@@ -25,7 +25,7 @@ class UserFragment : Fragment() {
         val profileImageView = view.findViewById<ImageView>(R.id.ivProfilePic)
 
         // Mock user data for now
-        userNameTextView.text = "John Doe"
+        userNameTextView.text = "Netanel Baruch"
         profileImageView.setImageResource(R.drawable.ic_user)
 
         // Setup RecyclerView for User's Tournaments
@@ -34,8 +34,8 @@ class UserFragment : Fragment() {
 
         // Mocked Tournament Data
         val userTournaments = listOf(
-            Tournament("User Tournament 1", "Public"),
-            Tournament("User Tournament 2", "Private")
+            Tournament("טורניר כיתות ו׳", "Public"),
+            Tournament("טורניר כיתות ג׳", "Private")
         )
         recyclerView.adapter = TournamentAdapter(userTournaments)
 
