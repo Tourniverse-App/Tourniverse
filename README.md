@@ -6,6 +6,13 @@ Welcome to **Tourniverse**, the ultimate tournament management app designed for 
 
 ---
 
+## 🔗 Download the App
+
+<a href="https://play.google.com/store/apps/details?id=com.example.tourniverse"><img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" height="80" /></a>
+
+
+---
+
 ## 🏆 Key Features
 
 ### For Tournament Organizers:
@@ -29,11 +36,7 @@ Welcome to **Tourniverse**, the ultimate tournament management app designed for 
   - Track standings, results, and updates in real-time.
   - Chat with other participants using the built-in social features.
 
----
 
-## 🔗 Download the App
-
-<a href="https://play.google.com/store/apps/details?id=com.example.tourniverse"><img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" height="80" /></a>
 
 ---
 
