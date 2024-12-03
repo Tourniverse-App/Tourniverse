@@ -1,0 +1,18 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_home"
+        android:title="Home"
+        android:icon="@drawable/ic_home" />
+    <item
+        android:id="@+id/nav_add"
+        android:title="Add Tournament"
+        android:icon="@drawable/ic_add" />
+    <item
+        android:id="@+id/nav_user"
+        android:title="Profile"
+        android:icon="@drawable/ic_user" />
+    <item
+        android:id="@+id/nav_settings"
+        android:title="Settings"
+        android:icon="@drawable/ic_settings" />
+</menu>

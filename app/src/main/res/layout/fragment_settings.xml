@@ -1,0 +1,85 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Settings Header -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Settings"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Account Settings -->
+    <TextView
+        android:id="@+id/accountSettings"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Account"
+        android:drawableStart="@drawable/ic_account"
+        android:drawablePadding="8dp"
+        android:padding="8dp"
+        android:background="@drawable/list_item_background"
+        android:layout_marginBottom="8dp"
+        android:gravity="center_vertical"
+        android:textSize="16sp" />
+
+    <!-- Notification Settings -->
+    <TextView
+        android:id="@+id/notificationSettings"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Notifications"
+        android:drawableStart="@drawable/ic_notifications"
+        android:drawablePadding="8dp"
+        android:padding="8dp"
+        android:background="@drawable/list_item_background"
+        android:layout_marginBottom="8dp"
+        android:gravity="center_vertical"
+        android:textSize="16sp" />
+
+    <!-- Privacy & Security Settings -->
+    <TextView
+        android:id="@+id/privacySettings"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Privacy &amp; Security"
+        android:drawableStart="@drawable/ic_privacy"
+        android:drawablePadding="8dp"
+        android:padding="8dp"
+        android:background="@drawable/list_item_background"
+        android:layout_marginBottom="8dp"
+        android:gravity="center_vertical"
+        android:textSize="16sp" />
+
+    <!-- Help & Support -->
+    <TextView
+        android:id="@+id/helpSupport"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Help &amp; Support"
+        android:drawableStart="@drawable/ic_help"
+        android:drawablePadding="8dp"
+        android:padding="8dp"
+        android:background="@drawable/list_item_background"
+        android:layout_marginBottom="8dp"
+        android:gravity="center_vertical"
+        android:textSize="16sp" />
+
+    <!-- About -->
+    <TextView
+        android:id="@+id/aboutSettings"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="About"
+        android:drawableStart="@drawable/ic_info"
+        android:drawablePadding="8dp"
+        android:padding="8dp"
+        android:background="@drawable/list_item_background"
+        android:gravity="center_vertical"
+        android:textSize="16sp" />
+</LinearLayout>

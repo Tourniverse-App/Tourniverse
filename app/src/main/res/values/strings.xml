@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Tourniverse</string>
+    <string-array name="teams_count">
+        <item>2</item>
+        <item>4</item>
+        <item>8</item>
+        <item>16</item>
+        <item>32</item>
+        <item>64</item>
+
+    </string-array>
+</resources>
