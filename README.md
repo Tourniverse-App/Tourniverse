@@ -59,11 +59,3 @@ Welcome to **Tourniverse**, the ultimate tournament management app designed for 
 
 ---
 
-## 🚀 Getting Started
-
-### Prerequisites:
-1. Android Studio installed on your machine.
-2. Firebase project set up with Authentication and Firestore enabled.
-3. Clone the repository:
-   ```bash
-   git clone https://github.com/Tourniverse-App/Tourniverse.git
