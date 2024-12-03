@@ -1,14 +1,18 @@
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:padding="16dp"
+    tools:context=".fragments.AddTournamentFragment">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <!-- Tournament Name -->
         <EditText
             android:id="@+id/etTournamentName"
             android:layout_width="match_parent"
@@ -16,20 +20,83 @@
             android:hint="Tournament Name"
             android:layout_marginBottom="16dp" />
 
+        <!-- Number of Teams -->
+        <EditText
+            android:id="@+id/etNumTeams"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:hint="Number of Teams"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Team Names -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Enter Team Names"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Example of 3 teams, you can dynamically create more fields based on the number of teams input -->
+        <EditText
+            android:id="@+id/teamName1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Team 1" />
+        <EditText
+            android:id="@+id/teamName2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Team 2" />
+        <EditText
+            android:id="@+id/teamName3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Team 3" />
+
+        <!-- Tournament Type -->
+        <Spinner
+            android:id="@+id/spinnerTournamentType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:entries="@array/tournament_type"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Number of Teams -->
         <Spinner
             android:id="@+id/spinnerTeams"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:entries="@array/teams_count"
+            android:entries="@array/team_count_options"
             android:layout_marginBottom="16dp" />
 
-        <Switch
-            android:id="@+id/switchPublic"
+
+        <!-- Tournament Format -->
+        <Spinner
+            android:id="@+id/spinnerTournamentFormat"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Public Tournament"
+            android:entries="@array/tournament_format"
             android:layout_marginBottom="16dp" />
 
+        <!-- Description -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Description"
+            android:layout_marginBottom="16dp">
+
+            <EditText
+                android:id="@+id/etDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textMultiLine"
+                android:layout_marginTop="8dp"
+                android:lines="5" /> <!-- Multi-line input -->
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Submit Button -->
         <Button
             android:id="@+id/btnSubmitTournament"
             android:layout_width="match_parent"

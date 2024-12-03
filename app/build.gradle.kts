@@ -36,24 +36,30 @@ android {
 }
 
 dependencies {
-
     // Import the Firebase BoM
     implementation(platform("com.google.firebase:firebase-bom:33.6.0"))
 
-    // TODO: Add the dependencies for Firebase products you want to use
-    // When using the BoM, don't specify versions in Firebase dependencies
+    // Add Firebase Analytics (if you want to use it)
     implementation("com.google.firebase:firebase-analytics")
 
-    // Add the dependencies for any other desired Firebase products
-    // https://firebase.google.com/docs/android/setup#available-libraries    implementation(libs.androidx.core.ktx)
+    // Add Firebase Authentication (if you're using it)
+    implementation("com.google.firebase:firebase-auth")
 
+    // Add Firestore
+    implementation("com.google.firebase:firebase-firestore")
+
+    // Add Material Components library to resolve TextInputLayout
+    implementation("com.google.android.material:material:1.6.0")
+    implementation("androidx.recyclerview:recyclerview:1.2.1")
+
+    // AndroidX Libraries
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
-    implementation(libs.firebase.auth.ktx)
     implementation(libs.androidx.navigation.runtime.ktx)
-    implementation(libs.firebase.firestore.ktx)
     implementation(libs.androidx.navigation.fragment)
     implementation(libs.androidx.navigation.ui.ktx)
+
+    // Test Libraries
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
