@@ -27,8 +27,11 @@
         <activity
             android:name=".TournamentActivity"
             android:exported="false" />
-        <activityin
+        <activity
             android:name=".MainActivity"
+            android:exported="false" />
+        <activity
+            android:name=".RegisterActivity"
             android:exported="false" />
 
     </application>
