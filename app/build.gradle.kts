@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -39,7 +40,7 @@ android {
 
 dependencies {
     // Firebase dependencies
-    implementation(platform("com.google.firebase:firebase-bom:33.6.0"))
+    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
@@ -51,6 +52,8 @@ dependencies {
     implementation("androidx.navigation:navigation-runtime-ktx:2.8.4")
     implementation("androidx.navigation:navigation-fragment-ktx:2.8.4")
     implementation("androidx.navigation:navigation-ui-ktx:2.8.4")
+    implementation("com.google.android.gms:play-services-auth:21.3.0")
+
 
     // Test dependencies
     testImplementation("junit:junit:4.13.2")
