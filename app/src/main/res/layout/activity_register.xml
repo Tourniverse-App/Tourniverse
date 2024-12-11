@@ -9,8 +9,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:gravity="center">
+        android:gravity="center"
+        android:padding="16dp">
 
+        <!-- Username Field -->
         <EditText
             android:id="@+id/etUsername"
             android:layout_width="match_parent"
@@ -19,14 +21,7 @@
             android:inputType="textPersonName"
             android:layout_marginBottom="8dp" />
 
-        <EditText
-            android:id="@+id/etName"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Full Name"
-            android:inputType="textPersonName"
-            android:layout_marginBottom="8dp" />
-
+        <!-- Email Field -->
         <EditText
             android:id="@+id/etEmail"
             android:layout_width="match_parent"
@@ -35,30 +30,32 @@
             android:inputType="textEmailAddress"
             android:layout_marginBottom="8dp" />
 
+        <!-- Password Field -->
         <EditText
             android:id="@+id/etPassword"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Password"
             android:inputType="textPassword"
-            android:layout_marginBottom="8dp" />
+            android:layout_marginBottom="16dp" />
 
+        <!-- Register Button -->
         <Button
             android:id="@+id/btnRegister"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Register"
-            android:layout_marginTop="16dp"
             android:background="@drawable/rounded_button"
-            android:textColor="@android:color/white" />
+            android:textColor="@android:color/white"
+            android:layout_marginBottom="24dp" />
 
+        <!-- Login Link -->
         <TextView
             android:id="@+id/tvLogin"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Already have an account? Login"
             android:textColor="@android:color/holo_blue_dark"
-            android:layout_marginTop="16dp"
             android:gravity="center"
             android:textSize="14sp" />
     </LinearLayout>

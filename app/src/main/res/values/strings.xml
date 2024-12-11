@@ -31,6 +31,11 @@
     <string name="what_s_on_your_mind">What\'s on your mind?</string>
     <string name="upcoming_matches">Upcoming Matches</string>
     <string name="team_statistics">Team Statistics</string>
+    <string name="sign_in_with_google">Sign in with Google</string>
+    <string name="forgot_password">Forgot password?</string>
+    <string name="don_t_have_an_account_sign_up">Don\'t have an account? Sign up</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
 
     <!-- Spinner Options -->
     <string-array name="tournament_format">
