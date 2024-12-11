@@ -29,7 +29,7 @@
         android:id="@+id/tabLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:tabIndicatorColor="@color/teal_200"
-        app:tabSelectedTextColor="@color/teal_200"
+        app:tabIndicatorColor="@color/black"
+        app:tabSelectedTextColor="@color/gray"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

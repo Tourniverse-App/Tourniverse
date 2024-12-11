@@ -17,7 +17,7 @@
             android:id="@+id/tvAppTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Tourniverse"
+            android:text="@string/tourniverse"
             android:textSize="24sp"
             android:textStyle="bold"
             android:gravity="center"
@@ -46,7 +46,7 @@
             android:id="@+id/btnLogin"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Log in"
+            android:text="@string/log_in"
             android:background="@drawable/rounded_button"
             android:textColor="@android:color/white"
             android:layout_marginBottom="16dp" />
@@ -68,7 +68,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="OR"
+                android:text="@string/or"
                 android:layout_marginHorizontal="8dp" />
 
             <View
@@ -83,10 +83,11 @@
             android:id="@+id/btnGoogleSignIn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:background="@drawable/google_sign_in_button"
             android:text="@string/sign_in_with_google"
-            android:gravity="center" />
+            android:theme="@style/GoogleButton"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp" />
+
 
         <!-- Forgot Password -->
         <TextView

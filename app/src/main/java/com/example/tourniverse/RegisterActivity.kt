@@ -3,7 +3,6 @@ package com.example.tourniverse
 import android.content.Intent
 import android.os.Bundle
 import android.text.TextUtils
-import android.view.LayoutInflater
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -25,7 +24,7 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     private val databaseReference = FirebaseDatabase.getInstance().reference
 
-    private lateinit var loadingDialog: AlertDialog
+    private lateinit var progressDialog: AlertDialog
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,9 +38,7 @@ class RegisterActivity : AppCompatActivity() {
         loginLink = findViewById(R.id.tvLogin)
 
         auth = FirebaseAuth.getInstance()
-
-        // Initialize the loading dialog
-        loadingDialog = createLoadingDialog()
+        progressDialog = createProgressDialog()
 
         // Handle register button click
         registerButton.setOnClickListener {
@@ -61,12 +58,11 @@ class RegisterActivity : AppCompatActivity() {
         // Navigate to LoginActivity when login link is clicked
         loginLink.setOnClickListener {
             startActivity(Intent(this, LoginActivity::class.java))
-            finish()
         }
     }
 
     private fun registerUser(username: String, email: String, password: String) {
-        loadingDialog.show()
+        progressDialog.show()
 
         // Register user in Firebase Auth
         auth.createUserWithEmailAndPassword(email, password)
@@ -77,49 +73,40 @@ class RegisterActivity : AppCompatActivity() {
                         "username" to username,
                         "email" to email,
                         "id" to userId,
-                        "bio" to "",
+                        "bio" to "Hi there! It's ${username}!",
                         "imageurl" to "default"
                     )
 
                     // Save user to Firebase Realtime Database
-                    if (userId != null) {
-                        databaseReference.child("Users").child(userId).setValue(userMap)
+                    userId?.let {
+                        databaseReference.child("Users").child(it).setValue(userMap)
                             .addOnCompleteListener { dbTask ->
                                 if (dbTask.isSuccessful) {
-                                    loadingDialog.dismiss()
-                                    Toast.makeText(
-                                        this,
-                                        "Registration successful! Please log in.",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
+                                    progressDialog.dismiss()
+                                    Toast.makeText(this, "Registration successful!", Toast.LENGTH_SHORT).show()
 
-                                    // Navigate to LoginActivity
-                                    val intent = Intent(this, LoginActivity::class.java)
+                                    // Navigate to MainActivity
+                                    val intent = Intent(this, MainActivity::class.java)
                                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
                                     startActivity(intent)
                                     finish()
                                 } else {
-                                    loadingDialog.dismiss()
-                                    Toast.makeText(
-                                        this,
-                                        "Failed to save user data: ${dbTask.exception?.message}",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
+                                    progressDialog.dismiss()
+                                    Toast.makeText(this, "Failed to save user data: ${dbTask.exception?.message}", Toast.LENGTH_SHORT).show()
                                 }
                             }
                     }
                 } else {
-                    loadingDialog.dismiss()
+                    progressDialog.dismiss()
                     Toast.makeText(this, "Registration failed: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
                 }
             }
     }
 
-    private fun createLoadingDialog(): AlertDialog {
-        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_loading, null)
-        return AlertDialog.Builder(this)
-            .setView(dialogView)
-            .setCancelable(false) // Prevent dismissal by tapping outside
-            .create()
+    private fun createProgressDialog(): AlertDialog {
+        val builder = AlertDialog.Builder(this)
+        builder.setView(layoutInflater.inflate(R.layout.dialog_loading, null)) // Use your existing layout
+        builder.setCancelable(false) // Prevent dismissal by tapping outside
+        return builder.create()
     }
 }

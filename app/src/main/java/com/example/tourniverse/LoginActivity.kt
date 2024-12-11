@@ -25,6 +25,9 @@ class LoginActivity : AppCompatActivity() {
         val forgotPassword = findViewById<TextView>(R.id.tvForgotPassword)
         val registerLink = findViewById<TextView>(R.id.tvRegister)
 
+        // Apply dynamic styling for the Google Sign-In button
+        applyDynamicStyleToGoogleButton(googleSignInButton)
+
         // Login logic
         loginButton.setOnClickListener {
             val email = emailField.text.toString()
@@ -72,9 +75,27 @@ class LoginActivity : AppCompatActivity() {
             }
         }
 
-        // Google Sign-In button (to be implemented later)
+        // Google Sign-In button
         googleSignInButton.setOnClickListener {
-            Toast.makeText(this, "Google Sign-In feature coming soon!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Google Sign-In clicked!", Toast.LENGTH_SHORT).show()
+            // TODO: Add your Google Sign-In logic here
+        }
+    }
+
+    /**
+     * Dynamically apply light or dark styling to the Google Sign-In button.
+     */
+    private fun applyDynamicStyleToGoogleButton(button: Button) {
+        // Check if the app is in dark mode
+        val isDarkMode = resources.configuration.uiMode and
+                android.content.res.Configuration.UI_MODE_NIGHT_MASK ==
+                android.content.res.Configuration.UI_MODE_NIGHT_YES
+
+        // Set the button background dynamically
+        if (isDarkMode) {
+            button.setBackgroundResource(R.drawable.google_button_dark)
+        } else {
+            button.setBackgroundResource(R.drawable.google_button_light)
         }
     }
 }
