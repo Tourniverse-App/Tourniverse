@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tournament Types -->
+    <string-array name="tournament_type">
+        <item>Knockout</item>
+        <item>Groups</item>
+        <item>Table</item>
+        <item>Table to knockout</item>
+        <item>Groups to knockout</item>
+    </string-array>
+
+    <!-- Team Count Options -->
+    <string-array name="team_count_options">
+        <item>2</item>
+        <item>4</item>
+        <item>6</item>
+        <item>8</item>
+        <item>16</item>
+        <item>32</item>
+        <item>64</item>
+    </string-array>
+</resources>

@@ -1,0 +1,129 @@
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:fillViewport="true"
+    tools:context=".fragments.AddTournamentFragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:focusable="true"
+        android:focusableInTouchMode="true">
+
+        <!-- Tournament Name -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/tournament_name_label"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/etTournamentName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/tournament_name_hint"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Number of Teams -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/number_of_teams_label"
+            android:layout_marginBottom="8dp" />
+
+        <Spinner
+            android:id="@+id/spinnerNumTeams"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:prompt="@string/select_number_of_teams" />
+
+        <!-- Team Names -->
+        <TextView
+            android:id="@+id/teamNamesLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/team_names_label"
+            android:visibility="gone"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:id="@+id/layoutTeamNames"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Tournament Format -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/tournament_format_label"
+            android:layout_marginBottom="8dp" />
+
+        <Spinner
+            android:id="@+id/spinnerTournamentFormat"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:prompt="@string/select_tournament_format" />
+
+        <!-- Privacy -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/privacy_label"
+            android:layout_marginBottom="8dp" />
+
+        <Spinner
+            android:id="@+id/spinnerPrivacy"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:prompt="@string/select_privacy" />
+
+        <!-- Description -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/description_label"
+            android:layout_marginBottom="8dp" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp">
+
+            <EditText
+                android:id="@+id/etDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textMultiLine"
+                android:lines="5" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Upload Photo Button -->
+        <Button
+            android:id="@+id/btnUploadPhoto"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/upload_photo"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Submit Button -->
+        <Button
+            android:id="@+id/btnSubmitTournament"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/submit_tournament" />
+
+    </LinearLayout>
+</ScrollView>

@@ -1,0 +1,39 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/appTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Tourniverse"
+        android:textSize="24sp"
+        android:layout_marginBottom="16dp" />
+
+    <EditText
+        android:id="@+id/searchBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint=" Search tournaments"
+        android:drawableStart="@drawable/ic_search"
+        android:padding="8dp"
+        android:background="@drawable/rounded_background"
+        android:layout_marginBottom="16dp"
+        android:imeOptions="actionSearch"
+        android:inputType="text"
+        android:focusable="true"
+        android:focusableInTouchMode="true" />
+
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerTournaments"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clipToPadding="false"
+        app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+        app:spanCount="2" /> <!-- 2 items per row -->
+
+</LinearLayout>

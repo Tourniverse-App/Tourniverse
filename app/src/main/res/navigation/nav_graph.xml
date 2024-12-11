@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:startDestination="@id/nav_home">
+
+    <!-- Home Fragment -->
+    <fragment
+        android:id="@+id/nav_home"
+        android:name="com.example.tourniverse.fragments.HomeFragment"
+        android:label="Home" >
+        <action
+            android:id="@+id/action_homeFragment_to_tournamentDetailsFragment"
+            app:destination="@id/tournamentDetailsFragment" />
+    </fragment>
+
+    <!-- Add Tournament Fragment -->
+    <fragment
+        android:id="@+id/nav_add"
+        android:name="com.example.tourniverse.fragments.AddTournamentFragment"
+        android:label="Add Tournament" />
+
+    <!-- User Fragment -->
+    <fragment
+        android:id="@+id/nav_user"
+        android:name="com.example.tourniverse.fragments.UserFragment"
+        android:label="User" >
+        <action
+            android:id="@+id/action_userFragment_to_tournamentDetailsFragment"
+            app:destination="@id/tournamentDetailsFragment" />
+    </fragment>
+
+    <!-- Tournament Details Fragment -->
+    <fragment
+        android:id="@+id/tournamentDetailsFragment"
+        android:name="com.example.tourniverse.fragments.TournamentDetailsFragment"
+        android:label="Tournament Details">
+        <argument
+            android:name="tournamentName"
+            app:argType="string" />
+        <argument
+            android:name="tournamentType"
+            app:argType="string" />
+    </fragment>
+
+    <!-- Settings Fragment -->
+    <fragment
+        android:id="@+id/nav_settings"
+        android:name="com.example.tourniverse.fragments.SettingsFragment"
+        android:label="Settings" />
+</navigation>
