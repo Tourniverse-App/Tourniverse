@@ -4,13 +4,21 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:gravity="center"
     android:padding="16dp">
 
+    <!-- Header -->
     <TextView
+        android:id="@+id/standingsHeader"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Standings Section"
-        android:textSize="18sp"
-        android:textStyle="bold" />
+        android:text="@string/upcoming_matches"
+        android:textStyle="bold"
+        android:textSize="18sp" />
+
+    <!-- Matches List -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/matchesRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="16dp" />
 </LinearLayout>

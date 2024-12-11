@@ -4,13 +4,21 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:gravity="center"
     android:padding="16dp">
 
+    <!-- Header -->
     <TextView
+        android:id="@+id/statisticsHeader"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Statistics Section"
-        android:textSize="18sp"
-        android:textStyle="bold" />
+        android:text="@string/team_statistics"
+        android:textStyle="bold"
+        android:textSize="18sp" />
+
+    <!-- Statistics Table -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/statisticsRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="16dp" />
 </LinearLayout>

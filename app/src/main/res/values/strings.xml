@@ -27,6 +27,10 @@
     <string name="select_number_of_teams">Select Number of Teams</string>
     <string name="select_tournament_format">Select Tournament Format</string>
     <string name="select_privacy">Select Privacy</string>
+    <string name="send_post">send post</string>
+    <string name="what_s_on_your_mind">What\'s on your mind?</string>
+    <string name="upcoming_matches">Upcoming Matches</string>
+    <string name="team_statistics">Team Statistics</string>
 
     <!-- Spinner Options -->
     <string-array name="tournament_format">
