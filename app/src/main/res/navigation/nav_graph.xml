@@ -46,5 +46,46 @@
     <fragment
         android:id="@+id/nav_settings"
         android:name="com.example.tourniverse.fragments.SettingsFragment"
-        android:label="Settings" />
+        android:label="Settings">
+        <!-- Account Fragment -->
+        <action
+            android:id="@+id/action_settingsFragment_to_accountFragment"
+            app:destination="@id/accountFragment" />
+        <!-- Notification Fragment -->
+        <action
+            android:id="@+id/action_settingsFragment_to_notificationFragment"
+            app:destination="@id/notificationFragment" />
+        <!-- Help & Support Fragment -->
+        <action
+            android:id="@+id/action_settingsFragment_to_helpSupportFragment"
+            app:destination="@id/helpSupportFragment" />
+        <!-- About Fragment -->
+        <action
+            android:id="@+id/action_settingsFragment_to_aboutFragment"
+            app:destination="@id/aboutFragment" />
+    </fragment>
+
+    <!-- Account Fragment -->
+    <fragment
+        android:id="@+id/accountFragment"
+        android:name="com.example.tourniverse.fragments.AccountFragment"
+        android:label="Account" />
+
+    <!-- Notification Fragment -->
+    <fragment
+        android:id="@+id/notificationFragment"
+        android:name="com.example.tourniverse.fragments.NotificationsFragment"
+        android:label="Notifications" />
+
+    <!-- Help & Support Fragment -->
+    <fragment
+        android:id="@+id/helpSupportFragment"
+        android:name="com.example.tourniverse.fragments.HelpSupportFragment"
+        android:label="Help and Support" />
+
+    <!-- About Fragment -->
+    <fragment
+        android:id="@+id/aboutFragment"
+        android:name="com.example.tourniverse.fragments.AboutFragment"
+        android:label="About" />
 </navigation>

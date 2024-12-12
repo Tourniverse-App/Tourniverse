@@ -82,4 +82,19 @@
         android:background="@drawable/list_item_background"
         android:gravity="center_vertical"
         android:textSize="16sp" />
+
+    <!-- Sign Out -->
+    <TextView
+        android:id="@+id/signOut"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Sign Out"
+        android:drawableStart="@drawable/ic_logout"
+        android:drawablePadding="8dp"
+        android:padding="8dp"
+        android:background="@drawable/list_item_background"
+        android:layout_marginTop="16dp"
+        android:gravity="center_vertical"
+        android:textSize="16sp"
+        android:textColor="@android:color/holo_red_dark" />
 </LinearLayout>

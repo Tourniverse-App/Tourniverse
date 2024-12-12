@@ -22,12 +22,7 @@
     <string name="tournament_format_label">Tournament Format:</string>
     <string name="privacy_label">Privacy:</string>
     <string name="description_label">Description:</string>
-
-    <!-- Spinner Prompts -->
-    <string name="select_number_of_teams">Select Number of Teams</string>
-    <string name="select_tournament_format">Select Tournament Format</string>
-    <string name="select_privacy">Select Privacy</string>
-    <string name="send_post">send post</string>
+    <string name="send_post">Send Post</string>
     <string name="what_s_on_your_mind">What\'s on your mind?</string>
     <string name="upcoming_matches">Upcoming Matches</string>
     <string name="team_statistics">Team Statistics</string>
@@ -39,6 +34,12 @@
     <string name="tourniverse">Tourniverse</string>
     <string name="log_in">Log in</string>
     <string name="or">OR</string>
+    <string name="default_web_client_id">YOUR_WEB_CLIENT_ID</string>
+
+    <!-- Spinner Prompts -->
+    <string name="select_number_of_teams">Select Number of Teams</string>
+    <string name="select_tournament_format">Select Tournament Format</string>
+    <string name="select_privacy">Select Privacy</string>
 
     <!-- Spinner Options -->
     <string-array name="tournament_format">
@@ -52,4 +53,108 @@
         <item>Public</item>
         <item>Private</item>
     </string-array>
+
+    <!-- Terms of Service -->
+    <string name="terms_of_service_text">
+        Welcome to Tourniverse. By accessing or using our app, you agree to comply with and be bound by the following terms and conditions. Please read them carefully:
+
+        1. **Acceptance of Terms**: By using Tourniverse, you agree to these Terms of Service. If you do not agree, please discontinue using the app immediately.
+
+        2. **Eligibility**: You must be at least 13 years old to use Tourniverse. If you are under the age of majority in your jurisdiction, you must have permission from a parent or legal guardian.
+
+        3. **User Responsibilities**:
+            - Provide accurate and complete registration information.
+            - Keep your account credentials confidential and secure.
+            - Do not share offensive, illegal, or harmful content within the app.
+            - Use Tourniverse only for lawful purposes and refrain from activities that could harm the app, its users, or its services.
+
+        4. **Prohibited Activities**:
+            - Attempting to hack, reverse-engineer, or otherwise tamper with the app.
+            - Using the app to harass, intimidate, or harm others.
+            - Uploading viruses, malware, or any harmful content.
+            - Impersonating others or providing false information.
+
+        5. **Content Ownership**:
+            - You retain ownership of content you create and share within the app (e.g., tournaments, posts).
+            - By sharing content, you grant Tourniverse a non-exclusive, worldwide license to use, display, and promote the content within the app.
+
+        6. **Account Suspension or Termination**:
+            - Tourniverse reserves the right to suspend or terminate accounts for violations of these terms or for other reasonable causes, with or without prior notice.
+            - Users found in violation of these terms may be prohibited from creating new accounts.
+
+        7. **Data Usage and Privacy**:
+            - Your personal data is collected and processed in accordance with our Privacy Policy.
+            - By using the app, you consent to our use of data as described in the Privacy Policy.
+
+        8. **Third-Party Services**:
+            - Tourniverse may contain links to third-party websites or services. We are not responsible for the content or functionality of such third-party services.
+
+        9. **Limitation of Liability**:
+            - Tourniverse is provided "as is" without warranties of any kind, whether express or implied.
+            - We are not liable for damages resulting from the use or inability to use the app, including data loss, service interruptions, or third-party actions.
+
+        10. **Modifications to Terms**:
+            - Tourniverse reserves the right to modify these terms at any time. Users will be notified of significant changes. Continued use of the app constitutes acceptance of the updated terms.
+
+        11. **Governing Law**:
+            - These terms shall be governed by and construed in accordance with the laws of your jurisdiction.
+
+        For questions or concerns about these Terms of Service, contact us at tourniverse@gmail.com. Thank you for being part of the Tourniverse community!
+    </string>
+
+    <!-- Privacy Policy -->
+    <string name="privacy_policy_text">
+        At Tourniverse, we prioritize your privacy:
+        1. We collect only essential data to enhance your experience, such as account information and preferences.
+        2. Your data is never shared with third parties without your explicit consent.
+        3. All personal data is stored securely and used solely to provide and improve our services.
+        4. You can request to delete your account and personal information at any time.
+
+        For the full Privacy Policy, visit our website. For concerns or questions, email us at tourniverse@gmail.com.
+    </string>
+
+    <!-- Credits -->
+    <string name="credits_text">
+        Tourniverse was proudly developed by:
+        - Gidi Rabi
+        - Roi Bruchim
+        - Netanel Baruch
+
+        Special thanks to all contributors and testers who helped make this app a success. For feedback or acknowledgments, contact tourniverse@gmail.com.
+    </string>
+
+    <!-- FAQ -->
+    <string name="faq_text">
+        Frequently Asked Questions:
+
+        **Q: How do I create a tournament?**
+        A: Go to "Add Tournament" in the main menu, provide the required details, and customize the tournament settings.
+
+        **Q: Can I change my account information?**
+        A: Yes, you can update your name, email, and other details in the "Account Settings" section.
+
+        **Q: How do I report inappropriate behavior?**
+        A: Tap on the user\'s profile, select "Report," and provide details about the issue.
+
+        **Q: Can I delete a tournament I\'ve created?**
+        A: Yes, navigate to your tournament, select "Manage," and choose the delete option.
+
+        **Q: How do notifications work?**
+        A: Notifications can be enabled or disabled for specific activities in the "Notification Settings" section.
+
+        **Q: Is my data secure?**
+        A: Absolutely. Your data is encrypted and stored securely in accordance with our Privacy Policy.
+
+        For additional questions, reach out to us at tourniverse@gmail.com.
+    </string>
+
+    <!-- Contact Support -->
+    <string name="contact_support_text">
+        Need assistance? Contact our support team:
+        Email: tourniverse@gmail.com
+        Response Time: Within 24-48 hours (excluding weekends and holidays).
+
+        We\'re here to help with any issues, feedback, or suggestions you may have.
+    </string>
+
 </resources>

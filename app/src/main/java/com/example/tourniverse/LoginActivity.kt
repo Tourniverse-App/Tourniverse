@@ -2,15 +2,25 @@ package com.example.tourniverse
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.GoogleAuthProvider
 
 class LoginActivity : AppCompatActivity() {
+
     private lateinit var auth: FirebaseAuth
+    private lateinit var googleSignInClient: GoogleSignInClient
+    private val RC_SIGN_IN = 9001
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,10 +35,8 @@ class LoginActivity : AppCompatActivity() {
         val forgotPassword = findViewById<TextView>(R.id.tvForgotPassword)
         val registerLink = findViewById<TextView>(R.id.tvRegister)
 
-        // Apply dynamic styling for the Google Sign-In button
-        applyDynamicStyleToGoogleButton(googleSignInButton)
+        configureGoogleSignIn()
 
-        // Login logic
         loginButton.setOnClickListener {
             val email = emailField.text.toString()
             val password = passwordField.text.toString()
@@ -52,13 +60,10 @@ class LoginActivity : AppCompatActivity() {
             }
         }
 
-        // Register link logic
         registerLink.setOnClickListener {
-            val intent = Intent(this, RegisterActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, RegisterActivity::class.java))
         }
 
-        // Forgot password logic
         forgotPassword.setOnClickListener {
             val email = emailField.text.toString()
             if (email.isNotEmpty()) {
@@ -75,27 +80,69 @@ class LoginActivity : AppCompatActivity() {
             }
         }
 
-        // Google Sign-In button
         googleSignInButton.setOnClickListener {
-            Toast.makeText(this, "Google Sign-In clicked!", Toast.LENGTH_SHORT).show()
-            // TODO: Add your Google Sign-In logic here
+            signIn()
         }
     }
 
-    /**
-     * Dynamically apply light or dark styling to the Google Sign-In button.
-     */
-    private fun applyDynamicStyleToGoogleButton(button: Button) {
-        // Check if the app is in dark mode
-        val isDarkMode = resources.configuration.uiMode and
-                android.content.res.Configuration.UI_MODE_NIGHT_MASK ==
-                android.content.res.Configuration.UI_MODE_NIGHT_YES
+    override fun onStart() {
+        super.onStart()
+        val currentUser = auth.currentUser
+        updateUI(currentUser)
+    }
 
-        // Set the button background dynamically
-        if (isDarkMode) {
-            button.setBackgroundResource(R.drawable.google_button_dark)
-        } else {
-            button.setBackgroundResource(R.drawable.google_button_light)
+    private fun configureGoogleSignIn() {
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+
+        googleSignInClient = GoogleSignIn.getClient(this, gso)
+    }
+
+    private fun signIn() {
+        val signInIntent = googleSignInClient.signInIntent
+        startActivityForResult(signInIntent, RC_SIGN_IN)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == RC_SIGN_IN) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(data)
+            try {
+                val account = task.getResult(ApiException::class.java)!!
+                Log.d(TAG, "firebaseAuthWithGoogle:" + account.id)
+                firebaseAuthWithGoogle(account.idToken!!)
+            } catch (e: ApiException) {
+                Log.w(TAG, "Google sign in failed", e)
+            }
         }
+    }
+
+    private fun firebaseAuthWithGoogle(idToken: String) {
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
+        auth.signInWithCredential(credential)
+            .addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+                    Log.d(TAG, "signInWithCredential:success")
+                    val user = auth.currentUser
+                    updateUI(user)
+                } else {
+                    Log.w(TAG, "signInWithCredential:failure", task.exception)
+                    updateUI(null)
+                }
+            }
+    }
+
+    private fun updateUI(user: FirebaseUser?) {
+        if (user != null) {
+            startActivity(Intent(this, MainActivity::class.java))
+            finish()
+        }
+    }
+
+    companion object {
+        private const val TAG = "GoogleActivity"
     }
 }
