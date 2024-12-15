@@ -7,7 +7,7 @@
     <fragment
         android:id="@+id/nav_home"
         android:name="com.example.tourniverse.fragments.HomeFragment"
-        android:label="Home" >
+        android:label="Home">
         <action
             android:id="@+id/action_homeFragment_to_tournamentDetailsFragment"
             app:destination="@id/tournamentDetailsFragment" />
@@ -17,13 +17,17 @@
     <fragment
         android:id="@+id/nav_add"
         android:name="com.example.tourniverse.fragments.AddTournamentFragment"
-        android:label="Add Tournament" />
+        android:label="Add Tournament">
+        <action
+            android:id="@+id/action_addTournamentFragment_to_tournamentDetailsFragment"
+            app:destination="@id/tournamentDetailsFragment" />
+    </fragment>
 
     <!-- User Fragment -->
     <fragment
         android:id="@+id/nav_user"
         android:name="com.example.tourniverse.fragments.UserFragment"
-        android:label="User" >
+        android:label="User">
         <action
             android:id="@+id/action_userFragment_to_tournamentDetailsFragment"
             app:destination="@id/tournamentDetailsFragment" />
@@ -34,11 +38,9 @@
         android:id="@+id/tournamentDetailsFragment"
         android:name="com.example.tourniverse.fragments.TournamentDetailsFragment"
         android:label="Tournament Details">
+        <!-- Accept a unique tournamentId as an argument -->
         <argument
-            android:name="tournamentName"
-            app:argType="string" />
-        <argument
-            android:name="tournamentType"
+            android:name="tournamentId"
             app:argType="string" />
     </fragment>
 

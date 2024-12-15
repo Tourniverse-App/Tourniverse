@@ -36,10 +36,11 @@
     <string name="or">OR</string>
     <string name="default_web_client_id">YOUR_WEB_CLIENT_ID</string>
 
+
     <!-- Spinner Prompts -->
     <string name="select_number_of_teams">Select Number of Teams</string>
-    <string name="select_tournament_format">Select Tournament Format</string>
     <string name="select_privacy">Select Privacy</string>
+    <string name="select_tournament_format">Select Format</string>
 
     <!-- Spinner Options -->
     <string-array name="tournament_format">
