@@ -23,27 +23,31 @@ object FirebaseHelper {
         description: String,
         privacy: String,
         teamNames: List<String>,
+        ownerId: String, // Add the owner's ID
+        allowedViewers: List<String> = emptyList(), // Optional viewer IDs
         callback: (Boolean, String?) -> Unit
     ) {
-        val tournament = mapOf(
+        val tournament = hashMapOf(
             "name" to name,
             "teamCount" to teamCount,
             "description" to description,
             "privacy" to privacy,
             "teamNames" to teamNames,
-            "createdAt" to System.currentTimeMillis()
+            "ownerId" to ownerId, // Add the authenticated user ID
+            "allowedViewers" to allowedViewers, // Empty by default
+            "shareableLink" to "https://yourapp/tournament/${System.currentTimeMillis()}",
+            "createdAt" to System.currentTimeMillis(),
+            "updatedAt" to System.currentTimeMillis()
         )
 
-        db.collection(TOURNAMENTS_COLLECTION)
+        db.collection("tournaments")
             .add(tournament)
             .addOnSuccessListener { documentReference ->
-                val documentId = documentReference.id
-                Log.d("FirebaseHelper", "Tournament added with ID: $documentId")
-                callback(true, documentId) // Return the document ID on success
+                callback(true, documentReference.id)
             }
             .addOnFailureListener { e ->
-                Log.e("FirebaseHelper", "Error adding tournament: ${e.message}", e)
-                callback(false, e.message) // Return error message on failure
+                callback(false, e.message)
             }
     }
+
 }

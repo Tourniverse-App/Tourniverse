@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.tourniverse.R
 import com.example.tourniverse.utils.FirebaseHelper
+import com.google.firebase.auth.FirebaseAuth
 
 class AddTournamentFragment : Fragment() {
 
@@ -137,6 +138,15 @@ class AddTournamentFragment : Fragment() {
             return
         }
 
+        // Get the current user's UID
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        val ownerId = currentUser?.uid ?: ""
+
+        if (ownerId.isEmpty()) {
+            Toast.makeText(requireContext(), "User not authenticated", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         // Disable the button to prevent duplicate submissions
         btnSubmitTournament.isEnabled = false
 
@@ -145,7 +155,8 @@ class AddTournamentFragment : Fragment() {
             teamCount = teamNames.size,
             description = description,
             privacy = privacy,
-            teamNames = teamNames
+            teamNames = teamNames,
+            ownerId = ownerId
         ) { success, tournamentId ->
             if (success) {
                 Toast.makeText(requireContext(), "Tournament saved successfully!", Toast.LENGTH_SHORT).show()
