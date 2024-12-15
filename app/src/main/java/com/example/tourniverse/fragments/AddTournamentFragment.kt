@@ -156,7 +156,7 @@ class AddTournamentFragment : Fragment() {
             description = description,
             privacy = privacy,
             teamNames = teamNames,
-            ownerId = ownerId
+            //ownerId = ownerId
         ) { success, tournamentId ->
             if (success) {
                 Toast.makeText(requireContext(), "Tournament saved successfully!", Toast.LENGTH_SHORT).show()

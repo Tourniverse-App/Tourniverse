@@ -13,7 +13,7 @@
         android:theme="@style/Theme.Tourniverse"
         tools:targetApi="31">
 
-        <!-- Main Activity -->
+        <!-- Login Activity -->
         <activity
             android:name=".LoginActivity"
             android:exported="true">
@@ -23,13 +23,18 @@
             </intent-filter>
         </activity>
 
-        <!-- Other Activities -->
+        <!-- Main Activity -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustPan" />
+
+        <!-- Tournament Activity -->
         <activity
             android:name=".TournamentActivity"
             android:exported="false" />
-        <activity
-            android:name=".MainActivity"
-            android:exported="true" />
+
+        <!-- Register Activity -->
         <activity
             android:name=".RegisterActivity"
             android:exported="true" />

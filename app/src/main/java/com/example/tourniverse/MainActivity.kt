@@ -10,20 +10,64 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.ActionCodeSettings
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
+import androidx.navigation.NavController
+
 
 class MainActivity : AppCompatActivity() {
 
     private val TAG = "MainActivity"
 
+    private lateinit var navController: NavController
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Navigation setup
-        val navController = findNavController(R.id.nav_host_fragment)
+        navController = findNavController(R.id.nav_host_fragment)
         val bottomNavView: BottomNavigationView = findViewById(R.id.bottom_navigation)
+
+        // Attach navigation controller to BottomNavigationView
         bottomNavView.setupWithNavController(navController)
+
+        // Fix for handling reselection and proper backstack clearing
+        bottomNavView.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_home -> {
+                    handleNavigation(R.id.nav_home)
+                    true
+                }
+                R.id.nav_add -> {
+                    handleNavigation(R.id.nav_add)
+                    true
+                }
+                R.id.nav_user -> {
+                    handleNavigation(R.id.nav_user)
+                    true
+                }
+                R.id.nav_settings -> {
+                    handleNavigation(R.id.nav_settings)
+                    true
+                }
+                else -> false
+            }
+        }
     }
+
+    /**
+     * Custom navigation handler to clear back stack and reset state.
+     *
+     * @param destinationId The fragment to navigate to.
+     */
+    private fun handleNavigation(destinationId: Int) {
+        // Check if the current destination is the same as the selected one
+        if (navController.currentDestination?.id == destinationId) {
+            // Pop back to the selected fragment to reset its state
+            navController.popBackStack(destinationId, true)
+        }
+        // Navigate to the selected fragment
+        navController.navigate(destinationId)
+    }
+
 
     /**
      * Builds ActionCodeSettings for email authentication links
