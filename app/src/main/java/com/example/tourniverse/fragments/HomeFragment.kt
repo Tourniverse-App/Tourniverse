@@ -1,6 +1,7 @@
 package com.example.tourniverse.fragments
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -85,12 +86,13 @@ class HomeFragment : Fragment() {
             if (result.isEmpty()) {
                 recyclerView.visibility = View.GONE
                 noTournamentsView.visibility = View.VISIBLE
+                Log.d("HomeDebug", "No tournaments found.")
             } else {
                 recyclerView.visibility = View.VISIBLE
                 noTournamentsView.visibility = View.GONE
 
                 tournaments.clear()
-                for (data in result) {
+                result.forEach { data ->
                     val name = data["name"] as? String ?: "Unknown"
                     val privacy = data["privacy"] as? String ?: "Private"
                     val description = data["description"] as? String ?: ""
@@ -98,24 +100,23 @@ class HomeFragment : Fragment() {
                     val ownerId = data["ownerId"] as? String ?: "Unknown"
                     val viewers = data["viewers"] as? List<String> ?: emptyList()
 
-                    // Debug log
-                    println("Tournament: $name, Privacy: $privacy, Teams: $teamNames, Owner: $ownerId")
-
                     val tournament = Tournament(
                         name = name,
                         type = privacy,
-                        format = null, // Add a field if needed
+                        format = null, // Add this field if required
                         description = description,
                         teamNames = teamNames,
                         owner = ownerId,
                         viewers = viewers
                     )
+                    Log.d("HomeDebug", "Loaded Tournament: $name")
                     tournaments.add(tournament)
                 }
                 adapter.notifyDataSetChanged()
             }
         }
     }
+
 
     private fun navigateToTournamentDetails(tournament: Tournament) {
         val bundle = Bundle().apply {

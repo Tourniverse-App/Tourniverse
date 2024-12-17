@@ -33,11 +33,12 @@ class TournamentAdapter(
         val tournament = filteredTournaments[position]
         Log.d("AdapterDebug", "Binding Tournament: ${tournament.name}")
         holder.tournamentName.text = tournament.name
-        holder.tournamentType.text = tournament.type
+        holder.tournamentType.text = "Type: ${tournament.type}"
         holder.itemView.setOnClickListener {
             onTournamentClick(tournament)
         }
     }
+
 
 
     override fun getItemCount() = filteredTournaments.size

@@ -83,7 +83,6 @@ object FirebaseHelper {
 
         userRef.get()
             .addOnSuccessListener { document ->
-                // Fetch owned and viewed tournaments
                 val ownedTournaments = document["ownedTournaments"] as? List<String> ?: emptyList()
                 val viewedTournaments = document["viewedTournaments"] as? List<String> ?: emptyList()
 
@@ -107,8 +106,8 @@ object FirebaseHelper {
                             val snapshot = result as? com.google.firebase.firestore.DocumentSnapshot
                             if (snapshot != null && snapshot.exists()) {
                                 snapshot.data?.let { data ->
-                                    Log.d("FirestoreDebug", "Fetched tournament: ${snapshot.id} -> $data")
                                     tournaments.add(data)
+                                    Log.d("FirestoreDebug", "Fetched tournament: ${snapshot.id} -> $data")
                                 }
                             } else {
                                 Log.w("FirestoreDebug", "Tournament document not found: ${snapshot?.id}")
@@ -126,6 +125,7 @@ object FirebaseHelper {
                 callback(emptyList())
             }
     }
+
 
 
 
@@ -221,5 +221,27 @@ object FirebaseHelper {
             println("Failed to check user document: ${e.message}")
         }
     }
+
+    /**
+     * Fetches the user document for a specific user ID.
+     *
+     * @param userId The ID of the user.
+     * @param callback Callback to return the user document as a Map.
+     */
+    fun getUserDocument(userId: String, callback: (Map<String, Any>?) -> Unit) {
+        val userRef = db.collection(USERS_COLLECTION).document(userId)
+        userRef.get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    callback(document.data)
+                } else {
+                    callback(null)
+                }
+            }
+            .addOnFailureListener { e ->
+                callback(null)
+            }
+    }
+
 
 }
