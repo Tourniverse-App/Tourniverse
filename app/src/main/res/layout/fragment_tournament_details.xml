@@ -9,12 +9,49 @@
     <!-- Tournament Name -->
     <TextView
         android:id="@+id/tvTournamentName"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Tournament Name"
         android:textSize="20sp"
         android:textStyle="bold"
+        android:singleLine="true"
+        android:ellipsize="end"
         android:layout_marginBottom="8dp" />
+
+    <!-- Tournament Type -->
+    <TextView
+        android:id="@+id/tvTournamentType"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Type: Public/Private"
+        android:textSize="16sp"
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:layout_marginBottom="4dp" />
+
+    <!-- Tournament Format -->
+    <TextView
+        android:id="@+id/tvTournamentFormat"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Format: Knockout/Table"
+        android:textSize="16sp"
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:layout_marginBottom="4dp"
+        android:visibility="gone" /> <!-- Initially hidden -->
+
+    <!-- Tournament Description -->
+    <TextView
+        android:id="@+id/tvTournamentDescription"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Description: Tournament Description here"
+        android:textSize="16sp"
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:layout_marginBottom="8dp"
+        android:visibility="gone" /> <!-- Initially hidden -->
 
     <!-- TabLayout -->
     <com.google.android.material.tabs.TabLayout

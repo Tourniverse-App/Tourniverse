@@ -243,5 +243,59 @@ object FirebaseHelper {
             }
     }
 
+    /**
+     * Fetches tournaments where the current user is either the owner or a viewer.
+     *
+     * @param includeViewed If true, includes viewed tournaments. Otherwise, only owned tournaments are fetched.
+     * @param callback Callback to return the list of tournaments as Maps.
+     */
+    fun getUserTournaments(includeViewed: Boolean, callback: (List<Map<String, Any>>) -> Unit) {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        val userId = currentUser?.uid ?: return callback(emptyList())
 
+        val userRef = db.collection(USERS_COLLECTION).document(userId)
+
+        userRef.get()
+            .addOnSuccessListener { document ->
+                val ownedTournaments = document["ownedTournaments"] as? List<String> ?: emptyList()
+                val tournamentIds = if (includeViewed) {
+                    val viewedTournaments = document["viewedTournaments"] as? List<String> ?: emptyList()
+                    ownedTournaments.union(viewedTournaments).toList()
+                } else {
+                    ownedTournaments
+                }
+
+                if (tournamentIds.isEmpty()) {
+                    Log.d("FirestoreDebug", "No tournaments found for user $userId")
+                    callback(emptyList())
+                    return@addOnSuccessListener
+                }
+
+                val tournaments = mutableListOf<Map<String, Any>>()
+                val tasks = tournamentIds.map { tournamentId ->
+                    db.collection(TOURNAMENTS_COLLECTION).document(tournamentId).get()
+                }
+
+                com.google.android.gms.tasks.Tasks.whenAllSuccess<Any>(tasks)
+                    .addOnSuccessListener { results ->
+                        results.forEach { result ->
+                            val snapshot = result as? com.google.firebase.firestore.DocumentSnapshot
+                            if (snapshot != null && snapshot.exists()) {
+                                snapshot.data?.let { data ->
+                                    tournaments.add(data)
+                                }
+                            }
+                        }
+                        callback(tournaments)
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("FirestoreDebug", "Error fetching tournaments: ${e.message}")
+                        callback(emptyList())
+                    }
+            }
+            .addOnFailureListener { e ->
+                Log.e("FirestoreDebug", "Error fetching user document: ${e.message}")
+                callback(emptyList())
+            }
+    }
 }

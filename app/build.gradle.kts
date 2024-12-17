@@ -56,6 +56,7 @@ dependencies {
     implementation("com.google.android.material:material:1.6.0")
     implementation("androidx.recyclerview:recyclerview:1.2.1")
     implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("androidx.preference:preference:1.2.1")
 
     // Navigation Component
     implementation("androidx.navigation:navigation-runtime-ktx:2.8.4")

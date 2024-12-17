@@ -58,6 +58,24 @@
         android:layout_marginTop="4dp"
         android:layout_marginBottom="8dp" />
 
+    <!-- Search Bar -->
+    <EditText
+        android:id="@+id/searchBar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Search tournaments"
+        android:drawableStart="@drawable/ic_search"
+        android:padding="8dp"
+        android:background="@drawable/rounded_background"
+        android:layout_marginBottom="8dp"
+        android:imeOptions="actionSearch"
+        android:inputType="text"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        app:layout_constraintTop_toBottomOf="@id/dividerLine"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
     <!-- RecyclerView for User Tournaments -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerUserTournaments"
@@ -65,7 +83,7 @@
         android:layout_height="0dp"
         app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
         app:spanCount="2"
-        app:layout_constraintTop_toBottomOf="@id/dividerLine"
+        app:layout_constraintTop_toBottomOf="@id/searchBar"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent" />

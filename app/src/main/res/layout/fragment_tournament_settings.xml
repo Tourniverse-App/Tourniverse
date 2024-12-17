@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Game Notifications -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Game Notifications"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:paddingTop="8dp" />
+
+    <Switch
+        android:id="@+id/switch_game_notifications"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Enable game notifications"
+        android:layout_marginTop="4dp" />
+
+    <!-- Social Notifications -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Social Notifications"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:paddingTop="16dp" />
+
+    <Switch
+        android:id="@+id/switch_social_notifications"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Enable social notifications"
+        android:layout_marginTop="4dp" />
+
+    <!-- Leave Tournament Button -->
+    <Button
+        android:id="@+id/button_leave_tournament"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Leave Tournament"
+        android:backgroundTint="@android:color/holo_red_light"
+        android:textColor="@android:color/white"
+        android:layout_marginTop="32dp" />
+
+</LinearLayout>

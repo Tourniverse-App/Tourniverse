@@ -24,37 +24,6 @@ class HomeFragment : Fragment() {
     private lateinit var noTournamentsView: TextView
     private val tournaments = mutableListOf<Tournament>()
 
-//    override fun onCreateView(
-//        inflater: LayoutInflater, container: ViewGroup?,
-//        savedInstanceState: Bundle?
-//    ): View? {
-//        val view = inflater.inflate(R.layout.fragment_home, container, false)
-//
-//        // Initialize views
-//        recyclerView = view.findViewById(R.id.recyclerTournaments)
-//        noTournamentsView = view.findViewById(R.id.noTournamentsView)
-//        val searchBar = view.findViewById<EditText>(R.id.searchBar)
-//
-//        // Setup RecyclerView
-//        recyclerView.layoutManager = GridLayoutManager(context, 2)
-//        adapter = TournamentAdapter(tournaments, ::navigateToTournamentDetails)
-//        recyclerView.adapter = adapter
-//
-//        // Fetch tournaments
-//        fetchUserTournaments()
-//
-//        // Search functionality
-//        searchBar.addTextChangedListener(object : android.text.TextWatcher {
-//            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-//            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-//                adapter.filter(s.toString())
-//            }
-//            override fun afterTextChanged(s: android.text.Editable?) {}
-//        })
-//
-//        return view
-//    }
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -81,49 +50,50 @@ class HomeFragment : Fragment() {
     }
 
 
+    /**
+     * Fetches both owned and viewed tournaments for the current user.
+     * Populates the RecyclerView with all tournaments when the app starts.
+     */
     private fun fetchUserTournaments() {
-        FirebaseHelper.getUserTournaments { result ->
-            if (result.isEmpty()) {
-                recyclerView.visibility = View.GONE
-                noTournamentsView.visibility = View.VISIBLE
-                Log.d("HomeDebug", "No tournaments found.")
-            } else {
-                recyclerView.visibility = View.VISIBLE
-                noTournamentsView.visibility = View.GONE
+        FirebaseHelper.getUserTournaments(includeViewed = true) { result ->
+            recyclerView.visibility = View.VISIBLE
+            noTournamentsView.visibility = View.GONE
 
-                tournaments.clear()
-                result.forEach { data ->
-                    val name = data["name"] as? String ?: "Unknown"
-                    val privacy = data["privacy"] as? String ?: "Private"
-                    val description = data["description"] as? String ?: ""
-                    val teamNames = data["teamNames"] as? List<String> ?: emptyList()
-                    val ownerId = data["ownerId"] as? String ?: "Unknown"
-                    val viewers = data["viewers"] as? List<String> ?: emptyList()
+            tournaments.clear()
+            result.forEach { data ->
+                val name = data["name"] as? String ?: "Unknown"
+                val privacy = data["privacy"] as? String ?: "Private"
+                val description = data["description"] as? String ?: ""
+                val teamNames = data["teamNames"] as? List<String> ?: emptyList()
+                val ownerId = data["ownerId"] as? String ?: "Unknown"
+                val viewers = data["viewers"] as? List<String> ?: emptyList()
 
-                    val tournament = Tournament(
-                        name = name,
-                        type = privacy,
-                        format = null, // Add this field if required
-                        description = description,
-                        teamNames = teamNames,
-                        owner = ownerId,
-                        viewers = viewers
-                    )
-                    Log.d("HomeDebug", "Loaded Tournament: $name")
-                    tournaments.add(tournament)
-                }
-                adapter.notifyDataSetChanged()
+                val tournament = Tournament(
+                    name = name,
+                    type = privacy,
+                    description = description,
+                    teamNames = teamNames,
+                    owner = ownerId,
+                    viewers = viewers
+                )
+                tournaments.add(tournament)
             }
+
+            adapter.filter("") // Show all tournaments initially
+            adapter.notifyDataSetChanged()
         }
     }
+
 
 
     private fun navigateToTournamentDetails(tournament: Tournament) {
         val bundle = Bundle().apply {
             putString("tournamentName", tournament.name)
             putString("tournamentType", tournament.type)
-            putString("tournamentType", tournament.format) // my addition
+            putString("tournamentFormat", tournament.format) // Pass the format
+            putString("tournamentDescription", tournament.description) // Pass the description
         }
         findNavController().navigate(R.id.action_homeFragment_to_tournamentDetailsFragment, bundle)
     }
+
 }

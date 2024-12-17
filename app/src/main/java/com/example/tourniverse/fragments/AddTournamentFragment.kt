@@ -112,6 +112,10 @@ class AddTournamentFragment : Fragment() {
         }
     }
 
+    /**
+     * Validates user input, collects tournament details, and saves them to Firestore.
+     * Navigates to the TournamentDetailsFragment upon successful creation.
+     */
     private fun handleSubmit() {
         val tournamentName = etTournamentName.text.toString().trim()
         val description = etDescription.text.toString().trim()
@@ -138,7 +142,6 @@ class AddTournamentFragment : Fragment() {
             return
         }
 
-        // Get the current user's UID
         val currentUser = FirebaseAuth.getInstance().currentUser
         val ownerId = currentUser?.uid ?: ""
 
@@ -147,7 +150,6 @@ class AddTournamentFragment : Fragment() {
             return
         }
 
-        // Disable the button to prevent duplicate submissions
         btnSubmitTournament.isEnabled = false
 
         FirebaseHelper.addTournament(
@@ -155,14 +157,13 @@ class AddTournamentFragment : Fragment() {
             teamCount = teamNames.size,
             description = description,
             privacy = privacy,
-            teamNames = teamNames,
-            //ownerId = ownerId
+            teamNames = teamNames
         ) { success, tournamentId ->
             if (success) {
                 Toast.makeText(requireContext(), "Tournament saved successfully!", Toast.LENGTH_SHORT).show()
                 tournamentId?.let {
-                    val action = AddTournamentFragmentDirections.actionAddTournamentFragmentToTournamentDetailsFragment(it)
-                    findNavController().navigate(action)
+                    val bundle = Bundle().apply { putString("tournamentId", it) }
+                    findNavController().navigate(R.id.action_addTournamentFragment_to_tournamentDetailsFragment, bundle)
                 }
             } else {
                 Toast.makeText(requireContext(), "Error saving tournament", Toast.LENGTH_SHORT).show()

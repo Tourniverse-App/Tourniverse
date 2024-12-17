@@ -35,6 +35,11 @@
     <string name="log_in">Log in</string>
     <string name="or">OR</string>
     <string name="default_web_client_id">YOUR_WEB_CLIENT_ID</string>
+    <string name="leave_tournament_title">Leave Tournament</string>
+    <string name="leave_tournament_message">Are you sure you want to leave this tournament?</string>
+    <string name="leave">Leave</string>
+    <string name="cancel">Cancel</string>
+    <string name="tournament_left">You have left the tournament.</string>
 
 
     <!-- Spinner Prompts -->

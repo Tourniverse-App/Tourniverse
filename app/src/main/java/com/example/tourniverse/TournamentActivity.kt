@@ -8,6 +8,7 @@ import com.google.android.material.tabs.TabLayoutMediator
 import com.example.tourniverse.adapters.TournamentPagerAdapter
 
 class TournamentActivity : AppCompatActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tournament)
@@ -15,7 +16,11 @@ class TournamentActivity : AppCompatActivity() {
         val tabLayout = findViewById<TabLayout>(R.id.tabLayout)
         val viewPager = findViewById<ViewPager2>(R.id.viewPager)
 
-        val adapter = TournamentPagerAdapter(this)
+        // Retrieve tournamentId passed through intent
+        val tournamentId = intent.getStringExtra("tournamentId") ?: ""
+
+        // Pass the tournamentId to the adapter
+        val adapter = TournamentPagerAdapter(this, tournamentId)
         viewPager.adapter = adapter
 
         TabLayoutMediator(tabLayout, viewPager) { tab, position ->
@@ -23,6 +28,7 @@ class TournamentActivity : AppCompatActivity() {
                 0 -> "Social"
                 1 -> "Standings"
                 2 -> "Statistics"
+                3 -> "Settings"
                 else -> ""
             }
         }.attach()

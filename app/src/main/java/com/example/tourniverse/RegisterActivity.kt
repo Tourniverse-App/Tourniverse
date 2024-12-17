@@ -82,7 +82,7 @@ class RegisterActivity : AppCompatActivity() {
                     // Initialize user data for Firestore "users" collection
                     val userMap = hashMapOf(
                         "username" to username,
-                        "bio" to "", // Empty bio by default
+                        "bio" to "This is ${username}'s bio!",
                         "image" to null, // Null image by default
                         "ownedTournaments" to mutableListOf<String>(), // Empty list for owned tournaments
                         "viewedTournaments" to mutableListOf<String>() // Empty list for viewed tournaments
