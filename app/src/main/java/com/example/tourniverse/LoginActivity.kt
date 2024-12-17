@@ -15,6 +15,7 @@ import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.firestore.FirebaseFirestore
 
 class LoginActivity : AppCompatActivity() {
 
@@ -127,13 +128,43 @@ class LoginActivity : AppCompatActivity() {
                 if (task.isSuccessful) {
                     Log.d(TAG, "signInWithCredential:success")
                     val user = auth.currentUser
-                    updateUI(user)
+
+                    user?.let {
+                        val userRef = FirebaseFirestore.getInstance().collection("users").document(it.uid)
+
+                        userRef.get().addOnCompleteListener { snapshotTask ->
+                            if (snapshotTask.isSuccessful && !snapshotTask.result.exists()) {
+                                // User does not exist, create new user document
+                                val userMap = hashMapOf(
+                                    "username" to (it.displayName ?: "Unknown"),
+                                    "bio" to "",
+                                    "image" to it.photoUrl?.toString(),
+                                    "ownedTournaments" to mutableListOf<String>(),
+                                    "viewedTournaments" to mutableListOf<String>()
+                                )
+
+                                userRef.set(userMap)
+                                    .addOnSuccessListener {
+                                        Log.d(TAG, "New Google user added to Firestore.")
+                                        updateUI(user)
+                                    }
+                                    .addOnFailureListener { e ->
+                                        Log.e(TAG, "Failed to add Google user: ${e.message}")
+                                        Toast.makeText(this, "Failed to save user data", Toast.LENGTH_SHORT).show()
+                                    }
+                            } else {
+                                // User already exists, proceed
+                                updateUI(user)
+                            }
+                        }
+                    }
                 } else {
                     Log.w(TAG, "signInWithCredential:failure", task.exception)
                     updateUI(null)
                 }
             }
     }
+
 
     private fun updateUI(user: FirebaseUser?) {
         if (user != null) {

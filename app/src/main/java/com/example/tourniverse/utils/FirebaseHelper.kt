@@ -1,5 +1,6 @@
 package com.example.tourniverse.utils
 
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -53,7 +54,6 @@ object FirebaseHelper {
                     val ownedTournaments = snapshot.get("ownedTournaments") as? MutableList<String> ?: mutableListOf()
                     val viewedTournaments = snapshot.get("viewedTournaments") as? MutableList<String> ?: mutableListOf()
 
-                    // Add tournament ID to the lists
                     ownedTournaments.add(tournamentId)
                     viewedTournaments.add(tournamentId)
 
@@ -83,31 +83,51 @@ object FirebaseHelper {
 
         userRef.get()
             .addOnSuccessListener { document ->
+                // Fetch owned and viewed tournaments
                 val ownedTournaments = document["ownedTournaments"] as? List<String> ?: emptyList()
                 val viewedTournaments = document["viewedTournaments"] as? List<String> ?: emptyList()
 
                 val tournamentIds = ownedTournaments.union(viewedTournaments).toList()
 
                 if (tournamentIds.isEmpty()) {
+                    Log.d("FirestoreDebug", "No tournaments found for user $userId")
                     callback(emptyList())
                     return@addOnSuccessListener
                 }
 
-                db.collection(TOURNAMENTS_COLLECTION)
-                    .whereIn("id", tournamentIds)
-                    .get()
-                    .addOnSuccessListener { querySnapshot ->
-                        val tournaments = querySnapshot.documents.mapNotNull { it.data }
+                val tournaments = mutableListOf<Map<String, Any>>()
+                val tasks = tournamentIds.map { tournamentId ->
+                    db.collection(TOURNAMENTS_COLLECTION).document(tournamentId).get()
+                }
+
+                // Fetch all tournaments using Tasks.whenAllSuccess
+                com.google.android.gms.tasks.Tasks.whenAllSuccess<Any>(tasks)
+                    .addOnSuccessListener { results ->
+                        results.forEach { result ->
+                            val snapshot = result as? com.google.firebase.firestore.DocumentSnapshot
+                            if (snapshot != null && snapshot.exists()) {
+                                snapshot.data?.let { data ->
+                                    Log.d("FirestoreDebug", "Fetched tournament: ${snapshot.id} -> $data")
+                                    tournaments.add(data)
+                                }
+                            } else {
+                                Log.w("FirestoreDebug", "Tournament document not found: ${snapshot?.id}")
+                            }
+                        }
                         callback(tournaments)
                     }
-                    .addOnFailureListener {
-                        callback(emptyList()) // Return empty list on failure
+                    .addOnFailureListener { e ->
+                        Log.e("FirestoreDebug", "Error fetching tournaments: ${e.message}")
+                        callback(emptyList())
                     }
             }
-            .addOnFailureListener {
+            .addOnFailureListener { e ->
+                Log.e("FirestoreDebug", "Error fetching user document: ${e.message}")
                 callback(emptyList())
             }
     }
+
+
 
     /**
      * Adds a viewer to a specific tournament document.
@@ -171,4 +191,35 @@ object FirebaseHelper {
                 callback(false, e.message ?: "Failed to update field")
             }
     }
+
+    /**
+     * Ensures that a user document exists in Firestore, initializing it if needed.
+     *
+     * @param userId The ID of the user.
+     */
+    fun createUserDocumentIfNotExists(userId: String) {
+        val userRef = db.collection(USERS_COLLECTION).document(userId)
+
+        userRef.get().addOnSuccessListener { document ->
+            if (!document.exists()) {
+                val userData = hashMapOf(
+                    "username" to "",
+                    "bio" to "",
+                    "image" to null,
+                    "ownedTournaments" to mutableListOf<String>(),
+                    "viewedTournaments" to mutableListOf<String>()
+                )
+                userRef.set(userData)
+                    .addOnSuccessListener {
+                        println("User document created successfully")
+                    }
+                    .addOnFailureListener { e ->
+                        println("Failed to create user document: ${e.message}")
+                    }
+            }
+        }.addOnFailureListener { e ->
+            println("Failed to check user document: ${e.message}")
+        }
+    }
+
 }

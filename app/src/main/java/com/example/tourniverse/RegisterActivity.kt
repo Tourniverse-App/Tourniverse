@@ -9,8 +9,10 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.example.tourniverse.utils.FirebaseHelper
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.firestore.FirebaseFirestore
 
 class RegisterActivity : AppCompatActivity() {
 
@@ -61,6 +63,13 @@ class RegisterActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Registers a new user and adds them to Firestore's "users" collection.
+     *
+     * @param username The desired username for the user.
+     * @param email The user's email address.
+     * @param password The user's password.
+     */
     private fun registerUser(username: String, email: String, password: String) {
         progressDialog.show()
 
@@ -68,40 +77,46 @@ class RegisterActivity : AppCompatActivity() {
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    val userId = auth.currentUser?.uid
+                    val userId = auth.currentUser?.uid ?: return@addOnCompleteListener
+
+                    // Initialize user data for Firestore "users" collection
                     val userMap = hashMapOf(
                         "username" to username,
-                        "email" to email,
-                        "id" to userId,
-                        "bio" to "Hi there! It's ${username}!",
-                        "imageurl" to "default"
+                        "bio" to "", // Empty bio by default
+                        "image" to null, // Null image by default
+                        "ownedTournaments" to mutableListOf<String>(), // Empty list for owned tournaments
+                        "viewedTournaments" to mutableListOf<String>() // Empty list for viewed tournaments
                     )
 
-                    // Save user to Firebase Realtime Database
-                    userId?.let {
-                        databaseReference.child("Users").child(it).setValue(userMap)
-                            .addOnCompleteListener { dbTask ->
-                                if (dbTask.isSuccessful) {
-                                    progressDialog.dismiss()
-                                    Toast.makeText(this, "Registration successful!", Toast.LENGTH_SHORT).show()
+                    // Use set() to create or overwrite the user document
+                    FirebaseFirestore.getInstance()
+                        .collection("users")
+                        .document(userId)
+                        .set(userMap)
+                        .addOnCompleteListener { dbTask ->
+                            progressDialog.dismiss()
 
-                                    // Navigate to MainActivity
-                                    val intent = Intent(this, MainActivity::class.java)
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    startActivity(intent)
-                                    finish()
-                                } else {
-                                    progressDialog.dismiss()
-                                    Toast.makeText(this, "Failed to save user data: ${dbTask.exception?.message}", Toast.LENGTH_SHORT).show()
-                                }
+                            if (dbTask.isSuccessful) {
+                                Toast.makeText(this, "Registration successful!", Toast.LENGTH_SHORT).show()
+
+                                // Navigate to MainActivity
+                                val intent = Intent(this, MainActivity::class.java)
+                                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+                                startActivity(intent)
+                                finish()
+                            } else {
+                                Toast.makeText(this, "Failed to save user data: ${dbTask.exception?.message}", Toast.LENGTH_SHORT).show()
                             }
-                    }
+                        }
                 } else {
                     progressDialog.dismiss()
                     Toast.makeText(this, "Registration failed: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
                 }
             }
     }
+
+
+
 
     private fun createProgressDialog(): AlertDialog {
         val builder = AlertDialog.Builder(this)

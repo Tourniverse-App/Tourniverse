@@ -2,6 +2,7 @@ package com.example.tourniverse.adapters
 
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -30,12 +31,14 @@ class TournamentAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val tournament = filteredTournaments[position]
+        Log.d("AdapterDebug", "Binding Tournament: ${tournament.name}")
         holder.tournamentName.text = tournament.name
         holder.tournamentType.text = tournament.type
         holder.itemView.setOnClickListener {
             onTournamentClick(tournament)
         }
     }
+
 
     override fun getItemCount() = filteredTournaments.size
 
