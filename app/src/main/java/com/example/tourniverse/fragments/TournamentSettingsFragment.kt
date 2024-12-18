@@ -1,6 +1,7 @@
-package com.example.tournamentapp.ui.settings
+package com.example.tourniverse.fragments
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -27,7 +28,7 @@ class TournamentSettingsFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout
+        Log.d("TournamentSettings", "onCreateView: Inflating layout")
         return inflater.inflate(R.layout.fragment_tournament_settings, container, false)
     }
 
@@ -41,63 +42,94 @@ class TournamentSettingsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        Log.d("TournamentSettings", "onViewCreated: Starting setup")
         tournamentId = arguments?.getString("tournamentId") ?: run {
+            Log.e("TournamentSettings", "onViewCreated: Tournament ID is null")
             Toast.makeText(context, "Invalid tournament ID", Toast.LENGTH_SHORT).show()
             return
         }
+        Log.d("TournamentSettings", "onViewCreated: Tournament ID = $tournamentId")
 
-        // Initialize views and load settings
-        switchGameNotifications = view.findViewById(R.id.switch_game_notifications)
-        switchSocialNotifications = view.findViewById(R.id.switch_social_notifications)
-        buttonLeaveTournament = view.findViewById(R.id.button_leave_tournament)
+        try {
+            // Initialize views
+            switchGameNotifications = view.findViewById(R.id.switch_game_notifications)
+            switchSocialNotifications = view.findViewById(R.id.switch_social_notifications)
+            buttonLeaveTournament = view.findViewById(R.id.button_leave_tournament)
 
-        loadSettings()
+            Log.d("TournamentSettings", "onViewCreated: Views initialized")
 
-        // Listeners
-        switchGameNotifications.setOnCheckedChangeListener { _, isChecked ->
-            updateNotificationSetting("gameNotifications", isChecked)
-        }
+            loadSettings()
 
-        switchSocialNotifications.setOnCheckedChangeListener { _, isChecked ->
-            updateNotificationSetting("socialNotifications", isChecked)
-        }
+            // Listeners
+            switchGameNotifications.setOnCheckedChangeListener { _, isChecked ->
+                Log.d("TournamentSettings", "Game Notifications toggled: $isChecked")
+                updateNotificationSetting("gameNotifications", isChecked)
+            }
 
-        buttonLeaveTournament.setOnClickListener {
-            leaveTournament()
+            switchSocialNotifications.setOnCheckedChangeListener { _, isChecked ->
+                Log.d("TournamentSettings", "Social Notifications toggled: $isChecked")
+                updateNotificationSetting("socialNotifications", isChecked)
+            }
+
+            buttonLeaveTournament.setOnClickListener {
+                Log.d("TournamentSettings", "Leave Tournament button clicked")
+                leaveTournament()
+            }
+        } catch (e: Exception) {
+            Log.e("TournamentSettings", "onViewCreated: Exception occurred - ${e.message}", e)
+            Toast.makeText(context, "Error initializing settings: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
-
     private fun loadSettings() {
-        // Fetch existing settings from Firebase
+        Log.d("TournamentSettings", "loadSettings: Fetching settings for tournament: $tournamentId")
         db.collection("users").document(userId)
             .collection("tournamentSettings").document(tournamentId)
             .get()
             .addOnSuccessListener { document ->
+                Log.d("TournamentSettings", "loadSettings: Document fetched - exists = ${document.exists()}")
                 if (document.exists()) {
-                    switchGameNotifications.isChecked = document.getBoolean("gameNotifications") ?: false
-                    switchSocialNotifications.isChecked = document.getBoolean("socialNotifications") ?: false
+                    val gameNotifications = document.getBoolean("gameNotifications") ?: false
+                    val socialNotifications = document.getBoolean("socialNotifications") ?: false
+                    Log.d("TournamentSettings", "loadSettings: gameNotifications=$gameNotifications, socialNotifications=$socialNotifications")
+
+                    switchGameNotifications.isChecked = gameNotifications
+                    switchSocialNotifications.isChecked = socialNotifications
+                } else {
+                    Log.e("TournamentSettings", "loadSettings: No settings document found")
                 }
+            }
+            .addOnFailureListener { e ->
+                Log.e("TournamentSettings", "loadSettings: Failed to fetch settings - ${e.message}", e)
+                Toast.makeText(context, "Error loading settings: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }
 
     private fun updateNotificationSetting(field: String, value: Boolean) {
+        Log.d("TournamentSettings", "updateNotificationSetting: Updating $field to $value")
         db.collection("users").document(userId)
             .collection("tournamentSettings").document(tournamentId)
             .update(field, value)
+            .addOnSuccessListener {
+                Log.d("TournamentSettings", "updateNotificationSetting: Successfully updated $field to $value")
+            }
             .addOnFailureListener { e ->
+                Log.e("TournamentSettings", "updateNotificationSetting: Failed to update $field - ${e.message}", e)
                 Toast.makeText(context, "Failed to update: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }
 
     private fun leaveTournament() {
+        Log.d("TournamentSettings", "leaveTournament: Removing user from tournament: $tournamentId")
         db.collection("users").document(userId)
             .update("tournaments", FieldValue.arrayRemove(tournamentId))
             .addOnSuccessListener {
+                Log.d("TournamentSettings", "leaveTournament: Successfully left tournament")
                 Toast.makeText(context, "You have left the tournament.", Toast.LENGTH_SHORT).show()
-                activity?.finish() // Close fragment
+                activity?.finish()
             }
             .addOnFailureListener { e ->
+                Log.e("TournamentSettings", "leaveTournament: Failed to leave tournament - ${e.message}", e)
                 Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }

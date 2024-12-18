@@ -1,8 +1,9 @@
 package com.example.tourniverse.models
 
-// Data model for a match
 data class Match(
-    val homeTeam: String,
-    val awayTeam: String,
-    val score: String
+    val id: String = "",        // Unique ID for the match
+    val teamA: String = "",     // Team A name
+    val teamB: String = "",     // Team B name
+    val scoreA: Int = 0,        // Score for Team A
+    val scoreB: Int = 0         // Score for Team B
 )

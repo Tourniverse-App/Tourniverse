@@ -80,9 +80,14 @@ class TournamentDetailsFragment : Fragment() {
                 .get()
                 .addOnSuccessListener { document ->
                     if (document.exists()) {
-                        tvTournamentName.text = document.getString("name") ?: "No Name"
-                        tvTournamentType.text = "Type: ${document.getString("privacy") ?: "Private"}"
+                        val name = document.getString("name") ?: "Didn't Find name"
+                        val privacy = document.getString("privacy") ?: "Didn't Find privacy"
+                        val description = document.getString("description") ?: "Didn't Find description"
 
+                        tvTournamentName.text = name
+                        tvTournamentType.text = "Type: $privacy"
+
+                        // Hide or show format text dynamically
                         val format = document.getString("format")
                         if (!format.isNullOrEmpty()) {
                             tvTournamentFormat.text = "Format: $format"
@@ -91,22 +96,21 @@ class TournamentDetailsFragment : Fragment() {
                             tvTournamentFormat.visibility = View.GONE
                         }
 
-                        val description = document.getString("description")
-                        if (!description.isNullOrEmpty()) {
+                        // Handle description field
+                        if (description.isNotEmpty()) {
                             tvTournamentDescription.text = "Description: $description"
                             tvTournamentDescription.visibility = View.VISIBLE
                         } else {
                             tvTournamentDescription.visibility = View.GONE
                         }
                     } else {
-                        Log.e("TournamentDetails", "Document not found")
+                        Log.e("TournamentDetails", "Tournament document not found.")
                     }
                 }
                 .addOnFailureListener { e ->
-                    Log.e("TournamentDetails", "Error fetching data: ${e.message}")
+                    Log.e("TournamentDetails", "Error fetching tournament details: ${e.message}")
                 }
-        } ?: run {
-            Log.e("TournamentDetails", "Tournament ID is null")
-        }
+        } ?: Log.e("TournamentDetails", "Tournament ID is null")
     }
+
 }

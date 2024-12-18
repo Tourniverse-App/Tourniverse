@@ -13,12 +13,15 @@
         android:layout_height="wrap_content"
         android:text="@string/upcoming_matches"
         android:textStyle="bold"
-        android:textSize="18sp" />
+        android:textSize="18sp"
+        android:layout_marginBottom="8dp" />
 
     <!-- Matches List -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/matchesRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="16dp" />
+        android:layout_marginTop="8dp"
+        android:padding="8dp"
+        android:clipToPadding="false" />
 </LinearLayout>

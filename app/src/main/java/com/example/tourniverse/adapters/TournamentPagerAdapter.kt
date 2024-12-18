@@ -1,10 +1,10 @@
 package com.example.tourniverse.adapters
 
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
-import com.example.tournamentapp.ui.settings.TournamentSettingsFragment
 import com.example.tourniverse.fragments.*
 
 /**
@@ -22,16 +22,19 @@ class TournamentPagerAdapter(
     override fun getItemCount(): Int = 4
 
     override fun createFragment(position: Int): Fragment {
+        Log.d("TournamentPagerAdapter", "Creating fragment at position: $position with tournamentId: $tournamentId")
+
         return when (position) {
-            0 -> SocialFragment()
+            0 -> SocialFragment().apply {
+                arguments = Bundle().apply { putString("tournamentId", tournamentId) }
+            }
             1 -> StandingsFragment()
             2 -> StatisticsFragment()
             3 -> TournamentSettingsFragment().apply {
-                arguments = Bundle().apply {
-                    putString("tournamentId", tournamentId)
-                }
+                arguments = Bundle().apply { putString("tournamentId", tournamentId) }
             }
             else -> throw IllegalArgumentException("Invalid tab position: $position")
         }
     }
+
 }

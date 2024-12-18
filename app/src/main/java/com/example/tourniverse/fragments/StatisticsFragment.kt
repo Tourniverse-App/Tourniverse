@@ -4,17 +4,22 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tourniverse.R
 import com.example.tourniverse.adapters.StatisticsAdapter
 import com.example.tourniverse.models.TeamStatistics
+import com.google.firebase.firestore.FirebaseFirestore
 
 class StatisticsFragment : Fragment() {
 
     private lateinit var statisticsRecyclerView: RecyclerView
     private val teamStatistics = mutableListOf<TeamStatistics>()
+    private lateinit var adapter: StatisticsAdapter
+    private val db = FirebaseFirestore.getInstance()
+    private val teamStatsCollection = db.collection("tournaments").document("tournamentId").collection("teamStats")
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -24,16 +29,23 @@ class StatisticsFragment : Fragment() {
 
         statisticsRecyclerView = view.findViewById(R.id.statisticsRecyclerView)
         statisticsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
-
-        // Mock data for team statistics
-        teamStatistics.add(TeamStatistics("Team A", 2, 1, 5, 7))
-        teamStatistics.add(TeamStatistics("Team B", 1, 2, 3, 3))
-
-        val adapter = StatisticsAdapter(teamStatistics)
+        adapter = StatisticsAdapter(teamStatistics)
         statisticsRecyclerView.adapter = adapter
 
-        // TODO: Add logic to calculate statistics from standings
+        fetchTeamStatistics()
 
         return view
+    }
+
+    private fun fetchTeamStatistics() {
+        teamStatsCollection.get()
+            .addOnSuccessListener { snapshot ->
+                teamStatistics.clear()
+                teamStatistics.addAll(snapshot.toObjects(TeamStatistics::class.java))
+                adapter.notifyDataSetChanged()
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(requireContext(), "Failed to load statistics: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
     }
 }

@@ -163,5 +163,11 @@
         We\'re here to help with any issues, feedback, or suggestions you may have.
     </string>
     <string name="profile_picture" />
+    <string name="type_message" />
+    <string name="send_message" />
+    <string name="sender_name" />
+    <string name="message_content" />
+    <string name="timestamp" />
+    <string name="user_image" />
 
 </resources>

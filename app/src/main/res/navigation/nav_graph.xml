@@ -21,7 +21,11 @@
         <action
             android:id="@+id/action_addTournamentFragment_to_tournamentDetailsFragment"
             app:destination="@id/tournamentDetailsFragment" />
+        <action
+            android:id="@+id/action_addTournamentFragment_to_homeFragment"
+            app:destination="@id/nav_home" />
     </fragment>
+
 
     <!-- User Fragment -->
     <fragment

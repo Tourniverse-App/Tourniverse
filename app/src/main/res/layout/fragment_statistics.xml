@@ -13,12 +13,14 @@
         android:layout_height="wrap_content"
         android:text="@string/team_statistics"
         android:textStyle="bold"
-        android:textSize="18sp" />
+        android:textSize="18sp"
+        android:layout_marginBottom="8dp" />
 
-    <!-- Statistics Table -->
+    <!-- Statistics List -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/statisticsRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="16dp" />
+        android:clipToPadding="false"
+        android:padding="8dp" />
 </LinearLayout>

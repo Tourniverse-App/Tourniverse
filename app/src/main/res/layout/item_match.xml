@@ -4,38 +4,91 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="8dp"
-    android:background="@drawable/rounded_background"
-    android:layout_marginBottom="8dp">
+    android:padding="8dp">
 
-    <!-- Home Team -->
     <TextView
-        android:id="@+id/homeTeamTextView"
-        android:layout_width="0dp"
+        android:id="@+id/teamA"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_weight="3"
-        android:textStyle="bold"
-        android:textSize="16sp"
-        android:gravity="center_vertical" />
-
-    <!-- Score -->
-    <TextView
-        android:id="@+id/scoreTextView"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:text="Team A"
         android:layout_weight="1"
-        android:textStyle="bold"
-        android:textSize="16sp"
-        android:gravity="center"
-        android:layout_marginHorizontal="8dp" />
+        android:textSize="16sp" />
 
-    <!-- Away Team -->
-    <TextView
-        android:id="@+id/awayTeamTextView"
-        android:layout_width="0dp"
+    <EditText
+        android:id="@+id/scoreAInput"
+        android:layout_width="40dp"
         android:layout_height="wrap_content"
-        android:layout_weight="3"
-        android:textStyle="bold"
-        android:textSize="16sp"
-        android:gravity="center_vertical" />
+        android:hint="0"
+        android:inputType="number" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=":"
+        android:layout_marginHorizontal="4dp" />
+
+    <EditText
+        android:id="@+id/scoreBInput"
+        android:layout_width="40dp"
+        android:layout_height="wrap_content"
+        android:hint="0"
+        android:inputType="number" />
+
+    <TextView
+        android:id="@+id/teamB"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Team B"
+        android:layout_weight="1"
+        android:textSize="16sp" />
+
+    <Button
+        android:id="@+id/updateScoreButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Update" />
 </LinearLayout>
+
+
+
+    <!--<?xml version="1.0" encoding="utf-8"?>-->
+    <!--<LinearLayout-->
+    <!--    xmlns:android="http://schemas.android.com/apk/res/android"-->
+    <!--    android:layout_width="match_parent"-->
+    <!--    android:layout_height="wrap_content"-->
+    <!--    android:orientation="horizontal"-->
+    <!--    android:padding="8dp"-->
+    <!--    android:background="@drawable/rounded_background"-->
+    <!--    android:layout_marginBottom="8dp">-->
+
+    <!--    &lt;!&ndash; Home Team &ndash;&gt;-->
+    <!--    <TextView-->
+    <!--        android:id="@+id/homeTeamTextView"-->
+    <!--        android:layout_width="0dp"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        android:layout_weight="3"-->
+    <!--        android:textStyle="bold"-->
+    <!--        android:textSize="16sp"-->
+    <!--        android:gravity="center_vertical" />-->
+
+    <!--    &lt;!&ndash; Score &ndash;&gt;-->
+    <!--    <TextView-->
+    <!--        android:id="@+id/scoreTextView"-->
+    <!--        android:layout_width="0dp"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        android:layout_weight="1"-->
+    <!--        android:textStyle="bold"-->
+    <!--        android:textSize="16sp"-->
+    <!--        android:gravity="center"-->
+    <!--        android:layout_marginHorizontal="8dp" />-->
+
+    <!--    &lt;!&ndash; Away Team &ndash;&gt;-->
+    <!--    <TextView-->
+    <!--        android:id="@+id/awayTeamTextView"-->
+    <!--        android:layout_width="0dp"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        android:layout_weight="3"-->
+    <!--        android:textStyle="bold"-->
+    <!--        android:textSize="16sp"-->
+    <!--        android:gravity="center_vertical" />-->
+    <!--</LinearLayout>-->

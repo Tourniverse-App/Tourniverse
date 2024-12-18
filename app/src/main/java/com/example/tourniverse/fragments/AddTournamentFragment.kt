@@ -1,11 +1,9 @@
 package com.example.tourniverse.fragments
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.inputmethod.EditorInfo
 import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
@@ -24,6 +22,7 @@ class AddTournamentFragment : Fragment() {
     private lateinit var btnSubmitTournament: Button
 
     private var currentType: String = "Tables"
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -67,20 +66,14 @@ class AddTournamentFragment : Fragment() {
     }
 
     private fun setupNumberOfTeamsSpinner() {
-        val teamOptions = if (currentType == "Tables") {
-            (2..32).toList()
-        } else {
-            listOf(4, 8, 16, 32)
-        }
-
+        val teamOptions = if (currentType == "Tables") (2..32).toList() else listOf(4, 8, 16, 32)
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, teamOptions)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerNumTeams.adapter = adapter
 
         spinnerNumTeams.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                val numTeams = teamOptions[position]
-                showTeamNameFields(numTeams)
+                showTeamNameFields(teamOptions[position])
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {}
@@ -92,37 +85,29 @@ class AddTournamentFragment : Fragment() {
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, privacyOptions)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerPrivacy.adapter = adapter
-        spinnerPrivacy.setSelection(1) // Default to "Private"
+        spinnerPrivacy.setSelection(1)
     }
+
 
     private fun showTeamNameFields(numTeams: Int) {
         layoutTeamNames.removeAllViews()
         for (i in 1..numTeams) {
-            val editText = EditText(requireContext())
-            editText.hint = "Team $i"
-            editText.isSingleLine = true
-            editText.inputType = EditorInfo.TYPE_CLASS_TEXT
-            editText.imeOptions = EditorInfo.IME_ACTION_DONE
-
-            editText.layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
+            val editText = EditText(requireContext()).apply {
+                hint = "Team $i"
+                isSingleLine = true
+                inputType = android.view.inputmethod.EditorInfo.TYPE_CLASS_TEXT
+            }
             layoutTeamNames.addView(editText)
         }
     }
 
-    /**
-     * Validates user input, collects tournament details, and saves them to Firestore.
-     * Navigates to the TournamentDetailsFragment upon successful creation.
-     */
     private fun handleSubmit() {
         val tournamentName = etTournamentName.text.toString().trim()
         val description = etDescription.text.toString().trim()
         val privacy = spinnerPrivacy.selectedItem.toString()
 
-        if (tournamentName.isEmpty()) {
-            Toast.makeText(requireContext(), "Please enter the tournament name", Toast.LENGTH_SHORT).show()
+        if (tournamentName.isEmpty() || description.isEmpty()) {
+            Toast.makeText(requireContext(), "Please fill all fields", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -137,14 +122,7 @@ class AddTournamentFragment : Fragment() {
             teamNames.add(teamName)
         }
 
-        if (description.isEmpty()) {
-            Toast.makeText(requireContext(), "Please enter a description", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        val ownerId = currentUser?.uid ?: ""
-
+        val ownerId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
         if (ownerId.isEmpty()) {
             Toast.makeText(requireContext(), "User not authenticated", Toast.LENGTH_SHORT).show()
             return
@@ -157,18 +135,18 @@ class AddTournamentFragment : Fragment() {
             teamCount = teamNames.size,
             description = description,
             privacy = privacy,
-            teamNames = teamNames
+            teamNames = teamNames,
         ) { success, tournamentId ->
             if (success) {
-                Toast.makeText(requireContext(), "Tournament saved successfully!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Tournament created!", Toast.LENGTH_SHORT).show()
                 tournamentId?.let {
                     val bundle = Bundle().apply { putString("tournamentId", it) }
                     findNavController().navigate(R.id.action_addTournamentFragment_to_tournamentDetailsFragment, bundle)
                 }
             } else {
-                Toast.makeText(requireContext(), "Error saving tournament", Toast.LENGTH_SHORT).show()
-                btnSubmitTournament.isEnabled = true
+                Toast.makeText(requireContext(), "Error creating tournament", Toast.LENGTH_SHORT).show()
             }
+            btnSubmitTournament.isEnabled = true
         }
     }
 }
