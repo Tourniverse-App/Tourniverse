@@ -10,16 +10,17 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tourniverse.R
 import com.example.tourniverse.adapters.StatisticsAdapter
+import com.example.tourniverse.models.TeamStanding
 import com.example.tourniverse.models.TeamStatistics
 import com.google.firebase.firestore.FirebaseFirestore
 
 class StatisticsFragment : Fragment() {
 
     private lateinit var statisticsRecyclerView: RecyclerView
-    private val teamStatistics = mutableListOf<TeamStatistics>()
+    private val teamStatistics = mutableListOf<TeamStanding>()
     private lateinit var adapter: StatisticsAdapter
     private val db = FirebaseFirestore.getInstance()
-    private val teamStatsCollection = db.collection("tournaments").document("tournamentId").collection("teamStats")
+    private val teamStatsCollection = db.collection("tournaments").document("yourTournamentId").collection("standings")
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -27,6 +28,7 @@ class StatisticsFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_statistics, container, false)
 
+        // Initialize RecyclerView
         statisticsRecyclerView = view.findViewById(R.id.statisticsRecyclerView)
         statisticsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         adapter = StatisticsAdapter(teamStatistics)
@@ -41,11 +43,14 @@ class StatisticsFragment : Fragment() {
         teamStatsCollection.get()
             .addOnSuccessListener { snapshot ->
                 teamStatistics.clear()
-                teamStatistics.addAll(snapshot.toObjects(TeamStatistics::class.java))
+                for (document in snapshot.documents) {
+                    val teamStat = document.toObject(TeamStanding::class.java)
+                    teamStat?.let { teamStatistics.add(it) }
+                }
                 adapter.notifyDataSetChanged()
             }
             .addOnFailureListener { e ->
-                Toast.makeText(requireContext(), "Failed to load statistics: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Failed to load statistics: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }
 }

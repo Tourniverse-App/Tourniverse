@@ -28,8 +28,12 @@ class TournamentPagerAdapter(
             0 -> SocialFragment().apply {
                 arguments = Bundle().apply { putString("tournamentId", tournamentId) }
             }
-            1 -> StandingsFragment()
-            2 -> StatisticsFragment()
+            1 -> StandingsFragment().apply {
+                arguments = Bundle().apply { putString("tournamentId", tournamentId) }
+            }
+            2 -> StatisticsFragment().apply {
+                arguments = Bundle().apply { putString("tournamentId", tournamentId) }
+            }
             3 -> TournamentSettingsFragment().apply {
                 arguments = Bundle().apply { putString("tournamentId", tournamentId) }
             }

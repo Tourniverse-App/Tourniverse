@@ -14,6 +14,11 @@ import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import com.google.firebase.firestore.FirebaseFirestore
 
+/**
+ * A fragment that displays the details of a tournament.
+ * It fetches the tournament details from Firestore and updates the UI.
+ * It also sets up a ViewPager2 with a TabLayout for different sections of the tournament.
+ */
 class TournamentDetailsFragment : Fragment() {
 
     private var tournamentId: String? = null
@@ -23,6 +28,7 @@ class TournamentDetailsFragment : Fragment() {
     private lateinit var tvTournamentDescription: TextView
 
     private val db = FirebaseFirestore.getInstance()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,9 +86,9 @@ class TournamentDetailsFragment : Fragment() {
                 .get()
                 .addOnSuccessListener { document ->
                     if (document.exists()) {
-                        val name = document.getString("name") ?: "Didn't Find name"
-                        val privacy = document.getString("privacy") ?: "Didn't Find privacy"
-                        val description = document.getString("description") ?: "Didn't Find description"
+                        val name = document.getString("name") ?: ""
+                        val privacy = document.getString("privacy") ?: ""
+                        val description = document.getString("description") ?: ""
 
                         tvTournamentName.text = name
                         tvTournamentType.text = "Type: $privacy"
@@ -112,5 +118,4 @@ class TournamentDetailsFragment : Fragment() {
                 }
         } ?: Log.e("TournamentDetails", "Tournament ID is null")
     }
-
 }

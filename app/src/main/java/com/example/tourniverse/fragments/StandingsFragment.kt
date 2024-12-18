@@ -9,19 +9,22 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tourniverse.R
-import com.example.tourniverse.adapters.MatchAdapter
+import com.example.tourniverse.adapters.StandingsAdapter
 import com.example.tourniverse.models.Match
-import com.google.firebase.auth.FirebaseAuth
+import com.example.tourniverse.models.TeamStanding
 import com.google.firebase.firestore.FirebaseFirestore
 
 class StandingsFragment : Fragment() {
 
-    private lateinit var matchesRecyclerView: RecyclerView
-    private val matches = mutableListOf<Match>()
-    private lateinit var adapter: MatchAdapter
+    private lateinit var standingsRecyclerView: RecyclerView
+    private lateinit var fixturesRecyclerView: RecyclerView
+    private lateinit var standingsAdapter: StandingsAdapter
+    private lateinit var fixturesAdapter: StandingsAdapter
+
     private val db = FirebaseFirestore.getInstance()
-    private val matchesCollection = db.collection("tournaments").document("tournamentId").collection("scores")
-    private val currentUser = FirebaseAuth.getInstance().currentUser
+    private var tournamentId: String? = null
+    private val teamStandings = mutableListOf<TeamStanding>()
+    private val fixtures = mutableListOf<Match>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -29,44 +32,61 @@ class StandingsFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_standings, container, false)
 
-        matchesRecyclerView = view.findViewById(R.id.matchesRecyclerView)
-        matchesRecyclerView.layoutManager = LinearLayoutManager(requireContext())
-        adapter = MatchAdapter(matches, ::updateMatchScore)
-        matchesRecyclerView.adapter = adapter
+        // Initialize RecyclerViews
+        standingsRecyclerView = view.findViewById(R.id.recyclerViewStandings)
+        fixturesRecyclerView = view.findViewById(R.id.recyclerViewFixtures)
 
-        fetchMatches()
+        standingsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+        fixturesRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+
+        standingsAdapter = StandingsAdapter(teamStandings)
+        fixturesAdapter = StandingsAdapter(fixtures)
+
+        standingsRecyclerView.adapter = standingsAdapter
+        fixturesRecyclerView.adapter = fixturesAdapter
+
+        // Fetch tournamentId from arguments
+        tournamentId = arguments?.getString("tournamentId")
+        if (tournamentId.isNullOrEmpty()) {
+            Toast.makeText(context, "Tournament ID is missing.", Toast.LENGTH_SHORT).show()
+            return view
+        }
+
+        fetchStandings()
+        fetchFixtures()
 
         return view
     }
 
-    private fun fetchMatches() {
-        matchesCollection.get()
-            .addOnSuccessListener { snapshot ->
-                matches.clear()
-                matches.addAll(snapshot.toObjects(Match::class.java))
-                adapter.notifyDataSetChanged()
+    private fun fetchStandings() {
+        db.collection("tournaments").document(tournamentId!!)
+            .collection("standings").get()
+            .addOnSuccessListener { documents ->
+                teamStandings.clear()
+                for (document in documents) {
+                    val team = document.toObject(TeamStanding::class.java)
+                    teamStandings.add(team)
+                }
+                standingsAdapter.notifyDataSetChanged()
             }
             .addOnFailureListener { e ->
-                Toast.makeText(requireContext(), "Failed to load matches: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Failed to load standings: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }
 
-    private fun updateMatchScore(matchId: String, newScoreA: Int, newScoreB: Int) {
-        val ownerId = "ownerId" // Replace with actual owner ID retrieval logic
-
-        if (currentUser?.uid != ownerId) {
-            Toast.makeText(requireContext(), "Only the owner can update scores", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        matchesCollection.document(matchId)
-            .update(mapOf("scoreA" to newScoreA, "scoreB" to newScoreB))
-            .addOnSuccessListener {
-                Toast.makeText(requireContext(), "Score updated successfully", Toast.LENGTH_SHORT).show()
-                fetchMatches()
+    private fun fetchFixtures() {
+        db.collection("tournaments").document(tournamentId!!)
+            .collection("matches").get()
+            .addOnSuccessListener { documents ->
+                fixtures.clear()
+                for (document in documents) {
+                    val match = document.toObject(Match::class.java)
+                    fixtures.add(match)
+                }
+                fixturesAdapter.notifyDataSetChanged()
             }
             .addOnFailureListener { e ->
-                Toast.makeText(requireContext(), "Failed to update score: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Failed to load fixtures: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }
 }
