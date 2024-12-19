@@ -16,11 +16,22 @@
         android:textSize="18sp"
         android:layout_marginBottom="8dp" />
 
-    <!-- Statistics List -->
+    <!-- RecyclerView for Table Statistics -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/statisticsRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:visibility="gone"
         android:clipToPadding="false"
         android:padding="8dp" />
+
+    <!-- Layout for Knockout Bracket -->
+    <LinearLayout
+        android:id="@+id/knockoutLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        android:orientation="vertical"
+        android:padding="8dp">
+    </LinearLayout>
 </LinearLayout>

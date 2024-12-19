@@ -1,6 +1,8 @@
 package com.example.tourniverse.utils
 
 import android.util.Log
+import android.widget.Toast
+import androidx.core.content.ContentProviderCompat.requireContext
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -26,6 +28,7 @@ object FirebaseHelper {
         description: String,
         privacy: String,
         teamNames: List<String>,
+        format: String, // Added parameter to handle tournament format (Knockout or Tables)
         callback: (Boolean, String?) -> Unit
     ) {
         val currentUser = FirebaseAuth.getInstance().currentUser
@@ -47,7 +50,8 @@ object FirebaseHelper {
                     "teamNames" to teamNames,
                     "ownerId" to ownerId,
                     "viewers" to emptyList<String>(),
-                    "createdAt" to System.currentTimeMillis()
+                    "createdAt" to System.currentTimeMillis(),
+                    "format" to format // Save the tournament format in Firestore
                 )
 
                 val tournamentRef = db.collection(TOURNAMENTS_COLLECTION)
@@ -58,7 +62,7 @@ object FirebaseHelper {
                         Log.d("FirestoreDebug", "Tournament created with ID: $tournamentId")
 
                         // Initialize subcollections
-                        initializeSubcollections(tournamentId, teamNames) { success, error ->
+                        initializeSubcollections(tournamentId, teamNames, format) { success, error ->
                             if (success) {
                                 updateUserOwnedTournaments(ownerId, tournamentId) { userUpdateSuccess, userError ->
                                     if (userUpdateSuccess) {
@@ -87,6 +91,7 @@ object FirebaseHelper {
     }
 
 
+
     fun fetchTournamentIds(callback: (List<String>?, String?) -> Unit) {
         db.collection(TOURNAMENTS_COLLECTION)
             .get()
@@ -104,11 +109,17 @@ object FirebaseHelper {
 
 
     /**
-     * Initializes the subcollections for a new tournament.
+     * Initializes subcollections for a new tournament.
+     *
+     * @param tournamentId ID of the new tournament.
+     * @param teamNames List of team names participating in the tournament.
+     * @param format The format of the tournament (Knockout or Tables).
+     * @param callback Callback to indicate success (Boolean) and optional error message.
      */
     private fun initializeSubcollections(
         tournamentId: String,
         teamNames: List<String>,
+        format: String, // Added to handle format type
         callback: (Boolean, String?) -> Unit
     ) {
         val batch = db.batch()
@@ -135,19 +146,32 @@ object FirebaseHelper {
         )
         batch.set(scoresRef, placeholderScore)
 
-        // Initialize teamStats collection
-        val teamStatsRef = db.collection(TOURNAMENTS_COLLECTION).document(tournamentId).collection("teamStats")
-        teamNames.forEach { teamName ->
-            val teamId = teamStatsRef.document().id
-            val teamStats = hashMapOf(
-                "teamName" to teamName,
-                "wins" to 0,
-                "losses" to 0,
-                "goalsFor" to 0,
-                "goalsAgainst" to 0,
-                "points" to 0
-            )
-            batch.set(teamStatsRef.document(teamId), teamStats)
+        // Generate matches based on format
+        FirebaseHelper.generateMatches(tournamentId, teamNames, format) { success, error ->
+            if (success) {
+                Log.d("FirebaseHelper", "Matches initialized successfully for format: $format")
+            } else {
+                Log.e("FirebaseHelper", "Error initializing matches: $error")
+                callback(false, error ?: "Error initializing matches")
+                return@generateMatches
+            }
+        }
+
+        // Initialize standings for Tables format
+        if (format == "Tables") {
+            val standingsRef = db.collection(TOURNAMENTS_COLLECTION).document(tournamentId).collection("standings")
+            teamNames.forEach { teamName ->
+                val doc = standingsRef.document()
+                val teamStanding = hashMapOf(
+                    "teamName" to teamName,
+                    "points" to 0,
+                    "wins" to 0,
+                    "draws" to 0,
+                    "losses" to 0,
+                    "goals" to 0
+                )
+                batch.set(doc, teamStanding)
+            }
         }
 
         // Commit the batch
@@ -155,6 +179,124 @@ object FirebaseHelper {
             .addOnSuccessListener { callback(true, null) }
             .addOnFailureListener { e -> callback(false, e.message ?: "Failed to initialize subcollections") }
     }
+
+
+    fun generateMatches(
+        tournamentId: String,
+        teamNames: List<String>,
+        format: String,
+        callback: (Boolean, String?) -> Unit
+    ) {
+        val matches = mutableListOf<HashMap<String, Any>>()
+
+        if (format == "Tables") {
+            // Generate round-robin matches
+            for (i in teamNames.indices) {
+                for (j in i + 1 until teamNames.size) {
+                    matches.add(
+                        hashMapOf(
+                            "teamA" to teamNames[i],
+                            "teamB" to teamNames[j],
+                            "scoreA" to 0,
+                            "scoreB" to 0,
+                            "round" to 0 // No rounds in tables, but default to 0
+                        )
+                    )
+                }
+            }
+        } else if (format == "Knockout") {
+            // Generate initial knockout matches (first round only)
+            val firstRoundMatches = teamNames.chunked(2) // Pair teams into matches
+            firstRoundMatches.forEachIndexed { index, pair ->
+                if (pair.size == 2) {
+                    matches.add(
+                        hashMapOf(
+                            "teamA" to pair[0],
+                            "teamB" to pair[1],
+                            "scoreA" to 0,
+                            "scoreB" to 0,
+                            "round" to 1 // First round
+                        )
+                    )
+                }
+            }
+        }
+
+        // Save matches to Firestore
+        val matchesRef = db.collection(TOURNAMENTS_COLLECTION).document(tournamentId).collection("matches")
+        matchesRef.add(mapOf("matches" to matches))
+            .addOnSuccessListener {
+                callback(true, null)
+            }
+            .addOnFailureListener { e ->
+                callback(false, e.message ?: "Failed to generate matches")
+            }
+    }
+
+    fun progressKnockoutRound(
+        tournamentId: String,
+        callback: (Boolean, String?) -> Unit
+    ) {
+        val matchesRef = db.collection(TOURNAMENTS_COLLECTION).document(tournamentId).collection("matches")
+
+        // Fetch all matches in the current round
+        matchesRef.whereEqualTo("round", getCurrentRound(tournamentId)).get()
+            .addOnSuccessListener { snapshot ->
+                val nextRoundMatches = mutableListOf<HashMap<String, Any>>()
+                val winners = mutableListOf<String>()
+
+                snapshot.documents.forEach { doc ->
+                    val match = doc.data
+                    val teamA = match?.get("teamA") as? String
+                    val teamB = match?.get("teamB") as? String
+                    val scoreA = (match?.get("scoreA") as? Long)?.toInt() ?: 0
+                    val scoreB = (match?.get("scoreB") as? Long)?.toInt() ?: 0
+
+                    // Determine the winner
+                    if (scoreA > scoreB) {
+                        teamA?.let { winners.add(it) }
+                    } else if (scoreB > scoreA) {
+                        teamB?.let { winners.add(it) }
+                    }
+                }
+
+                // Pair winners for the next round
+                winners.chunked(2).forEach { pair ->
+                    if (pair.size == 2) {
+                        nextRoundMatches.add(
+                            hashMapOf(
+                                "teamA" to pair[0],
+                                "teamB" to pair[1],
+                                "scoreA" to 0,
+                                "scoreB" to 0,
+                                "round" to getCurrentRound(tournamentId) + 1 // Increment round
+                            )
+                        )
+                    }
+                }
+
+                // Save next round matches to Firestore
+                matchesRef.add(mapOf("matches" to nextRoundMatches))
+                    .addOnSuccessListener {
+                        callback(true, null)
+                    }
+                    .addOnFailureListener { e ->
+                        callback(false, e.message ?: "Failed to progress knockout round")
+                    }
+            }
+            .addOnFailureListener { e ->
+                callback(false, e.message ?: "Failed to fetch matches")
+            }
+    }
+
+    // Helper function to get the current round for the tournament
+    private fun getCurrentRound(tournamentId: String): Int {
+        // Fetch matches and determine the highest round
+        // This can be optimized with a Firestore field or a more efficient query
+        return 1 // Placeholder logic
+    }
+
+
 
     /**
      * Updates the user's ownedTournaments list.
@@ -219,6 +361,62 @@ object FirebaseHelper {
                 callback(emptyList())
             }
     }
+
+    /**
+     * Updates the standings subcollection after a match is completed.
+     */
+    fun updateStandings(
+        tournamentId: String,
+        teamA: String,
+        teamB: String,
+        scoreA: Int,
+        scoreB: Int,
+        callback: (Boolean, String?) -> Unit
+    ) {
+        val standingsRef = db.collection(TOURNAMENTS_COLLECTION).document(tournamentId).collection("standings")
+
+        db.runBatch { batch ->
+            // Update teamA's stats
+            val teamARef = standingsRef.whereEqualTo("teamName", teamA)
+            teamARef.get().addOnSuccessListener { teamADocs ->
+                val teamADoc = teamADocs.documents.firstOrNull()
+                teamADoc?.let {
+                    val points = if (scoreA > scoreB) 3 else if (scoreA == scoreB) 1 else 0
+                    val updates: Map<String, Any> = mapOf(
+                        "points" to (it.getLong("points") ?: 0L) + points,
+                        "goals" to (it.getLong("goals") ?: 0L) + scoreA,
+                        "wins" to if (scoreA > scoreB) (it.getLong("wins") ?: 0L) + 1 else it.getLong("wins") ?: 0L,
+                        "draws" to if (scoreA == scoreB) (it.getLong("draws") ?: 0L) + 1 else it.getLong("draws") ?: 0L,
+                        "losses" to if (scoreA < scoreB) (it.getLong("losses") ?: 0L) + 1 else it.getLong("losses") ?: 0L
+                    )
+                    batch.update(teamADoc.reference, updates)
+                }
+            }
+
+            // Update teamB's stats
+            val teamBRef = standingsRef.whereEqualTo("teamName", teamB)
+            teamBRef.get().addOnSuccessListener { teamBDocs ->
+                val teamBDoc = teamBDocs.documents.firstOrNull()
+                teamBDoc?.let {
+                    val points = if (scoreB > scoreA) 3 else if (scoreA == scoreB) 1 else 0
+                    val updates: Map<String, Any> = mapOf( // Changed to Map<String, Any>
+                        "points" to (it.getLong("points") ?: 0L) + points,
+                        "goals" to (it.getLong("goals") ?: 0L) + scoreB,
+                        "wins" to if (scoreB > scoreA) (it.getLong("wins") ?: 0L) + 1 else it.getLong("wins") ?: 0L,
+                        "draws" to if (scoreA == scoreB) (it.getLong("draws") ?: 0L) + 1 else it.getLong("draws") ?: 0L,
+                        "losses" to if (scoreB < scoreA) (it.getLong("losses") ?: 0L) + 1 else it.getLong("losses") ?: 0L
+                    )
+                    batch.update(teamBDoc.reference, updates)
+                }
+            }
+        }.addOnSuccessListener {
+            callback(true, null)
+        }.addOnFailureListener { e ->
+            callback(false, e.message ?: "Failed to update standings")
+        }
+    }
+
+
 
 //    fun getUserTournaments(callback: (List<Map<String, Any>>) -> Unit) {
 //        val currentUser = FirebaseAuth.getInstance().currentUser

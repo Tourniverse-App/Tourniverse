@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="8dp"
+    android:layout_marginBottom="8dp">
+
+    <!-- Team Name -->
+    <TextView
+        android:id="@+id/teamNameTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="3"
+        android:text="Team Name"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        android:gravity="center" />
+
+    <!-- Wins -->
+    <TextView
+        android:id="@+id/winsTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="W"
+        android:gravity="center"
+        android:textSize="14sp" />
+
+    <!-- Draws -->
+    <TextView
+        android:id="@+id/drawsTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="D"
+        android:gravity="center"
+        android:textSize="14sp" />
+
+    <!-- Losses -->
+    <TextView
+        android:id="@+id/lossesTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="L"
+        android:gravity="center"
+        android:textSize="14sp" />
+
+    <!-- Goals -->
+    <TextView
+        android:id="@+id/goalsTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="G"
+        android:gravity="center"
+        android:textSize="14sp" />
+
+    <!-- Points -->
+    <TextView
+        android:id="@+id/pointsTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="P"
+        android:gravity="center"
+        android:textSize="14sp" />
+</LinearLayout>

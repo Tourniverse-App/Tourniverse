@@ -5,5 +5,6 @@ data class TeamStanding(
     var points: Int = 0,
     var goals: Int = 0,
     var wins: Int = 0,
+    var draws: Int = 0,
     var losses: Int = 0
 )

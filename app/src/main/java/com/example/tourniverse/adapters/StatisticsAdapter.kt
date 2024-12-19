@@ -7,43 +7,63 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tourniverse.R
 import com.example.tourniverse.models.TeamStanding
+import com.example.tourniverse.models.Match
 
-class StatisticsAdapter(
-    private val teamStats: MutableList<TeamStanding>
-) : RecyclerView.Adapter<StatisticsAdapter.StatisticsViewHolder>() {
+class StatisticsAdapter (
+    private val items: List<Any>, // Can be TeamStanding for tables or Match for knockout
+    private val isKnockout: Boolean
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    // ViewHolder to represent each row in the RecyclerView
-    class StatisticsViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+    companion object {
+        private const val VIEW_TYPE_TABLE = 1
+        private const val VIEW_TYPE_KNOCKOUT = 2
+    }
+
+    // ViewHolder for Table statistics
+    class TableViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val teamNameTextView: TextView = view.findViewById(R.id.teamNameTextView)
         val winsTextView: TextView = view.findViewById(R.id.winsTextView)
+        val drawsTextView: TextView = view.findViewById(R.id.drawsTextView)
         val lossesTextView: TextView = view.findViewById(R.id.lossesTextView)
-        val fieldGoalsTextView: TextView = view.findViewById(R.id.fieldGoalsTextView)
+        val goalsTextView: TextView = view.findViewById(R.id.goalsTextView)
         val pointsTextView: TextView = view.findViewById(R.id.pointsTextView)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): StatisticsViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_statistics, parent, false)
-        return StatisticsViewHolder(view)
+    // ViewHolder for Knockout matches
+    class KnockoutViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val matchTextView: TextView = view.findViewById(R.id.matchTextView)
     }
 
-    override fun onBindViewHolder(holder: StatisticsViewHolder, position: Int) {
-        val teamStat = teamStats[position]
-
-        // Bind the data to the ViewHolder
-        holder.teamNameTextView.text = teamStat.teamName
-        holder.winsTextView.text = teamStat.wins.toString()
-        holder.lossesTextView.text = teamStat.losses.toString()
-        holder.fieldGoalsTextView.text = teamStat.goals.toString()
-        holder.pointsTextView.text = teamStat.points.toString()
+    override fun getItemViewType(position: Int): Int {
+        return if (isKnockout) VIEW_TYPE_KNOCKOUT else VIEW_TYPE_TABLE
     }
 
-    override fun getItemCount(): Int = teamStats.size
-
-    // Optional: Update data in the adapter
-    fun updateData(newStats: List<TeamStanding>) {
-        teamStats.clear()
-        teamStats.addAll(newStats)
-        notifyDataSetChanged()
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        return if (viewType == VIEW_TYPE_TABLE) {
+            val view = LayoutInflater.from(parent.context)
+                .inflate(R.layout.item_statistics_table, parent, false)
+            TableViewHolder(view)
+        } else {
+            val view = LayoutInflater.from(parent.context)
+                .inflate(R.layout.item_statistics_knockout, parent, false)
+            KnockoutViewHolder(view)
+        }
     }
+
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        if (holder is TableViewHolder && items[position] is TeamStanding) {
+            val teamStat = items[position] as TeamStanding
+            holder.teamNameTextView.text = teamStat.teamName
+            holder.winsTextView.text = teamStat.wins.toString()
+            holder.drawsTextView.text = teamStat.draws.toString()
+            holder.lossesTextView.text = teamStat.losses.toString()
+            holder.goalsTextView.text = teamStat.goals.toString()
+            holder.pointsTextView.text = teamStat.points.toString()
+        } else if (holder is KnockoutViewHolder && items[position] is Match) {
+            val match = items[position] as Match
+            holder.matchTextView.text = "${match.teamA} vs ${match.teamB} - Score: ${match.scoreA}:${match.scoreB}"
+        }
+    }
+
+    override fun getItemCount(): Int = items.size
 }

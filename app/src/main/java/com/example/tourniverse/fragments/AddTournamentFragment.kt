@@ -9,6 +9,7 @@ import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.tourniverse.R
+import com.example.tourniverse.utils.FirebaseHelper
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -102,6 +103,7 @@ class AddTournamentFragment : Fragment() {
         }
     }
 
+
     private fun handleSubmit() {
         val tournamentName = etTournamentName.text.toString().trim()
         val description = etDescription.text.toString().trim()
@@ -135,48 +137,101 @@ class AddTournamentFragment : Fragment() {
         btnSubmitTournament.isEnabled = false
         Log.d("AddTournamentFragment", "Submitting tournament: $tournamentName")
 
-        // Fetch existing tournaments to ensure unique operations or to debug issues
-        db.collection("tournaments")
-            .get()
-            .addOnSuccessListener { documents ->
-                for (document in documents) {
-                    Log.d("AddTournamentFragment", "Existing tournament ID: ${document.id}")
+        FirebaseHelper.addTournament(
+            name = tournamentName,
+            teamCount = teamNames.size,
+            description = description,
+            privacy = privacy,
+            teamNames = teamNames,
+            format = currentType, // Tables or Knockout
+            callback = { success, error ->
+                if (success) {
+                    Toast.makeText(requireContext(), "Tournament created successfully!", Toast.LENGTH_SHORT).show()
+                    findNavController().navigate(R.id.action_addTournamentFragment_to_homeFragment)
+                } else {
+                    Log.e("AddTournamentFragment", "Error creating tournament: $error")
+                    Toast.makeText(requireContext(), "Failed to create tournament: $error", Toast.LENGTH_SHORT).show()
+                    btnSubmitTournament.isEnabled = true
                 }
-
-                // Proceed with creating the new tournament
-                val tournamentData = hashMapOf(
-                    "name" to tournamentName,
-                    "description" to description,
-                    "privacy" to privacy,
-                    "teamCount" to teamNames.size,
-                    "ownerId" to ownerId,
-                    "teamNames" to teamNames,
-                    "createdAt" to System.currentTimeMillis(),
-                    "type" to currentType,
-                )
-
-                db.collection("tournaments").add(tournamentData)
-                    .addOnSuccessListener { documentReference ->
-                        val tournamentId = documentReference.id
-                        Log.d("AddTournamentFragment", "Tournament created with ID: $tournamentId")
-                        generateMatches(tournamentId, teamNames, currentType)
-                        updateUserOwnedTournaments(ownerId, tournamentId)
-                        Toast.makeText(requireContext(), "Tournament created!", Toast.LENGTH_SHORT).show()
-                        val bundle = Bundle().apply { putString("tournamentId", tournamentId) }
-                        findNavController().navigate(R.id.action_addTournamentFragment_to_tournamentDetailsFragment, bundle)
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("AddTournamentFragment", "Error creating tournament: ${e.message}")
-                        Toast.makeText(requireContext(), "Error creating tournament: ${e.message}", Toast.LENGTH_SHORT).show()
-                        btnSubmitTournament.isEnabled = true
-                    }
             }
-            .addOnFailureListener { e ->
-                Log.e("AddTournamentFragment", "Error fetching tournaments: ${e.message}")
-                Toast.makeText(requireContext(), "Error fetching tournaments: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
+        )
     }
 
+
+//    private fun handleSubmit() {
+//        val tournamentName = etTournamentName.text.toString().trim()
+//        val description = etDescription.text.toString().trim()
+//        val privacy = spinnerPrivacy.selectedItem.toString()
+//
+//        if (tournamentName.isEmpty() || description.isEmpty()) {
+//            Toast.makeText(requireContext(), "Please fill all fields", Toast.LENGTH_SHORT).show()
+//            Log.e("AddTournamentFragment", "Empty fields: Tournament name or description")
+//            return
+//        }
+//
+//        val teamNames = mutableListOf<String>()
+//        for (i in 0 until layoutTeamNames.childCount) {
+//            val teamField = layoutTeamNames.getChildAt(i) as EditText
+//            val teamName = teamField.text.toString().trim()
+//            if (teamName.isEmpty()) {
+//                Toast.makeText(requireContext(), "Please fill all the team names", Toast.LENGTH_SHORT).show()
+//                Log.e("AddTournamentFragment", "Empty team name at position $i")
+//                return
+//            }
+//            teamNames.add(teamName)
+//        }
+//
+//        val ownerId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+//        if (ownerId.isEmpty()) {
+//            Toast.makeText(requireContext(), "User not authenticated", Toast.LENGTH_SHORT).show()
+//            Log.e("AddTournamentFragment", "User not authenticated")
+//            return
+//        }
+//
+//        btnSubmitTournament.isEnabled = false
+//        Log.d("AddTournamentFragment", "Submitting tournament: $tournamentName")
+//
+//        // Fetch existing tournaments to ensure unique operations or to debug issues
+//        db.collection("tournaments")
+//            .get()
+//            .addOnSuccessListener { documents ->
+//                for (document in documents) {
+//                    Log.d("AddTournamentFragment", "Existing tournament ID: ${document.id}")
+//                }
+//
+//                // Proceed with creating the new tournament
+//                val tournamentData = hashMapOf(
+//                    "name" to tournamentName,
+//                    "description" to description,
+//                    "privacy" to privacy,
+//                    "teamCount" to teamNames.size,
+//                    "ownerId" to ownerId,
+//                    "teamNames" to teamNames,
+//                    "createdAt" to System.currentTimeMillis(),
+//                    "type" to currentType,
+//                )
+//
+//                db.collection("tournaments").add(tournamentData)
+//                    .addOnSuccessListener { documentReference ->
+//                        val tournamentId = documentReference.id
+//                        Log.d("AddTournamentFragment", "Tournament created with ID: $tournamentId")
+//                        generateMatches(tournamentId, teamNames, currentType)
+//                        updateUserOwnedTournaments(ownerId, tournamentId)
+//                        Toast.makeText(requireContext(), "Tournament created!", Toast.LENGTH_SHORT).show()
+//                        val bundle = Bundle().apply { putString("tournamentId", tournamentId) }
+//                        findNavController().navigate(R.id.action_addTournamentFragment_to_tournamentDetailsFragment, bundle)
+//                    }
+//                    .addOnFailureListener { e ->
+//                        Log.e("AddTournamentFragment", "Error creating tournament: ${e.message}")
+//                        Toast.makeText(requireContext(), "Error creating tournament: ${e.message}", Toast.LENGTH_SHORT).show()
+//                        btnSubmitTournament.isEnabled = true
+//                    }
+//            }
+//            .addOnFailureListener { e ->
+//                Log.e("AddTournamentFragment", "Error fetching tournaments: ${e.message}")
+//                Toast.makeText(requireContext(), "Error fetching tournaments: ${e.message}", Toast.LENGTH_SHORT).show()
+//            }
+//    }
 
     private fun updateUserOwnedTournaments(userId: String, tournamentId: String) {
         val userDocRef = db.collection("users").document(userId)
