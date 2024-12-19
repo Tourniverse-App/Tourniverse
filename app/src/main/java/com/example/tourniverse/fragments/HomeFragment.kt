@@ -15,10 +15,11 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.tourniverse.R
 import com.example.tourniverse.adapters.TournamentAdapter
 import com.example.tourniverse.models.Tournament
-import com.example.tourniverse.utils.FirebaseHelper
+import com.google.firebase.firestore.FirebaseFirestore
 
 class HomeFragment : Fragment() {
 
+    private lateinit var db: FirebaseFirestore
     private lateinit var adapter: TournamentAdapter
     private lateinit var recyclerView: RecyclerView
     private lateinit var noTournamentsView: TextView
@@ -29,6 +30,11 @@ class HomeFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_home, container, false)
+
+        Log.d("HomeFragment", "onCreateView called")
+
+        // Initialize Firestore
+        db = FirebaseFirestore.getInstance()
 
         // Initialize views
         recyclerView = view.findViewById(R.id.recyclerTournaments)
@@ -49,45 +55,79 @@ class HomeFragment : Fragment() {
         return view
     }
 
-
     /**
-     * Fetches both owned and viewed tournaments for the current user.
-     * Populates the RecyclerView with all tournaments when the app starts.
+     * Fetches tournaments from Firestore and populates the RecyclerView.
      */
     private fun fetchUserTournaments() {
-        FirebaseHelper.getUserTournaments(includeViewed = true) { result ->
-            recyclerView.visibility = View.VISIBLE
-            noTournamentsView.visibility = View.GONE
+        Log.d("HomeFragment", "Fetching tournaments from Firestore")
 
-            tournaments.clear()
-            result.forEach { data ->
-                val name = data["name"] as? String ?: "Unknown"
-                val privacy = data["privacy"] as? String ?: "Private"
-                val description = data["description"] as? String ?: ""
-                val teamNames = data["teamNames"] as? List<String> ?: emptyList()
-                val ownerId = data["ownerId"] as? String ?: "Unknown"
-                val viewers = data["viewers"] as? List<String> ?: emptyList()
+        db.collection("tournaments")
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                tournaments.clear()
+                if (querySnapshot.isEmpty) {
+                    Log.d("HomeFragment", "No tournaments found")
+                    recyclerView.visibility = View.GONE
+                    noTournamentsView.visibility = View.VISIBLE
+                    Toast.makeText(requireContext(), "No tournaments found.", Toast.LENGTH_SHORT).show()
+                    return@addOnSuccessListener
+                }
 
-                val tournament = Tournament(
-                    name = name,
-                    type = privacy,
-                    description = description,
-                    teamNames = teamNames,
-                    owner = ownerId,
-                    viewers = viewers
-                )
-                tournaments.add(tournament)
+                for (document in querySnapshot.documents) {
+                    val id = document.id
+                    if (id.isNullOrEmpty()) {
+                        Log.e("HomeFragment", "Missing tournament ID")
+                        continue
+                    }
+
+                    val name = document.getString("name") ?: "Unknown"
+                    val privacy = document.getString("privacy") ?: "Private"
+                    val description = document.getString("description") ?: ""
+                    val teamNames = try {
+                        document.get("teamNames") as? List<String> ?: emptyList()
+                    } catch (e: Exception) {
+                        Log.e("HomeFragment", "Error casting teamNames: ${e.message}")
+                        emptyList<String>()
+                    }
+                    val ownerId = document.getString("ownerId") ?: "Unknown"
+
+                    tournaments.add(
+                        Tournament(
+                            id = id,
+                            name = name,
+                            type = privacy,
+                            description = description,
+                            teamNames = teamNames,
+                            owner = ownerId,
+                            viewers = emptyList() // Adjust as needed
+                        )
+                    )
+                }
+
+                Log.d("HomeFragment", "Fetched ${tournaments.size} tournaments")
+                recyclerView.visibility = View.VISIBLE
+                noTournamentsView.visibility = View.GONE
+                adapter.filter("")
+                adapter.notifyDataSetChanged()
+                Toast.makeText(requireContext(), "${tournaments.size} tournaments loaded.", Toast.LENGTH_SHORT).show()
             }
-
-            adapter.filter("") // Show all tournaments initially
-            adapter.notifyDataSetChanged()
-        }
+            .addOnFailureListener { e ->
+                Log.e("HomeFragment", "Error fetching tournaments: ${e.message}")
+                recyclerView.visibility = View.GONE
+                noTournamentsView.visibility = View.VISIBLE
+                Toast.makeText(requireContext(), "Failed to load tournaments.", Toast.LENGTH_SHORT).show()
+            }
     }
 
-
-
+    /**
+     * Navigates to tournament details when a tournament is clicked.
+     */
     private fun navigateToTournamentDetails(tournament: Tournament) {
+        Log.d("HomeFragment", "Navigating to tournament details for ID: ${tournament.id}")
+        Toast.makeText(requireContext(), "Opening tournament: ${tournament.name}", Toast.LENGTH_SHORT).show()
+
         val bundle = Bundle().apply {
+            putString("tournamentId", tournament.id) // Pass the tournamentId
             putString("tournamentName", tournament.name)
             putString("tournamentType", tournament.type)
             putString("tournamentFormat", tournament.format) // Pass the format
@@ -95,5 +135,4 @@ class HomeFragment : Fragment() {
         }
         findNavController().navigate(R.id.action_homeFragment_to_tournamentDetailsFragment, bundle)
     }
-
 }

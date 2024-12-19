@@ -1,6 +1,7 @@
 package com.example.tourniverse.models
 
 data class Tournament(
+    val id: String,
     val name: String,
     val type: String,
     val format: String? = null,          // Format of the tournament

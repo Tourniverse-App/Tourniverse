@@ -58,7 +58,7 @@ class TournamentSettingsFragment : Fragment() {
 
             Log.d("TournamentSettings", "onViewCreated: Views initialized")
 
-            loadSettings()
+            loadSettings(userId, tournamentId)
 
             // Listeners
             switchGameNotifications.setOnCheckedChangeListener { _, isChecked ->
@@ -81,29 +81,31 @@ class TournamentSettingsFragment : Fragment() {
         }
     }
 
-    private fun loadSettings() {
-        Log.d("TournamentSettings", "loadSettings: Fetching settings for tournament: $tournamentId")
-        db.collection("users").document(userId)
-            .collection("tournamentSettings").document(tournamentId)
-            .get()
-            .addOnSuccessListener { document ->
-                Log.d("TournamentSettings", "loadSettings: Document fetched - exists = ${document.exists()}")
-                if (document.exists()) {
-                    val gameNotifications = document.getBoolean("gameNotifications") ?: false
-                    val socialNotifications = document.getBoolean("socialNotifications") ?: false
-                    Log.d("TournamentSettings", "loadSettings: gameNotifications=$gameNotifications, socialNotifications=$socialNotifications")
+    private fun loadSettings(userId: String, tournamentId: String) {
+        try {
+            val settingsRef = db.collection("users")
+                .document(userId)
+                .collection("tournamentSettings")
+                .document(tournamentId) // Ensure a valid document path with even segments
 
-                    switchGameNotifications.isChecked = gameNotifications
-                    switchSocialNotifications.isChecked = socialNotifications
-                } else {
-                    Log.e("TournamentSettings", "loadSettings: No settings document found")
+            settingsRef.get()
+                .addOnSuccessListener { documentSnapshot ->
+                    if (documentSnapshot.exists()) {
+                        // Handle the settings data
+                        val settings = documentSnapshot.data
+                        Log.d("TournamentSettings", "Settings loaded: $settings")
+                    } else {
+                        Log.e("TournamentSettings", "Settings not found for tournamentId: $tournamentId")
+                    }
                 }
-            }
-            .addOnFailureListener { e ->
-                Log.e("TournamentSettings", "loadSettings: Failed to fetch settings - ${e.message}", e)
-                Toast.makeText(context, "Error loading settings: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
+                .addOnFailureListener { e ->
+                    Log.e("TournamentSettings", "Error fetching settings: ${e.message}")
+                }
+        } catch (e: Exception) {
+            Log.e("TournamentSettings", "Invalid document reference: ${e.message}")
+        }
     }
+
 
     private fun updateNotificationSetting(field: String, value: Boolean) {
         Log.d("TournamentSettings", "updateNotificationSetting: Updating $field to $value")

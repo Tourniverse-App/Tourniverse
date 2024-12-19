@@ -11,7 +11,7 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
+//import com.bumptech.glide.Glide
 import com.example.tourniverse.R
 import com.example.tourniverse.adapters.TournamentAdapter
 import com.example.tourniverse.models.Tournament
@@ -73,15 +73,15 @@ class UserFragment : Fragment() {
                 userNameTextView.text = userName
                 userBioTextView.text = userBio
 
-                if (!profileImageUrl.isNullOrEmpty()) {
-                    Glide.with(this)
-                        .load(profileImageUrl)
-                        .placeholder(R.drawable.ic_user)
-                        .error(R.drawable.ic_user)
-                        .into(profileImageView)
-                } else {
-                    profileImageView.setImageResource(R.drawable.ic_user)
-                }
+//                if (!profileImageUrl.isNullOrEmpty()) {
+//                    Glide.with(this)
+//                        .load(profileImageUrl)
+//                        .placeholder(R.drawable.ic_user)
+//                        .error(R.drawable.ic_user)
+//                        .into(profileImageView)
+//                } else {
+//                    profileImageView.setImageResource(R.drawable.ic_user)
+//                }
             }
         }
     }
@@ -104,6 +104,7 @@ class UserFragment : Fragment() {
                     val viewers = data["viewers"] as? List<String> ?: emptyList()
 
                     val tournament = Tournament(
+                        id = id.toString(),
                         name = name,
                         type = privacy,
                         description = description,

@@ -1,6 +1,7 @@
 package com.example.tourniverse.fragments
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -32,6 +33,8 @@ class StandingsFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_standings, container, false)
 
+        Log.d("StandingsFragment", "onCreateView called")
+
         // Initialize RecyclerViews
         standingsRecyclerView = view.findViewById(R.id.recyclerViewStandings)
         fixturesRecyclerView = view.findViewById(R.id.recyclerViewFixtures)
@@ -45,9 +48,14 @@ class StandingsFragment : Fragment() {
         standingsRecyclerView.adapter = standingsAdapter
         fixturesRecyclerView.adapter = fixturesAdapter
 
+        Log.d("StandingsFragment", "RecyclerViews and adapters initialized")
+
         // Fetch tournamentId from arguments
         tournamentId = arguments?.getString("tournamentId")
+        Log.d("StandingsFragment", "Tournament ID from arguments: $tournamentId")
+
         if (tournamentId.isNullOrEmpty()) {
+            Log.e("StandingsFragment", "Tournament ID is missing")
             Toast.makeText(context, "Tournament ID is missing.", Toast.LENGTH_SHORT).show()
             return view
         }
@@ -59,34 +67,51 @@ class StandingsFragment : Fragment() {
     }
 
     private fun fetchStandings() {
-        db.collection("tournaments").document(tournamentId!!)
-            .collection("standings").get()
-            .addOnSuccessListener { documents ->
-                teamStandings.clear()
-                for (document in documents) {
-                    val team = document.toObject(TeamStanding::class.java)
-                    teamStandings.add(team)
+        Log.d("StandingsFragment", "Fetching standings for Tournament ID: $tournamentId")
+
+        tournamentId?.let { id ->
+            db.collection("tournaments").document(id)
+                .collection("standings").get()
+                .addOnSuccessListener { documents ->
+                    teamStandings.clear()
+                    for (document in documents) {
+                        val team = document.toObject(TeamStanding::class.java)
+                        teamStandings.add(team)
+                    }
+                    Log.d("StandingsFragment", "Standings fetched: ${teamStandings.size} items")
+                    standingsAdapter.notifyDataSetChanged()
                 }
-                standingsAdapter.notifyDataSetChanged()
-            }
-            .addOnFailureListener { e ->
-                Toast.makeText(context, "Failed to load standings: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
+                .addOnFailureListener { e ->
+                    Log.e("StandingsFragment", "Failed to load standings: ${e.message}")
+                    Toast.makeText(context, "Failed to load standings: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+        } ?: showTournamentIdError()
     }
 
     private fun fetchFixtures() {
-        db.collection("tournaments").document(tournamentId!!)
-            .collection("matches").get()
-            .addOnSuccessListener { documents ->
-                fixtures.clear()
-                for (document in documents) {
-                    val match = document.toObject(Match::class.java)
-                    fixtures.add(match)
+        Log.d("StandingsFragment", "Fetching fixtures for Tournament ID: $tournamentId")
+
+        tournamentId?.let { id ->
+            db.collection("tournaments").document(id)
+                .collection("matches").get()
+                .addOnSuccessListener { documents ->
+                    fixtures.clear()
+                    for (document in documents) {
+                        val match = document.toObject(Match::class.java)
+                        fixtures.add(match)
+                    }
+                    Log.d("StandingsFragment", "Fixtures fetched: ${fixtures.size} items")
+                    fixturesAdapter.notifyDataSetChanged()
                 }
-                fixturesAdapter.notifyDataSetChanged()
-            }
-            .addOnFailureListener { e ->
-                Toast.makeText(context, "Failed to load fixtures: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
+                .addOnFailureListener { e ->
+                    Log.e("StandingsFragment", "Failed to load fixtures: ${e.message}")
+                    Toast.makeText(context, "Failed to load fixtures: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+        } ?: showTournamentIdError()
+    }
+
+    private fun showTournamentIdError() {
+        Log.e("StandingsFragment", "Invalid or missing tournament ID")
+        Toast.makeText(context, "Invalid or missing tournament ID.", Toast.LENGTH_SHORT).show()
     }
 }

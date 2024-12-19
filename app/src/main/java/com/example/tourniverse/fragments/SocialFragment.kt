@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -34,20 +35,34 @@ class SocialFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_social, container, false)
 
+        // Log at the start of onCreateView
+        Log.d("SocialFragment", "onCreateView called")
+
         // Retrieve tournamentId from arguments
         tournamentId = arguments?.getString("tournamentId")
-        if (!tournamentId.isNullOrEmpty()) {
-            Log.d("SocialFragment", "Tournament ID: $tournamentId")
-            chatCollection = db.collection("tournaments")
-                .document(tournamentId!!)
-                .collection("chat")
-                .orderBy("createdAt", Query.Direction.ASCENDING)
+        Log.d("SocialFragment", "Tournament ID from arguments: $tournamentId")
+
+        if (tournamentId.isNullOrEmpty()) {
+            Log.e("SocialFragment", "Tournament ID is missing. Cannot proceed.")
+            db.collection("tournaments")
+                .get()
+                .addOnSuccessListener { documents ->
+                    for (document in documents) {
+                        tournamentId = document.id
+                        Log.d("SocialFragment", "Fetched fallback Tournament ID: $tournamentId")
+                        setupChatCollection()
+                        fetchMessages()
+                        break
+                    }
+                }
+                .addOnFailureListener { e ->
+                    Log.e("SocialFragment", "Error fetching tournaments for fallback ID: ${e.message}")
+                    setupDefaultChatCollection()
+                    fetchMessages()
+                }
         } else {
-            Log.e("SocialFragment", "Tournament ID is null or empty. Defaulting to fallback chat.")
-            chatCollection = db.collection("tournaments")
-                .document("default")
-                .collection("chat")
-                .orderBy("createdAt", Query.Direction.ASCENDING)
+            setupChatCollection()
+            fetchMessages()
         }
 
         // Initialize views
@@ -60,6 +75,9 @@ class SocialFragment : Fragment() {
         adapter = ChatAdapter(chatMessages)
         chatRecyclerView.adapter = adapter
 
+        // Log RecyclerView initialization
+        Log.d("SocialFragment", "RecyclerView and adapter initialized")
+
         // Send button logic
         sendIcon.setOnClickListener {
             val messageContent = messageInput.text.toString().trim()
@@ -69,15 +87,45 @@ class SocialFragment : Fragment() {
             }
         }
 
-        // Fetch messages if collection is valid
-        fetchMessages()
-
         return view
+    }
+
+    private fun setupChatCollection() {
+        if (!tournamentId.isNullOrEmpty()) {
+            try {
+                chatCollection = db.collection("tournaments")
+                    .document(tournamentId!!)
+                    .collection("chat")
+                    .orderBy("createdAt", Query.Direction.ASCENDING)
+                Log.d("SocialFragment", "Chat collection set up for Tournament ID: $tournamentId")
+            } catch (e: Exception) {
+                Log.e("SocialFragment", "Error setting up chat collection: ${e.message}")
+                setupDefaultChatCollection()
+            }
+        } else {
+            Log.e("SocialFragment", "Tournament ID is null or empty. Setting up default chat collection.")
+            setupDefaultChatCollection()
+        }
+    }
+
+
+    private fun setupDefaultChatCollection() {
+        chatCollection = db.collection("tournaments")
+            .document("default")
+            .collection("chat")
+            .orderBy("createdAt", Query.Direction.ASCENDING)
+        Log.d("SocialFragment", "Using default chat collection")
     }
 
     private fun sendMessage(content: String) {
         val currentUser = FirebaseAuth.getInstance().currentUser
         val userId = currentUser?.uid ?: "Unknown"
+
+        if (tournamentId.isNullOrEmpty()) {
+            Log.e("SocialFragment", "Cannot send message. Tournament ID is null or empty.")
+            Toast.makeText(context, "Cannot send message without a valid tournament ID.", Toast.LENGTH_SHORT).show()
+            return
+        }
 
         db.collection("users").document(userId).get()
             .addOnSuccessListener { userSnapshot ->
@@ -90,7 +138,7 @@ class SocialFragment : Fragment() {
                 )
 
                 db.collection("tournaments")
-                    .document(tournamentId ?: "default")
+                    .document(tournamentId!!)
                     .collection("chat")
                     .add(message)
                     .addOnSuccessListener {
@@ -104,6 +152,8 @@ class SocialFragment : Fragment() {
                 Log.e("SocialFragment", "Error fetching username for userId: $userId, ${e.message}")
             }
     }
+
+
 
     private fun fetchMessages() {
         chatCollection.addSnapshotListener { snapshot, e ->

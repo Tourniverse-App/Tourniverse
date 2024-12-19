@@ -57,6 +57,7 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.2.1")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.preference:preference:1.2.1")
+    implementation("androidx.coordinatorlayout:coordinatorlayout:1.2.0")
 
     // Navigation Component
     implementation("androidx.navigation:navigation-runtime-ktx:2.8.4")

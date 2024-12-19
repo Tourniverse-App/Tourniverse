@@ -135,33 +135,48 @@ class AddTournamentFragment : Fragment() {
         btnSubmitTournament.isEnabled = false
         Log.d("AddTournamentFragment", "Submitting tournament: $tournamentName")
 
-        val tournamentData = hashMapOf(
-            "name" to tournamentName,
-            "description" to description,
-            "privacy" to privacy,
-            "teamCount" to teamNames.size,
-            "ownerId" to ownerId,
-            "teamNames" to teamNames,
-            "createdAt" to System.currentTimeMillis(),
-            "type" to currentType
-        )
+        // Fetch existing tournaments to ensure unique operations or to debug issues
+        db.collection("tournaments")
+            .get()
+            .addOnSuccessListener { documents ->
+                for (document in documents) {
+                    Log.d("AddTournamentFragment", "Existing tournament ID: ${document.id}")
+                }
 
-        db.collection("tournaments").add(tournamentData)
-            .addOnSuccessListener { documentReference ->
-                val tournamentId = documentReference.id
-                Log.d("AddTournamentFragment", "Tournament created with ID: $tournamentId")
-                generateMatches(tournamentId, teamNames, currentType)
-                updateUserOwnedTournaments(ownerId, tournamentId)
-                Toast.makeText(requireContext(), "Tournament created!", Toast.LENGTH_SHORT).show()
-                val bundle = Bundle().apply { putString("tournamentId", tournamentId) }
-                findNavController().navigate(R.id.action_addTournamentFragment_to_tournamentDetailsFragment, bundle)
+                // Proceed with creating the new tournament
+                val tournamentData = hashMapOf(
+                    "name" to tournamentName,
+                    "description" to description,
+                    "privacy" to privacy,
+                    "teamCount" to teamNames.size,
+                    "ownerId" to ownerId,
+                    "teamNames" to teamNames,
+                    "createdAt" to System.currentTimeMillis(),
+                    "type" to currentType,
+                )
+
+                db.collection("tournaments").add(tournamentData)
+                    .addOnSuccessListener { documentReference ->
+                        val tournamentId = documentReference.id
+                        Log.d("AddTournamentFragment", "Tournament created with ID: $tournamentId")
+                        generateMatches(tournamentId, teamNames, currentType)
+                        updateUserOwnedTournaments(ownerId, tournamentId)
+                        Toast.makeText(requireContext(), "Tournament created!", Toast.LENGTH_SHORT).show()
+                        val bundle = Bundle().apply { putString("tournamentId", tournamentId) }
+                        findNavController().navigate(R.id.action_addTournamentFragment_to_tournamentDetailsFragment, bundle)
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("AddTournamentFragment", "Error creating tournament: ${e.message}")
+                        Toast.makeText(requireContext(), "Error creating tournament: ${e.message}", Toast.LENGTH_SHORT).show()
+                        btnSubmitTournament.isEnabled = true
+                    }
             }
             .addOnFailureListener { e ->
-                Log.e("AddTournamentFragment", "Error creating tournament: ${e.message}")
-                Toast.makeText(requireContext(), "Error creating tournament: ${e.message}", Toast.LENGTH_SHORT).show()
-                btnSubmitTournament.isEnabled = true
+                Log.e("AddTournamentFragment", "Error fetching tournaments: ${e.message}")
+                Toast.makeText(requireContext(), "Error fetching tournaments: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }
+
 
     private fun updateUserOwnedTournaments(userId: String, tournamentId: String) {
         val userDocRef = db.collection("users").document(userId)

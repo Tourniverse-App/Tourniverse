@@ -4,20 +4,21 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.ActionCodeSettings
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
-import androidx.navigation.NavController
-
 
 class MainActivity : AppCompatActivity() {
 
     private val TAG = "MainActivity"
 
     private lateinit var navController: NavController
+    private var globalTournamentId: String? = null // Global variable to store tournament ID
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,7 +30,10 @@ class MainActivity : AppCompatActivity() {
         // Attach navigation controller to BottomNavigationView
         bottomNavView.setupWithNavController(navController)
 
-        // Fix for handling reselection and proper backstack clearing
+        // Fetch global tournament ID
+        fetchGlobalTournamentId()
+
+        // Handle reselection and proper backstack clearing
         bottomNavView.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_home -> {
@@ -54,7 +58,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Custom navigation handler to clear back stack and reset state.
+     * Handles navigation to the specified destination, passing the tournament ID as arguments.
      *
      * @param destinationId The fragment to navigate to.
      */
@@ -64,8 +68,39 @@ class MainActivity : AppCompatActivity() {
             // Pop back to the selected fragment to reset its state
             navController.popBackStack(destinationId, true)
         }
-        // Navigate to the selected fragment
-        navController.navigate(destinationId)
+
+        val bundle = Bundle().apply {
+            globalTournamentId?.let {
+                putString("tournamentId", it) // Pass the global tournament ID
+            }
+        }
+
+        // Navigate to the selected fragment with arguments
+        try {
+            navController.navigate(destinationId, bundle)
+        } catch (e: Exception) {
+            Log.e(TAG, "Navigation error: ${e.message}")
+        }
+    }
+
+    /**
+     * Fetches the global tournament ID from Firestore.
+     */
+    private fun fetchGlobalTournamentId() {
+        FirebaseFirestore.getInstance().collection("tournaments")
+            .get()
+            .addOnSuccessListener { documents ->
+                if (!documents.isEmpty) {
+                    globalTournamentId = documents.documents.first().id
+                    Log.d(TAG, "Global Tournament ID fetched: $globalTournamentId")
+                } else {
+                    Log.e(TAG, "No tournaments found.")
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Failed to fetch global tournament ID: ${e.message}")
+                Toast.makeText(this, "Unable to fetch tournament information. Please try again later.", Toast.LENGTH_LONG).show()
+            }
     }
 
 

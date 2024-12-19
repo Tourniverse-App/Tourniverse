@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.widget.ViewPager2
 import com.example.tourniverse.R
@@ -29,13 +30,14 @@ class TournamentDetailsFragment : Fragment() {
 
     private val db = FirebaseFirestore.getInstance()
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         // Get tournamentId from arguments
-        arguments?.let {
-            tournamentId = it.getString("tournamentId")
+        tournamentId = arguments?.getString("tournamentId")
+        if (tournamentId.isNullOrEmpty()) {
+            Log.e("TournamentDetails", "Tournament ID is null or empty.")
+            Toast.makeText(requireContext(), "Invalid tournament ID.", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -51,8 +53,10 @@ class TournamentDetailsFragment : Fragment() {
         tvTournamentFormat = view.findViewById(R.id.tvTournamentFormat)
         tvTournamentDescription = view.findViewById(R.id.tvTournamentDescription)
 
-        // Fetch tournament details
-        fetchTournamentDetails()
+        // Fetch tournament details if tournamentId is valid
+        if (!tournamentId.isNullOrEmpty()) {
+            fetchTournamentDetails()
+        }
 
         // Setup TabLayout and ViewPager2
         val tabLayout = view.findViewById<TabLayout>(R.id.tabLayout)
@@ -86,14 +90,14 @@ class TournamentDetailsFragment : Fragment() {
                 .get()
                 .addOnSuccessListener { document ->
                     if (document.exists()) {
-                        val name = document.getString("name") ?: ""
-                        val privacy = document.getString("privacy") ?: ""
+                        val name = document.getString("name") ?: "Unknown Tournament"
+                        val privacy = document.getString("privacy") ?: "Unknown"
                         val description = document.getString("description") ?: ""
 
                         tvTournamentName.text = name
                         tvTournamentType.text = "Type: $privacy"
 
-                        // Hide or show format text dynamically
+                        // Update format text
                         val format = document.getString("format")
                         if (!format.isNullOrEmpty()) {
                             tvTournamentFormat.text = "Format: $format"
@@ -102,19 +106,29 @@ class TournamentDetailsFragment : Fragment() {
                             tvTournamentFormat.visibility = View.GONE
                         }
 
-                        // Handle description field
+                        // Update description text
                         if (description.isNotEmpty()) {
-                            tvTournamentDescription.text = "Description: $description"
+                            tvTournamentDescription.text = description
                             tvTournamentDescription.visibility = View.VISIBLE
                         } else {
                             tvTournamentDescription.visibility = View.GONE
                         }
                     } else {
                         Log.e("TournamentDetails", "Tournament document not found.")
+                        Toast.makeText(
+                            requireContext(),
+                            "Tournament details not available.",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
                 .addOnFailureListener { e ->
                     Log.e("TournamentDetails", "Error fetching tournament details: ${e.message}")
+                    Toast.makeText(
+                        requireContext(),
+                        "Error loading tournament details. Please try again.",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
         } ?: Log.e("TournamentDetails", "Tournament ID is null")
     }

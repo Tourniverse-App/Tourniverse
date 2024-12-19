@@ -24,21 +24,17 @@ class TournamentPagerAdapter(
     override fun createFragment(position: Int): Fragment {
         Log.d("TournamentPagerAdapter", "Creating fragment at position: $position with tournamentId: $tournamentId")
 
-        return when (position) {
-            0 -> SocialFragment().apply {
-                arguments = Bundle().apply { putString("tournamentId", tournamentId) }
-            }
-            1 -> StandingsFragment().apply {
-                arguments = Bundle().apply { putString("tournamentId", tournamentId) }
-            }
-            2 -> StatisticsFragment().apply {
-                arguments = Bundle().apply { putString("tournamentId", tournamentId) }
-            }
-            3 -> TournamentSettingsFragment().apply {
-                arguments = Bundle().apply { putString("tournamentId", tournamentId) }
-            }
+        // Centralize fragment creation logic for consistency
+        val fragment = when (position) {
+            0 -> SocialFragment()
+            1 -> StandingsFragment()
+            2 -> StatisticsFragment()
+            3 -> TournamentSettingsFragment()
             else -> throw IllegalArgumentException("Invalid tab position: $position")
         }
-    }
 
+        // Attach tournamentId to the fragment
+        fragment.arguments = Bundle().apply { putString("tournamentId", tournamentId) }
+        return fragment
+    }
 }

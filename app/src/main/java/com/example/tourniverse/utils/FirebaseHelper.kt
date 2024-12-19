@@ -31,49 +31,75 @@ object FirebaseHelper {
         val currentUser = FirebaseAuth.getInstance().currentUser
         val ownerId = currentUser?.uid ?: return callback(false, "User not authenticated")
 
-        val tournamentData = hashMapOf(
-            "name" to name,
-            "teamCount" to teamCount,
-            "description" to description,
-            "privacy" to privacy,
-            "teamNames" to teamNames,
-            "ownerId" to ownerId,
-            "viewers" to emptyList<String>(),
-            "createdAt" to System.currentTimeMillis()
-        )
+        // Fetch all tournaments to log IDs or perform validation (optional)
+        db.collection(TOURNAMENTS_COLLECTION)
+            .get()
+            .addOnSuccessListener { documents ->
+                for (document in documents) {
+                    Log.d("FirebaseHelper", "Existing Tournament ID: ${document.id}")
+                }
 
-        val tournamentRef = db.collection(TOURNAMENTS_COLLECTION)
+                val tournamentData = hashMapOf(
+                    "name" to name,
+                    "teamCount" to teamCount,
+                    "description" to description,
+                    "privacy" to privacy,
+                    "teamNames" to teamNames,
+                    "ownerId" to ownerId,
+                    "viewers" to emptyList<String>(),
+                    "createdAt" to System.currentTimeMillis()
+                )
 
-        // Add the tournament document
-        tournamentRef.add(tournamentData)
-            .addOnSuccessListener { documentRef ->
-                val tournamentId = documentRef.id
-                Log.d("FirestoreDebug", "Tournament created with ID: $tournamentId")
+                val tournamentRef = db.collection(TOURNAMENTS_COLLECTION)
 
-                // Initialize subcollections
-                initializeSubcollections(tournamentId, teamNames) { success, error ->
-                    if (success) {
-                        updateUserOwnedTournaments(ownerId, tournamentId) { userUpdateSuccess, userError ->
-                            if (userUpdateSuccess) {
-                                Log.d("FirestoreDebug", "Successfully updated user's ownedTournaments.")
-                                callback(true, null)
+                tournamentRef.add(tournamentData)
+                    .addOnSuccessListener { documentRef ->
+                        val tournamentId = documentRef.id
+                        Log.d("FirestoreDebug", "Tournament created with ID: $tournamentId")
+
+                        // Initialize subcollections
+                        initializeSubcollections(tournamentId, teamNames) { success, error ->
+                            if (success) {
+                                updateUserOwnedTournaments(ownerId, tournamentId) { userUpdateSuccess, userError ->
+                                    if (userUpdateSuccess) {
+                                        Log.d("FirestoreDebug", "Successfully updated user's ownedTournaments.")
+                                        callback(true, null)
+                                    } else {
+                                        Log.e("FirestoreDebug", "Error updating user: $userError")
+                                        callback(false, "Failed to update user: $userError")
+                                    }
+                                }
                             } else {
-                                Log.e("FirestoreDebug", "Error updating user: $userError")
-                                callback(false, "Failed to update user: $userError")
+                                Log.e("FirestoreDebug", "Error initializing subcollections: $error")
+                                callback(false, "Failed to initialize subcollections: $error")
                             }
                         }
-                    } else {
-                        Log.e("FirestoreDebug", "Error initializing subcollections: $error")
-                        callback(false, "Failed to initialize subcollections: $error")
                     }
-                }
+                    .addOnFailureListener { e ->
+                        Log.e("FirestoreDebug", "Error adding tournament: ${e.message}")
+                        callback(false, e.message ?: "Failed to create tournament")
+                    }
             }
             .addOnFailureListener { e ->
-                Log.e("FirestoreDebug", "Error adding tournament: ${e.message}")
-                callback(false, e.message ?: "Failed to create tournament")
+                Log.e("FirebaseHelper", "Error fetching tournaments: ${e.message}")
+                callback(false, e.message)
             }
     }
 
+
+    fun fetchTournamentIds(callback: (List<String>?, String?) -> Unit) {
+        db.collection(TOURNAMENTS_COLLECTION)
+            .get()
+            .addOnSuccessListener { documents ->
+                val tournamentIds = documents.map { it.id }
+                Log.d("FirebaseHelper", "Fetched Tournament IDs: $tournamentIds")
+                callback(tournamentIds, null)
+            }
+            .addOnFailureListener { e ->
+                Log.e("FirebaseHelper", "Error fetching tournaments: ${e.message}")
+                callback(null, e.message ?: "Failed to fetch tournament IDs")
+            }
+    }
 
 
 
@@ -163,9 +189,7 @@ object FirebaseHelper {
         val currentUser = FirebaseAuth.getInstance().currentUser
         val userId = currentUser?.uid ?: return callback(emptyList())
 
-        val userRef = db.collection(USERS_COLLECTION).document(userId)
-
-        userRef.get()
+        db.collection(USERS_COLLECTION).document(userId).get()
             .addOnSuccessListener { document ->
                 val ownedTournaments = document["ownedTournaments"] as? List<String> ?: emptyList()
                 val viewedTournaments = document["viewedTournaments"] as? List<String> ?: emptyList()
@@ -178,29 +202,15 @@ object FirebaseHelper {
                     return@addOnSuccessListener
                 }
 
-                val tournaments = mutableListOf<Map<String, Any>>()
-                val tasks = tournamentIds.map { tournamentId ->
-                    db.collection(TOURNAMENTS_COLLECTION).document(tournamentId).get()
-                }
-
-                // Fetch all tournaments using Tasks.whenAllSuccess
-                com.google.android.gms.tasks.Tasks.whenAllSuccess<Any>(tasks)
-                    .addOnSuccessListener { results ->
-                        results.forEach { result ->
-                            val snapshot = result as? com.google.firebase.firestore.DocumentSnapshot
-                            if (snapshot != null && snapshot.exists()) {
-                                snapshot.data?.let { data ->
-                                    tournaments.add(data)
-                                    Log.d("FirestoreDebug", "Fetched tournament: ${snapshot.id} -> $data")
-                                }
-                            } else {
-                                Log.w("FirestoreDebug", "Tournament document not found: ${snapshot?.id}")
-                            }
-                        }
+                db.collection(TOURNAMENTS_COLLECTION)
+                    .whereIn("__name__", tournamentIds)
+                    .get()
+                    .addOnSuccessListener { tournamentDocs ->
+                        val tournaments = tournamentDocs.mapNotNull { it.data }
                         callback(tournaments)
                     }
                     .addOnFailureListener { e ->
-                        Log.e("FirestoreDebug", "Error fetching tournaments: ${e.message}")
+                        Log.e("FirestoreDebug", "Error fetching tournament details: ${e.message}")
                         callback(emptyList())
                     }
             }
@@ -209,6 +219,57 @@ object FirebaseHelper {
                 callback(emptyList())
             }
     }
+
+//    fun getUserTournaments(callback: (List<Map<String, Any>>) -> Unit) {
+//        val currentUser = FirebaseAuth.getInstance().currentUser
+//        val userId = currentUser?.uid ?: return callback(emptyList())
+//
+//        val userRef = db.collection(USERS_COLLECTION).document(userId)
+//
+//        userRef.get()
+//            .addOnSuccessListener { document ->
+//                val ownedTournaments = document["ownedTournaments"] as? List<String> ?: emptyList()
+//                val viewedTournaments = document["viewedTournaments"] as? List<String> ?: emptyList()
+//
+//                val tournamentIds = ownedTournaments.union(viewedTournaments).toList()
+//
+//                if (tournamentIds.isEmpty()) {
+//                    Log.d("FirestoreDebug", "No tournaments found for user $userId")
+//                    callback(emptyList())
+//                    return@addOnSuccessListener
+//                }
+//
+//                val tournaments = mutableListOf<Map<String, Any>>()
+//                val tasks = tournamentIds.map { tournamentId ->
+//                    db.collection(TOURNAMENTS_COLLECTION).document(tournamentId).get()
+//                }
+//
+//                // Fetch all tournaments using Tasks.whenAllSuccess
+//                com.google.android.gms.tasks.Tasks.whenAllSuccess<Any>(tasks)
+//                    .addOnSuccessListener { results ->
+//                        results.forEach { result ->
+//                            val snapshot = result as? com.google.firebase.firestore.DocumentSnapshot
+//                            if (snapshot != null && snapshot.exists()) {
+//                                snapshot.data?.let { data ->
+//                                    tournaments.add(data)
+//                                    Log.d("FirestoreDebug", "Fetched tournament: ${snapshot.id} -> $data")
+//                                }
+//                            } else {
+//                                Log.w("FirestoreDebug", "Tournament document not found: ${snapshot?.id}")
+//                            }
+//                        }
+//                        callback(tournaments)
+//                    }
+//                    .addOnFailureListener { e ->
+//                        Log.e("FirestoreDebug", "Error fetching tournaments: ${e.message}")
+//                        callback(emptyList())
+//                    }
+//            }
+//            .addOnFailureListener { e ->
+//                Log.e("FirestoreDebug", "Error fetching user document: ${e.message}")
+//                callback(emptyList())
+//            }
+//    }
 
 
 
