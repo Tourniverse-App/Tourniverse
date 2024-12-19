@@ -97,8 +97,16 @@ class StandingsFragment : Fragment() {
                 .addOnSuccessListener { documents ->
                     fixtures.clear()
                     for (document in documents) {
-                        val match = document.toObject(Match::class.java)
-                        fixtures.add(match)
+                        val matchesArray = document.get("matches") as? List<HashMap<String, Any>>
+                        if (matchesArray != null) {
+                            for (match in matchesArray) {
+                                val teamA = match["teamA"] as? String ?: ""
+                                val teamB = match["teamB"] as? String ?: ""
+                                val scoreA = (match["scoreA"] as? Long)?.toInt() ?: 0
+                                val scoreB = (match["scoreB"] as? Long)?.toInt() ?: 0
+                                fixtures.add(Match(teamA = teamA, teamB = teamB, scoreA = scoreA, scoreB = scoreB))
+                            }
+                        }
                     }
                     Log.d("StandingsFragment", "Fixtures fetched: ${fixtures.size} items")
                     fixturesAdapter.notifyDataSetChanged()

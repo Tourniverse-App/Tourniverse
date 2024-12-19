@@ -25,10 +25,16 @@ class StandingsAdapter(
 
     override fun onBindViewHolder(holder: StandingsViewHolder, position: Int) {
         val item = items[position]
-        if (item is TeamStanding) {
-            holder.textLine.text = "${item.teamName} - Points: ${item.points} | Goals: ${item.goals} | Wins: ${item.wins} | Losses: ${item.losses}"
-        } else if (item is Match) {
-            holder.textLine.text = "${item.teamA} - ${item.teamB} : ${item.scoreA} - ${item.scoreB}"
+        when (item) {
+            is TeamStanding -> {
+                holder.textLine.text = "${item.teamName} - Points: ${item.points} | Goals: ${item.goals} | Wins: ${item.wins} | Losses: ${item.losses}"
+            }
+            is Match -> {
+                holder.textLine.text = "Match: ${item.teamA} vs ${item.teamB} - Score: ${item.scoreA} : ${item.scoreB}"
+            }
+            else -> {
+                holder.textLine.text = "Unknown item type"
+            }
         }
     }
 

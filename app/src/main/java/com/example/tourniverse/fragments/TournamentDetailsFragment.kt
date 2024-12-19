@@ -68,7 +68,7 @@ class TournamentDetailsFragment : Fragment() {
         TabLayoutMediator(tabLayout, viewPager) { tab, position ->
             tab.text = when (position) {
                 0 -> "Social"
-                1 -> "Standings"
+                1 -> "Fixtures"
                 2 -> "Statistics"
                 3 -> "Settings"
                 else -> "Tab $position"
