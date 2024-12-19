@@ -169,5 +169,7 @@
     <string name="message_content" />
     <string name="timestamp" />
     <string name="user_image" />
+    <string name="standings" />
+    <string name="statistics_header" />
 
 </resources>

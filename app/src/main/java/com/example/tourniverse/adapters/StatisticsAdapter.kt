@@ -1,5 +1,6 @@
 package com.example.tourniverse.adapters
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,7 +10,7 @@ import com.example.tourniverse.R
 import com.example.tourniverse.models.TeamStanding
 import com.example.tourniverse.models.Match
 
-class StatisticsAdapter (
+class StatisticsAdapter(
     private val items: List<Any>, // Can be TeamStanding for tables or Match for knockout
     private val isKnockout: Boolean
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
@@ -17,6 +18,7 @@ class StatisticsAdapter (
     companion object {
         private const val VIEW_TYPE_TABLE = 1
         private const val VIEW_TYPE_KNOCKOUT = 2
+        private const val TAG = "StatisticsAdapter"
     }
 
     // ViewHolder for Table statistics
@@ -51,17 +53,23 @@ class StatisticsAdapter (
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        if (holder is TableViewHolder && items[position] is TeamStanding) {
-            val teamStat = items[position] as TeamStanding
-            holder.teamNameTextView.text = teamStat.teamName
-            holder.winsTextView.text = teamStat.wins.toString()
-            holder.drawsTextView.text = teamStat.draws.toString()
-            holder.lossesTextView.text = teamStat.losses.toString()
-            holder.goalsTextView.text = teamStat.goals.toString()
-            holder.pointsTextView.text = teamStat.points.toString()
-        } else if (holder is KnockoutViewHolder && items[position] is Match) {
-            val match = items[position] as Match
-            holder.matchTextView.text = "${match.teamA} vs ${match.teamB} - Score: ${match.scoreA}:${match.scoreB}"
+        try {
+            if (holder is TableViewHolder && items[position] is TeamStanding) {
+                val teamStat = items[position] as TeamStanding
+                holder.teamNameTextView.text = teamStat.teamName
+                holder.winsTextView.text = teamStat.wins.toString()
+                holder.drawsTextView.text = teamStat.draws.toString()
+                holder.lossesTextView.text = teamStat.losses.toString()
+                holder.goalsTextView.text = teamStat.goals.toString()
+                holder.pointsTextView.text = teamStat.points.toString()
+            } else if (holder is KnockoutViewHolder && items[position] is Match) {
+                val match = items[position] as Match
+                holder.matchTextView.text = "${match.teamA} vs ${match.teamB} - Score: ${match.scoreA}:${match.scoreB}"
+            } else {
+                Log.w(TAG, "Unexpected item type or ViewHolder at position $position")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error binding view at position $position: ${e.message}", e)
         }
     }
 
