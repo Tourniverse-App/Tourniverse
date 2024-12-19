@@ -10,21 +10,17 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tourniverse.R
-import com.example.tourniverse.adapters.StandingsAdapter
+import com.example.tourniverse.adapters.FixturesAdapter // Replace with the correct adapter
 import com.example.tourniverse.models.Match
-import com.example.tourniverse.models.TeamStanding
 import com.google.firebase.firestore.FirebaseFirestore
 
 class StandingsFragment : Fragment() {
 
-    private lateinit var standingsRecyclerView: RecyclerView
     private lateinit var fixturesRecyclerView: RecyclerView
-    private lateinit var standingsAdapter: StandingsAdapter
-    private lateinit var fixturesAdapter: StandingsAdapter
+    private lateinit var fixturesAdapter: FixturesAdapter // Updated Adapter
 
     private val db = FirebaseFirestore.getInstance()
     private var tournamentId: String? = null
-    private val teamStandings = mutableListOf<TeamStanding>()
     private val fixtures = mutableListOf<Match>()
 
     override fun onCreateView(
@@ -35,20 +31,20 @@ class StandingsFragment : Fragment() {
 
         Log.d("StandingsFragment", "onCreateView called")
 
-        // Initialize RecyclerViews
-        standingsRecyclerView = view.findViewById(R.id.recyclerViewStandings)
+        // Initialize RecyclerView
         fixturesRecyclerView = view.findViewById(R.id.recyclerViewFixtures)
-
-        standingsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         fixturesRecyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-        standingsAdapter = StandingsAdapter(teamStandings)
-        fixturesAdapter = StandingsAdapter(fixtures)
-
-        standingsRecyclerView.adapter = standingsAdapter
+        // Initialize the updated FixturesAdapter
+        fixturesAdapter = FixturesAdapter(
+            fixtures,
+            tournamentId = tournamentId ?: ""
+        ) { match, newScoreA, newScoreB ->
+            updateMatchScores(match, newScoreA, newScoreB) // Pass the lambda for score updates
+        }
         fixturesRecyclerView.adapter = fixturesAdapter
 
-        Log.d("StandingsFragment", "RecyclerViews and adapters initialized")
+        Log.d("StandingsFragment", "RecyclerView and adapter initialized")
 
         // Fetch tournamentId from arguments
         tournamentId = arguments?.getString("tournamentId")
@@ -60,33 +56,11 @@ class StandingsFragment : Fragment() {
             return view
         }
 
-        fetchStandings()
         fetchFixtures()
 
         return view
     }
 
-    private fun fetchStandings() {
-        Log.d("StandingsFragment", "Fetching standings for Tournament ID: $tournamentId")
-
-        tournamentId?.let { id ->
-            db.collection("tournaments").document(id)
-                .collection("standings").get()
-                .addOnSuccessListener { documents ->
-                    teamStandings.clear()
-                    for (document in documents) {
-                        val team = document.toObject(TeamStanding::class.java)
-                        teamStandings.add(team)
-                    }
-                    Log.d("StandingsFragment", "Standings fetched: ${teamStandings.size} items")
-                    standingsAdapter.notifyDataSetChanged()
-                }
-                .addOnFailureListener { e ->
-                    Log.e("StandingsFragment", "Failed to load standings: ${e.message}")
-                    Toast.makeText(context, "Failed to load standings: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
-        } ?: showTournamentIdError()
-    }
 
     private fun fetchFixtures() {
         Log.d("StandingsFragment", "Fetching fixtures for Tournament ID: $tournamentId")
@@ -97,17 +71,16 @@ class StandingsFragment : Fragment() {
                 .addOnSuccessListener { documents ->
                     fixtures.clear()
                     for (document in documents) {
-                        val matchesArray = document.get("matches") as? List<HashMap<String, Any>>
-                        if (matchesArray != null) {
-                            for (match in matchesArray) {
-                                val teamA = match["teamA"] as? String ?: ""
-                                val teamB = match["teamB"] as? String ?: ""
-                                val scoreA = (match["scoreA"] as? Long)?.toInt() ?: 0
-                                val scoreB = (match["scoreB"] as? Long)?.toInt() ?: 0
-                                fixtures.add(Match(teamA = teamA, teamB = teamB, scoreA = scoreA, scoreB = scoreB))
-                            }
+                        val matchesArray = document.get("matches") as? List<Map<String, Any>>
+                        matchesArray?.forEach { match ->
+                            val teamA = match["teamA"] as? String ?: ""
+                            val teamB = match["teamB"] as? String ?: ""
+                            val scoreA = (match["scoreA"] as? Long)?.toInt() ?: 0
+                            val scoreB = (match["scoreB"] as? Long)?.toInt() ?: 0
+                            fixtures.add(Match(teamA = teamA, teamB = teamB, scoreA = scoreA, scoreB = scoreB))
                         }
                     }
+
                     Log.d("StandingsFragment", "Fixtures fetched: ${fixtures.size} items")
                     fixturesAdapter.notifyDataSetChanged()
                 }
@@ -116,6 +89,44 @@ class StandingsFragment : Fragment() {
                     Toast.makeText(context, "Failed to load fixtures: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
         } ?: showTournamentIdError()
+    }
+
+    private fun updateMatchScores(match: Match, newScoreA: Int, newScoreB: Int) {
+        tournamentId?.let { id ->
+            db.collection("tournaments").document(id)
+                .collection("matches").get()
+                .addOnSuccessListener { documents ->
+                    for (document in documents) {
+                        val matchesArray = document.get("matches") as? MutableList<Map<String, Any>>
+                        if (matchesArray != null) {
+                            val matchIndex = matchesArray.indexOfFirst {
+                                it["teamA"] == match.teamA && it["teamB"] == match.teamB
+                            }
+                            if (matchIndex != -1) {
+                                matchesArray[matchIndex] = mapOf(
+                                    "teamA" to match.teamA,
+                                    "teamB" to match.teamB,
+                                    "scoreA" to newScoreA,
+                                    "scoreB" to newScoreB
+                                )
+                                db.collection("tournaments").document(id)
+                                    .collection("matches")
+                                    .document(document.id)
+                                    .update("matches", matchesArray)
+                                    .addOnSuccessListener {
+                                        Log.d("StandingsFragment", "Scores updated for match: $match")
+                                    }
+                                    .addOnFailureListener { e ->
+                                        Log.e("StandingsFragment", "Failed to update scores: ${e.message}")
+                                    }
+                            }
+                        }
+                    }
+                }
+                .addOnFailureListener { e ->
+                    Log.e("StandingsFragment", "Failed to load matches for update: ${e.message}")
+                }
+        }
     }
 
     private fun showTournamentIdError() {
