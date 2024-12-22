@@ -27,6 +27,16 @@ class AddTournamentFragment : Fragment() {
     private var currentType: String = "Tables"
     private val db = FirebaseFirestore.getInstance()
 
+    /**
+     * Inflates the layout for this fragment and initializes the views.
+     * Also sets up the spinners for tournament type, number of teams, and privacy.
+     * Finally, sets up the submit button to handle form submission.
+     *
+     * @param inflater The layout inflater object that can be used to inflate any views in the fragment.
+     * @param container The parent view that the fragment's UI should be attached to.
+     * @param savedInstanceState The previously saved state of the fragment.
+     * @return The root view of the fragment.
+     */
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -52,6 +62,25 @@ class AddTournamentFragment : Fragment() {
         return view
     }
 
+    /**
+     * Sets up the spinner for selecting the tournament type (Tables or Knockout).
+     * Also sets up the spinner for selecting the number of teams based on the selected type.
+     *
+     * The tournament type spinner is initialized with two options: Tables and Knockout.
+     * The number of teams spinner is initialized with a range of 2 to 32 for Tables type,
+     * and with fixed values of 4, 8, 16, and 32 for Knockout type.
+     *
+     * The team names fields are displayed based on the selected number of teams.
+     *
+     * The tournament type spinner's selection listener updates the current type and sets up the number of teams spinner.
+     * The number of teams spinner's selection listener shows the team name fields based on the selected number of teams.
+     *
+     * @see setupNumberOfTeamsSpinner
+     * @see showTeamNameFields
+     * @see currentType
+     * @see spinnerTournamentType
+     * @see spinnerNumTeams
+     */
     private fun setupTournamentTypeSpinner() {
         val typeOptions = listOf("Tables", "Knockout")
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, typeOptions)
@@ -103,7 +132,25 @@ class AddTournamentFragment : Fragment() {
         }
     }
 
-
+    /**
+     * Handles the form submission by validating the input fields and creating a new tournament.
+     *
+     * The tournament name and description fields are validated to ensure they are not empty.
+     * The team names fields are validated to ensure they are not empty.
+     * The user ID is retrieved from Firebase Auth to associate the tournament with the owner.
+     *
+     * The tournament data is submitted to Firestore using the FirebaseHelper class.
+     * The user's ownedTournaments field is updated with the new tournament ID.
+     *
+     * If the tournament is created successfully, the user is navigated back to the home screen.
+     * If there is an error creating the tournament, an error message is displayed and the submit button is enabled.
+     *
+     * @param tournamentName The name of the tournament.
+     * @param description The description of the tournament.
+     * @param privacy The privacy setting of the tournament (Public or Private).
+     * @param teamNames The list of team names participating in the tournament.
+     * @param ownerId The ID of the user who owns the tournament.
+     */
     private fun handleSubmit() {
         val tournamentName = etTournamentName.text.toString().trim()
         val description = etDescription.text.toString().trim()
@@ -147,7 +194,23 @@ class AddTournamentFragment : Fragment() {
             callback = { success, error ->
                 if (success) {
                     Toast.makeText(requireContext(), "Tournament created successfully!", Toast.LENGTH_SHORT).show()
-                    findNavController().navigate(R.id.action_addTournamentFragment_to_homeFragment)
+                    db.collection("tournaments").whereEqualTo("name", tournamentName).limit(1).get()
+                        .addOnSuccessListener { documents ->
+                            for (document in documents) {
+                                val id = document.id
+                                val bundle = Bundle().apply {
+                                    putString("tournamentId", id)
+                                    putString("tournamentName", tournamentName)
+                                    putString("tournamentType", privacy)
+                                    putString("tournamentFormat", currentType)
+                                    putString("tournamentDescription", description)
+                                }
+                                findNavController().navigate(R.id.action_addTournamentFragment_to_tournamentDetailsFragment, bundle)
+                            }
+                        }
+                        .addOnFailureListener {
+                            Log.e("AddTournamentFragment", "Failed to fetch newly created tournament ID")
+                        }
                 } else {
                     Log.e("AddTournamentFragment", "Error creating tournament: $error")
                     Toast.makeText(requireContext(), "Failed to create tournament: $error", Toast.LENGTH_SHORT).show()
@@ -157,81 +220,6 @@ class AddTournamentFragment : Fragment() {
         )
     }
 
-
-//    private fun handleSubmit() {
-//        val tournamentName = etTournamentName.text.toString().trim()
-//        val description = etDescription.text.toString().trim()
-//        val privacy = spinnerPrivacy.selectedItem.toString()
-//
-//        if (tournamentName.isEmpty() || description.isEmpty()) {
-//            Toast.makeText(requireContext(), "Please fill all fields", Toast.LENGTH_SHORT).show()
-//            Log.e("AddTournamentFragment", "Empty fields: Tournament name or description")
-//            return
-//        }
-//
-//        val teamNames = mutableListOf<String>()
-//        for (i in 0 until layoutTeamNames.childCount) {
-//            val teamField = layoutTeamNames.getChildAt(i) as EditText
-//            val teamName = teamField.text.toString().trim()
-//            if (teamName.isEmpty()) {
-//                Toast.makeText(requireContext(), "Please fill all the team names", Toast.LENGTH_SHORT).show()
-//                Log.e("AddTournamentFragment", "Empty team name at position $i")
-//                return
-//            }
-//            teamNames.add(teamName)
-//        }
-//
-//        val ownerId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
-//        if (ownerId.isEmpty()) {
-//            Toast.makeText(requireContext(), "User not authenticated", Toast.LENGTH_SHORT).show()
-//            Log.e("AddTournamentFragment", "User not authenticated")
-//            return
-//        }
-//
-//        btnSubmitTournament.isEnabled = false
-//        Log.d("AddTournamentFragment", "Submitting tournament: $tournamentName")
-//
-//        // Fetch existing tournaments to ensure unique operations or to debug issues
-//        db.collection("tournaments")
-//            .get()
-//            .addOnSuccessListener { documents ->
-//                for (document in documents) {
-//                    Log.d("AddTournamentFragment", "Existing tournament ID: ${document.id}")
-//                }
-//
-//                // Proceed with creating the new tournament
-//                val tournamentData = hashMapOf(
-//                    "name" to tournamentName,
-//                    "description" to description,
-//                    "privacy" to privacy,
-//                    "teamCount" to teamNames.size,
-//                    "ownerId" to ownerId,
-//                    "teamNames" to teamNames,
-//                    "createdAt" to System.currentTimeMillis(),
-//                    "type" to currentType,
-//                )
-//
-//                db.collection("tournaments").add(tournamentData)
-//                    .addOnSuccessListener { documentReference ->
-//                        val tournamentId = documentReference.id
-//                        Log.d("AddTournamentFragment", "Tournament created with ID: $tournamentId")
-//                        generateMatches(tournamentId, teamNames, currentType)
-//                        updateUserOwnedTournaments(ownerId, tournamentId)
-//                        Toast.makeText(requireContext(), "Tournament created!", Toast.LENGTH_SHORT).show()
-//                        val bundle = Bundle().apply { putString("tournamentId", tournamentId) }
-//                        findNavController().navigate(R.id.action_addTournamentFragment_to_tournamentDetailsFragment, bundle)
-//                    }
-//                    .addOnFailureListener { e ->
-//                        Log.e("AddTournamentFragment", "Error creating tournament: ${e.message}")
-//                        Toast.makeText(requireContext(), "Error creating tournament: ${e.message}", Toast.LENGTH_SHORT).show()
-//                        btnSubmitTournament.isEnabled = true
-//                    }
-//            }
-//            .addOnFailureListener { e ->
-//                Log.e("AddTournamentFragment", "Error fetching tournaments: ${e.message}")
-//                Toast.makeText(requireContext(), "Error fetching tournaments: ${e.message}", Toast.LENGTH_SHORT).show()
-//            }
-//    }
 
     private fun updateUserOwnedTournaments(userId: String, tournamentId: String) {
         val userDocRef = db.collection("users").document(userId)
@@ -261,11 +249,11 @@ class AddTournamentFragment : Fragment() {
                 }
             }
         } else if (type == "Knockout") {
-            for (i in 0 until teamNames.size -1 step 2) {
+            for (i in 0 until teamNames.size - 1 step 2) {
                 matches.add(
                     hashMapOf(
                         "teamA" to teamNames[i],
-                        "teamB" to teamNames[i+1],
+                        "teamB" to teamNames[i + 1],
                         "scoreA" to 0,
                         "scoreB" to 0
                     )

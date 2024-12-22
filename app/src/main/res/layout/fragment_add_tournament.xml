@@ -113,20 +113,20 @@
             android:inputType="textMultiLine"
             android:layout_marginBottom="16dp" />
 
-        <!-- Upload Photo Button -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Upload a photo for the tournament:"
-            android:textSize="16sp"
-            android:layout_marginBottom="4dp" />
+<!--        &lt;!&ndash; Upload Photo Button &ndash;&gt;-->
+<!--        <TextView-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:text="Upload a photo for the tournament:"-->
+<!--            android:textSize="16sp"-->
+<!--            android:layout_marginBottom="4dp" />-->
 
-        <Button
-            android:id="@+id/btnUploadPhoto"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Upload Photo"
-            android:layout_marginBottom="16dp" />
+<!--        <Button-->
+<!--            android:id="@+id/btnUploadPhoto"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:text="Upload Photo"-->
+<!--            android:layout_marginBottom="16dp" />-->
 
         <!-- Submit Button -->
         <TextView

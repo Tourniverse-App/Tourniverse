@@ -127,13 +127,19 @@ class SocialFragment : Fragment() {
             return
         }
 
+        // Profanity filter
+        val bannedWords = listOf("fuck", "bitch", "gay", "zona", "dick", "shit", "homo" ) // Replace with actual banned words
+        val filteredContent = content.split(" ").joinToString(" ") { word ->
+            if (bannedWords.contains(word.lowercase())) "***" else word
+        }
+
         db.collection("users").document(userId).get()
             .addOnSuccessListener { userSnapshot ->
                 val username = userSnapshot.getString("username") ?: "Anonymous"
                 val message = ChatMessage(
                     senderId = userId,
                     senderName = username,
-                    message = content,
+                    message = filteredContent,
                     createdAt = System.currentTimeMillis()
                 )
 
@@ -152,8 +158,6 @@ class SocialFragment : Fragment() {
                 Log.e("SocialFragment", "Error fetching username for userId: $userId, ${e.message}")
             }
     }
-
-
 
     private fun fetchMessages() {
         chatCollection.addSnapshotListener { snapshot, e ->
