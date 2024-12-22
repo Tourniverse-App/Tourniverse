@@ -15,6 +15,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.tourniverse.R
 import com.example.tourniverse.adapters.TournamentAdapter
 import com.example.tourniverse.models.Tournament
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 
 class HomeFragment : Fragment() {
@@ -56,67 +58,112 @@ class HomeFragment : Fragment() {
     }
 
     /**
-     * Fetches tournaments from Firestore and populates the RecyclerView.
+     * Fetches tournaments owned or viewed by the currently logged-in user from Firestore.
      */
     private fun fetchUserTournaments() {
-        Log.d("HomeFragment", "Fetching tournaments from Firestore")
+        Log.d("HomeFragment", "Fetching user-specific tournaments from Firestore")
 
-        db.collection("tournaments")
-            .get()
-            .addOnSuccessListener { querySnapshot ->
-                tournaments.clear()
-                if (querySnapshot.isEmpty) {
-                    Log.d("HomeFragment", "No tournaments found")
-                    recyclerView.visibility = View.GONE
-                    noTournamentsView.visibility = View.VISIBLE
-                    Toast.makeText(requireContext(), "No tournaments found.", Toast.LENGTH_SHORT).show()
+        // Check current user
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser == null) {
+            Log.e("HomeFragment", "No user logged in")
+            showNoTournamentsMessage()
+            return
+        }
+
+        val userId = currentUser.uid
+        Log.d("HomeFragment", "Logged-in user ID: $userId")
+
+        // Fetch user's data
+        db.collection("users").document(userId).get()
+            .addOnSuccessListener { userDocument ->
+                if (!userDocument.exists()) {
+                    Log.d("HomeFragment", "User document does not exist.")
+                    showNoTournamentsMessage()
                     return@addOnSuccessListener
                 }
 
-                for (document in querySnapshot.documents) {
-                    val id = document.id
-                    if (id.isNullOrEmpty()) {
-                        Log.e("HomeFragment", "Missing tournament ID")
-                        continue
-                    }
+                // Log fetched document
+                Log.d("HomeFragment", "User document data: ${userDocument.data}")
 
-                    val name = document.getString("name") ?: "Unknown"
-                    val privacy = document.getString("privacy") ?: "Private"
-                    val description = document.getString("description") ?: ""
-                    val teamNames = try {
-                        document.get("teamNames") as? List<String> ?: emptyList()
-                    } catch (e: Exception) {
-                        Log.e("HomeFragment", "Error casting teamNames: ${e.message}")
-                        emptyList<String>()
-                    }
-                    val ownerId = document.getString("ownerId") ?: "Unknown"
+                // Extract owned and viewed tournaments
+                val ownedTournaments = userDocument.get("ownedTournaments") as? List<String> ?: emptyList()
+                val viewedTournaments = userDocument.get("viewedTournaments") as? List<String> ?: emptyList()
+                val allTournaments = ownedTournaments + viewedTournaments
 
-                    tournaments.add(
-                        Tournament(
-                            id = id,
-                            name = name,
-                            type = privacy,
-                            description = description,
-                            teamNames = teamNames,
-                            owner = ownerId,
-                            viewers = emptyList() // Adjust as needed
-                        )
-                    )
+                Log.d("HomeFragment", "Owned Tournaments: $ownedTournaments")
+                Log.d("HomeFragment", "Viewed Tournaments: $viewedTournaments")
+                Log.d("HomeFragment", "All Tournaments: $allTournaments")
+
+                if (allTournaments.isEmpty()) {
+                    Log.d("HomeFragment", "User has no tournaments.")
+                    showNoTournamentsMessage()
+                    return@addOnSuccessListener
                 }
 
-                Log.d("HomeFragment", "Fetched ${tournaments.size} tournaments")
-                recyclerView.visibility = View.VISIBLE
-                noTournamentsView.visibility = View.GONE
-                adapter.filter("")
-                adapter.notifyDataSetChanged()
-                Toast.makeText(requireContext(), "${tournaments.size} tournaments loaded.", Toast.LENGTH_SHORT).show()
+                // Fetch tournament data
+                db.collection("tournaments")
+                    .whereIn(FieldPath.documentId(), allTournaments)
+                    .get()
+                    .addOnSuccessListener { querySnapshot ->
+                        tournaments.clear()
+
+                        if (querySnapshot.isEmpty) {
+                            Log.d("HomeFragment", "No tournaments matched the IDs.")
+                            showNoTournamentsMessage()
+                            return@addOnSuccessListener
+                        }
+
+                        for (document in querySnapshot.documents) {
+                            Log.d("HomeFragment", "Fetched tournament: ${document.data}")
+
+                            val id = document.id
+                            val name = document.getString("name") ?: "Unknown"
+                            val privacy = document.getString("privacy") ?: "Private"
+                            val description = document.getString("description") ?: ""
+                            val teamNames = document.get("teamNames") as? List<String> ?: emptyList()
+                            val ownerId = document.getString("ownerId") ?: "Unknown"
+
+                            tournaments.add(
+                                Tournament(
+                                    id = id,
+                                    name = name,
+                                    type = privacy,
+                                    description = description,
+                                    teamNames = teamNames,
+                                    owner = ownerId,
+                                    viewers = emptyList()
+                                )
+                            )
+                        }
+
+                        // Update UI
+                        Log.d("HomeFragment", "Final tournament list size: ${tournaments.size}")
+                        recyclerView.visibility = View.VISIBLE
+                        noTournamentsView.visibility = View.GONE
+                        adapter.filter("")
+                        adapter.notifyDataSetChanged()
+                        Toast.makeText(requireContext(), "${tournaments.size} tournaments loaded.", Toast.LENGTH_SHORT).show()
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("HomeFragment", "Error fetching tournaments: ${e.message}")
+                        showNoTournamentsMessage()
+                    }
             }
             .addOnFailureListener { e ->
-                Log.e("HomeFragment", "Error fetching tournaments: ${e.message}")
-                recyclerView.visibility = View.GONE
-                noTournamentsView.visibility = View.VISIBLE
-                Toast.makeText(requireContext(), "Failed to load tournaments.", Toast.LENGTH_SHORT).show()
+                Log.e("HomeFragment", "Error fetching user data: ${e.message}")
+                showNoTournamentsMessage()
             }
+    }
+
+
+    /**
+     * Displays a message when no tournaments are found.
+     */
+    private fun showNoTournamentsMessage() {
+        recyclerView.visibility = View.GONE
+        noTournamentsView.visibility = View.VISIBLE
+        Toast.makeText(requireContext(), "No tournaments found.", Toast.LENGTH_SHORT).show()
     }
 
     /**
