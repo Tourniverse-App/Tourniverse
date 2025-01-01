@@ -3,6 +3,7 @@ package com.example.tourniverse.utils
 import android.util.Log
 import android.widget.Toast
 import androidx.core.content.ContentProviderCompat.requireContext
+import com.example.tourniverse.models.Comment
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -416,62 +417,6 @@ object FirebaseHelper {
         }
     }
 
-
-
-//    fun getUserTournaments(callback: (List<Map<String, Any>>) -> Unit) {
-//        val currentUser = FirebaseAuth.getInstance().currentUser
-//        val userId = currentUser?.uid ?: return callback(emptyList())
-//
-//        val userRef = db.collection(USERS_COLLECTION).document(userId)
-//
-//        userRef.get()
-//            .addOnSuccessListener { document ->
-//                val ownedTournaments = document["ownedTournaments"] as? List<String> ?: emptyList()
-//                val viewedTournaments = document["viewedTournaments"] as? List<String> ?: emptyList()
-//
-//                val tournamentIds = ownedTournaments.union(viewedTournaments).toList()
-//
-//                if (tournamentIds.isEmpty()) {
-//                    Log.d("FirestoreDebug", "No tournaments found for user $userId")
-//                    callback(emptyList())
-//                    return@addOnSuccessListener
-//                }
-//
-//                val tournaments = mutableListOf<Map<String, Any>>()
-//                val tasks = tournamentIds.map { tournamentId ->
-//                    db.collection(TOURNAMENTS_COLLECTION).document(tournamentId).get()
-//                }
-//
-//                // Fetch all tournaments using Tasks.whenAllSuccess
-//                com.google.android.gms.tasks.Tasks.whenAllSuccess<Any>(tasks)
-//                    .addOnSuccessListener { results ->
-//                        results.forEach { result ->
-//                            val snapshot = result as? com.google.firebase.firestore.DocumentSnapshot
-//                            if (snapshot != null && snapshot.exists()) {
-//                                snapshot.data?.let { data ->
-//                                    tournaments.add(data)
-//                                    Log.d("FirestoreDebug", "Fetched tournament: ${snapshot.id} -> $data")
-//                                }
-//                            } else {
-//                                Log.w("FirestoreDebug", "Tournament document not found: ${snapshot?.id}")
-//                            }
-//                        }
-//                        callback(tournaments)
-//                    }
-//                    .addOnFailureListener { e ->
-//                        Log.e("FirestoreDebug", "Error fetching tournaments: ${e.message}")
-//                        callback(emptyList())
-//                    }
-//            }
-//            .addOnFailureListener { e ->
-//                Log.e("FirestoreDebug", "Error fetching user document: ${e.message}")
-//                callback(emptyList())
-//            }
-//    }
-
-
-
-
     /**
      * Adds a viewer to a specific tournament document.
      *
@@ -664,5 +609,41 @@ object FirebaseHelper {
                 callback(emptyList())
             }
     }
+
+    fun updatePostLikes(postId: String, likesCount: Int, likedBy: List<String>, tournamentId: String) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("tournaments")
+            .document(tournamentId)
+            .collection("chat")
+            .document(postId)
+            .update(
+                mapOf(
+                    "likesCount" to likesCount,
+                    "likedBy" to likedBy
+                )
+            )
+            .addOnSuccessListener {
+                Log.d("FirebaseHelper", "Likes updated successfully!")
+            }
+            .addOnFailureListener { e ->
+                Log.e("FirebaseHelper", "Error updating likes: ${e.message}")
+            }
+    }
+
+
+    fun addCommentToPost(postId: String, comment: Comment, tournamentId: String) {
+        val postRef = db.collection(TOURNAMENTS_COLLECTION)
+            .document(tournamentId)
+            .collection("chat")
+            .document(postId)
+
+        postRef.update(
+            "comments", com.google.firebase.firestore.FieldValue.arrayUnion(comment)
+        ).addOnFailureListener { e ->
+            Log.e("FirebaseHelper", "Failed to add comment: ${e.message}")
+        }
+    }
+
+
 
 }

@@ -1,54 +1,116 @@
 package com.example.tourniverse.adapters
 
+import android.content.Context
+import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
+import androidx.fragment.app.FragmentActivity
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tourniverse.R
+import com.example.tourniverse.fragments.CommentFragment
 import com.example.tourniverse.models.ChatMessage
-import java.text.SimpleDateFormat
-import java.util.*
+import com.example.tourniverse.utils.FirebaseHelper
+import com.google.firebase.auth.FirebaseAuth
 
-class ChatAdapter(private val messages: List<ChatMessage>) : RecyclerView.Adapter<ChatAdapter.ChatViewHolder>() {
+class ChatAdapter(
+    private val context: Context,
+    private val messages: MutableList<ChatMessage>,
+    private val tournamentId: String
+) : RecyclerView.Adapter<ChatAdapter.ChatViewHolder>() {
 
+    // ViewHolder class
+    inner class ChatViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val userNameTextView: TextView = itemView.findViewById(R.id.userNameTextView)
+        val contentTextView: TextView = itemView.findViewById(R.id.contentTextView)
+        val likeButton: ImageView = itemView.findViewById(R.id.likeButton)
+        val likeCountTextView: TextView = itemView.findViewById(R.id.likeCountTextView)
+        val commentButton: ImageView = itemView.findViewById(R.id.commentButton)
+        val timestampTextView: TextView = itemView.findViewById(R.id.timestampTextView)
+    }
+
+    // Create ViewHolder
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChatViewHolder {
         val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_chat_message, parent, false)
+            .inflate(R.layout.item_post, parent, false)
         return ChatViewHolder(view)
     }
 
+    // Bind data to views
     override fun onBindViewHolder(holder: ChatViewHolder, position: Int) {
         val message = messages[position]
-        holder.bind(message)
-    }
 
-    override fun getItemCount(): Int = messages.size
+        // Set user name
+        holder.userNameTextView.text = message.senderName
 
-    class ChatViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val senderNameTextView: TextView = itemView.findViewById(R.id.senderName)
-        private val messageTextView: TextView = itemView.findViewById(R.id.messageContent)
-        private val timestampTextView: TextView = itemView.findViewById(R.id.timestamp)
+        // Set content
+        holder.contentTextView.text = message.message
 
-        fun bind(chatMessage: ChatMessage) {
-            // Set the sender name with a fallback
-            senderNameTextView.text = if (!chatMessage.senderName.isNullOrEmpty()) {
-                chatMessage.senderName
+        // Format and set timestamp
+        val time = android.text.format.DateFormat.format("hh:mm a", message.createdAt)
+        holder.timestampTextView.text = time.toString()
+
+        // Handle likes
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+        val isLiked = message.likedBy.contains(currentUserId)
+
+        // Update like button UI
+        holder.likeButton.setImageResource(
+            if (isLiked) R.drawable.ic_heart_filled else R.drawable.ic_heart_outline
+        )
+        holder.likeCountTextView.text = "${message.likesCount} Likes"
+
+        // Like button click listener
+        holder.likeButton.setOnClickListener {
+            val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return@setOnClickListener
+
+            // Toggle like
+            if (message.likedBy.contains(currentUserId)) {
+                message.likedBy.remove(currentUserId)
+                message.likesCount--
             } else {
-                "Anonymous"
+                message.likedBy.add(currentUserId)
+                message.likesCount++
             }
 
-            // Set the message content
-            messageTextView.text = chatMessage.message ?: "No content"
+            // Update UI
+            holder.likeCountTextView.text = "${message.likesCount} Likes"
+            holder.likeButton.setImageResource(
+                if (message.likedBy.contains(currentUserId)) R.drawable.ic_heart_filled else R.drawable.ic_heart_outline
+            )
 
-            // Format the timestamp and set it
-            val dateFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
-            val timeString = try {
-                dateFormat.format(Date(chatMessage.createdAt))
-            } catch (e: Exception) {
-                "Unknown Time"
-            }
-            timestampTextView.text = timeString
+            // Update Firebase
+            FirebaseHelper.updatePostLikes(
+                postId = message.senderId,
+                likesCount = message.likesCount,
+                likedBy = message.likedBy,
+                tournamentId = tournamentId
+            )
+        }
+
+        // Handle comment button click
+        holder.commentButton.setOnClickListener {
+            // Navigate to CommentFragment
+            val commentFragment = CommentFragment()
+            val bundle = Bundle()
+            bundle.putString("postId", message.senderId)
+            bundle.putString("tournamentId", tournamentId)
+            commentFragment.arguments = bundle
+
+            val navController = (context as FragmentActivity)
+                .supportFragmentManager
+                .findFragmentById(R.id.nav_host_fragment)?.findNavController()
+
+            navController?.navigate(
+                R.id.commentFragment,
+                bundle
+            )
         }
     }
+
+    // Item count
+    override fun getItemCount(): Int = messages.size
 }

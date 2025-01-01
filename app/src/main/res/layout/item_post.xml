@@ -3,65 +3,99 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
+    android:orientation="horizontal"
     android:padding="8dp">
 
-    <!-- User Name -->
-    <TextView
-        android:id="@+id/userNameTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textStyle="bold"
-        android:textSize="16sp"
-        android:layout_marginBottom="4dp" />
+    <!-- User Image -->
+    <ImageView
+        android:id="@+id/userImageView"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:src="@drawable/ic_user"
+        android:scaleType="centerCrop"
+        android:contentDescription="User Image"
+        android:layout_marginEnd="8dp" />
 
-    <!-- Post Content -->
-    <TextView
-        android:id="@+id/contentTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="14sp"
-        android:layout_marginBottom="8dp" />
-
-    <!-- Likes and Comments -->
+    <!-- Vertical Content -->
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <!-- Like Button -->
-        <TextView
-            android:id="@+id/likeButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Like"
-            android:padding="8dp"
-            android:background="@drawable/rounded_background"
-            android:layout_marginEnd="16dp" />
-
-        <!-- Like Count -->
-        <TextView
-            android:id="@+id/likeCountTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="0 Likes"
-            android:layout_marginEnd="16dp" />
-
-        <!-- Comment Button -->
-        <TextView
-            android:id="@+id/commentButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Comment"
-            android:padding="8dp"
-            android:background="@drawable/rounded_background" />
-    </LinearLayout>
-
-    <!-- Comments Section -->
-    <LinearLayout
-        android:id="@+id/commentsSection"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:layout_marginTop="8dp" />
+        android:layout_weight="1">
+
+        <!-- User Name -->
+        <TextView
+            android:id="@+id/userNameTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:layout_marginBottom="4dp"
+            android:contentDescription="User Name" />
+
+        <!-- Post Content with Timestamp -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp">
+
+            <!-- Post Content -->
+            <TextView
+                android:id="@+id/contentTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:layout_alignParentStart="true"
+                android:contentDescription="Post Content" />
+
+            <!-- Timestamp -->
+            <TextView
+                android:id="@+id/timestampTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="@android:color/darker_gray"
+                android:layout_alignParentEnd="true"
+                android:contentDescription="Timestamp" />
+        </RelativeLayout>
+
+        <!-- Likes and Comments -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp">
+
+            <!-- Heart (Like) Button -->
+            <ImageView
+                android:id="@+id/likeButton"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_heart_outline"
+                android:contentDescription="Like Button"
+                android:padding="4dp" />
+
+            <!-- Like Count -->
+            <TextView
+                android:id="@+id/likeCountTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0 Likes"
+                android:layout_marginStart="8dp"
+                android:contentDescription="Like Count" />
+
+            <!-- Comment Button -->
+            <ImageView
+                android:id="@+id/commentButton"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_comment"
+                android:contentDescription="Comment Button"
+                android:layout_marginStart="16dp"
+                android:padding="4dp" />
+        </LinearLayout>
+    </LinearLayout>
+
 </LinearLayout>

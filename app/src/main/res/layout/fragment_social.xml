@@ -17,11 +17,13 @@
 
     <!-- Message Input Section -->
     <LinearLayout
+        android:id="@+id/messageInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:padding="8dp"
         android:background="@android:color/white"
+        android:layout_alignParentBottom="true"
         android:elevation="4dp">
 
         <!-- Message Input Field -->
@@ -38,16 +40,49 @@
             android:textAlignment="viewStart"
             android:gravity="start|center_vertical" />
 
-
         <!-- Send Button -->
         <ImageView
             android:id="@+id/sendPostButton"
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:layout_marginStart="8dp"
-            android:layout_marginBottom="8dp"
             android:src="@drawable/ic_send"
             android:contentDescription="@string/send_message"
             app:tint="@android:color/black" />
     </LinearLayout>
+
+    <!--    <LinearLayout-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:orientation="horizontal"-->
+<!--        android:padding="8dp"-->
+<!--        android:background="@android:color/white"-->
+<!--        android:elevation="4dp">-->
+
+<!--        &lt;!&ndash; Message Input Field &ndash;&gt;-->
+<!--        <EditText-->
+<!--            android:id="@+id/newPostInput"-->
+<!--            android:layout_width="0dp"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_weight="1"-->
+<!--            android:hint="@string/type_message"-->
+<!--            android:background="@drawable/rounded_background"-->
+<!--            android:padding="8dp"-->
+<!--            android:imeOptions="actionSend"-->
+<!--            android:inputType="text"-->
+<!--            android:textAlignment="viewStart"-->
+<!--            android:gravity="start|center_vertical" />-->
+
+
+<!--        &lt;!&ndash; Send Button &ndash;&gt;-->
+<!--        <ImageView-->
+<!--            android:id="@+id/sendPostButton"-->
+<!--            android:layout_width="48dp"-->
+<!--            android:layout_height="48dp"-->
+<!--            android:layout_marginStart="8dp"-->
+<!--            android:layout_marginBottom="8dp"-->
+<!--            android:src="@drawable/ic_send"-->
+<!--            android:contentDescription="@string/send_message"-->
+<!--            app:tint="@android:color/black" />-->
+<!--    </LinearLayout>-->
 </LinearLayout>

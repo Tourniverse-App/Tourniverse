@@ -17,6 +17,7 @@ import com.example.tourniverse.models.ChatMessage
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.example.tourniverse.models.Comment
 
 class SocialFragment : Fragment() {
 
@@ -72,7 +73,11 @@ class SocialFragment : Fragment() {
 
         // RecyclerView setup
         chatRecyclerView.layoutManager = LinearLayoutManager(requireContext())
-        adapter = ChatAdapter(chatMessages)
+        adapter = ChatAdapter(
+            requireContext(),         // Pass Context using 'requireContext()'
+            chatMessages,             // Pass the list of messages
+            tournamentId ?: ""        // Pass the tournamentId (fallback to empty string if null)
+        )
         chatRecyclerView.adapter = adapter
 
         // Log RecyclerView initialization
@@ -128,7 +133,7 @@ class SocialFragment : Fragment() {
         }
 
         // Profanity filter
-        val bannedWords = listOf("fuck", "bitch", "gay", "zona", "dick", "shit", "homo" ) // Replace with actual banned words
+        val bannedWords = listOf("fuck", "bitch", "gay", "zona", "dick", "shit", "homo") // Replace with actual banned words
         val filteredContent = content.split(" ").joinToString(" ") { word ->
             if (bannedWords.contains(word.lowercase())) "***" else word
         }
@@ -140,7 +145,10 @@ class SocialFragment : Fragment() {
                     senderId = userId,
                     senderName = username,
                     message = filteredContent,
-                    createdAt = System.currentTimeMillis()
+                    createdAt = System.currentTimeMillis(),
+                    likesCount = 0, // Added for likes
+                    likedBy = mutableListOf(), // Added for likes tracking
+                    comments = mutableListOf() // Added for comments tracking
                 )
 
                 db.collection("tournaments")
@@ -156,6 +164,54 @@ class SocialFragment : Fragment() {
             }
             .addOnFailureListener { e ->
                 Log.e("SocialFragment", "Error fetching username for userId: $userId, ${e.message}")
+            }
+    }
+
+    private fun updateLikes(postId: String, newLikesCount: Int, likedBy: List<String>) {
+        val postRef = db.collection("tournaments")
+            .document(tournamentId!!)
+            .collection("chat")
+            .document(postId)
+
+        postRef.update(
+            mapOf(
+                "likesCount" to newLikesCount,
+                "likedBy" to likedBy
+            )
+        ).addOnFailureListener { e ->
+            Log.e("SocialFragment", "Failed to update likes: ${e.message}")
+        }
+    }
+
+    private fun addComment(postId: String, commentText: String) {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        val userId = currentUser?.uid ?: "Unknown"
+
+        db.collection("users").document(userId).get()
+            .addOnSuccessListener { userSnapshot ->
+                val username = userSnapshot.getString("username") ?: "Anonymous"
+
+                // Create comment object
+                val comment = Comment(
+                    userId = userId,
+                    username = username,
+                    text = commentText,
+                    createdAt = System.currentTimeMillis()
+                )
+
+                // Update the comments array in Firebase
+                val postRef = db.collection("tournaments")
+                    .document(tournamentId!!)
+                    .collection("chat")
+                    .document(postId)
+
+                postRef.update(
+                    "comments", com.google.firebase.firestore.FieldValue.arrayUnion(comment)
+                ).addOnSuccessListener {
+                    Log.d("SocialFragment", "Comment added successfully!")
+                }.addOnFailureListener { e ->
+                    Log.e("SocialFragment", "Failed to add comment: ${e.message}")
+                }
             }
     }
 

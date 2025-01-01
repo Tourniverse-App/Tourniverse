@@ -1,22 +1,33 @@
 package com.example.tourniverse.adapters
 
+import android.content.Context
+import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
+import androidx.fragment.app.FragmentActivity
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tourniverse.R
-import com.example.tourniverse.models.Post
+import com.example.tourniverse.fragments.CommentFragment
+import com.example.tourniverse.models.ChatMessage
+import com.example.tourniverse.utils.FirebaseHelper
+import com.google.firebase.auth.FirebaseAuth
 
-class PostAdapter(private val posts: MutableList<Post>) : RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
+class PostAdapter(
+    private val context: Context,
+    private val posts: MutableList<ChatMessage>,
+    private val tournamentId: String // Added tournamentId for navigation
+) : RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
 
     inner class PostViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val userNameTextView: TextView = view.findViewById(R.id.userNameTextView)
         val contentTextView: TextView = view.findViewById(R.id.contentTextView)
-        val likeButton: TextView = view.findViewById(R.id.likeButton)
+        val likeButton: ImageView = view.findViewById(R.id.likeButton)
         val likeCountTextView: TextView = view.findViewById(R.id.likeCountTextView)
-        val commentButton: TextView = view.findViewById(R.id.commentButton)
-        val commentsSection: ViewGroup = view.findViewById(R.id.commentsSection)
+        val commentButton: ImageView = view.findViewById(R.id.commentButton)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PostViewHolder {
@@ -27,35 +38,68 @@ class PostAdapter(private val posts: MutableList<Post>) : RecyclerView.Adapter<P
     override fun onBindViewHolder(holder: PostViewHolder, position: Int) {
         val post = posts[position]
 
-        holder.userNameTextView.text = post.userName
-        holder.contentTextView.text = post.content
-        holder.likeCountTextView.text = "${post.likes} Likes"
+        // Display post details
+        holder.userNameTextView.text = post.senderName
+        holder.contentTextView.text = post.message
+        holder.likeCountTextView.text = "${post.likesCount} Likes"
 
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+
+        // Update heart button state
+        val isLiked = post.likedBy.contains(currentUserId)
+        holder.likeButton.setImageResource(
+            if (isLiked) R.drawable.ic_heart_filled else R.drawable.ic_heart_outline
+        )
+
+        // Handle like button click
         holder.likeButton.setOnClickListener {
-            post.likes++
-            holder.likeCountTextView.text = "${post.likes} Likes"
+            if (currentUserId == null) return@setOnClickListener
+
+            if (post.likedBy.contains(currentUserId)) {
+                post.likedBy.remove(currentUserId)
+                post.likesCount--
+            } else {
+                post.likedBy.add(currentUserId)
+                post.likesCount++
+            }
+
+            // Update UI
+            holder.likeCountTextView.text = "${post.likesCount} Likes"
+            holder.likeButton.setImageResource(
+                if (post.likedBy.contains(currentUserId)) R.drawable.ic_heart_filled else R.drawable.ic_heart_outline
+            )
+
+            // Update Firebase
+            FirebaseHelper.updatePostLikes(
+                postId = post.senderId,
+                likesCount = post.likesCount,
+                likedBy = post.likedBy,
+                tournamentId = tournamentId // Pass tournamentId for database path
+            )
         }
 
+        // Handle comment button click
         holder.commentButton.setOnClickListener {
-            val newComment = "Example comment ${post.comments.size + 1}"
-            post.comments.add(newComment)
-            val commentTextView = TextView(holder.itemView.context).apply {
-                text = newComment
-                textSize = 14f
-                setPadding(8, 8, 8, 8)
-            }
-            holder.commentsSection.addView(commentTextView)
-        }
+            // Create CommentFragment and pass arguments
+            val commentFragment = CommentFragment()
+            val bundle = Bundle()
+            bundle.putString("postId", post.senderId)
+            bundle.putString("tournamentId", tournamentId)
+            commentFragment.arguments = bundle
 
-        // Display existing comments
-        holder.commentsSection.removeAllViews()
-        post.comments.forEach { comment ->
-            val commentTextView = TextView(holder.itemView.context).apply {
-                text = comment
-                textSize = 14f
-                setPadding(8, 8, 8, 8)
-            }
-            holder.commentsSection.addView(commentTextView)
+            // Navigate to CommentFragment
+            val navController = (context as FragmentActivity)
+                .supportFragmentManager
+                .findFragmentById(R.id.nav_host_fragment)?.findNavController()
+
+            navController?.navigate(
+                R.id.commentFragment, // Replace with the ID of your CommentFragment in the nav_graph.xml
+                Bundle().apply {
+                    putString("postId", post.senderId)
+                    putString("tournamentId", tournamentId)
+                }
+            )
+
         }
     }
 
