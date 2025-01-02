@@ -15,8 +15,9 @@ import com.example.tourniverse.fragments.*
  * @param tournamentId The ID of the current tournament, passed to relevant fragments.
  */
 class TournamentPagerAdapter(
-    fragmentActivity: FragmentActivity,
-    private val tournamentId: String
+    private val fragmentActivity: FragmentActivity,
+    private val tournamentId: String,
+    private val tournamentFormat: String
 ) : FragmentStateAdapter(fragmentActivity) {
 
     override fun getItemCount(): Int = 4
@@ -28,13 +29,16 @@ class TournamentPagerAdapter(
         val fragment = when (position) {
             0 -> SocialFragment()
             1 -> StandingsFragment()
-            2 -> StatisticsFragment()
+            2 -> if (tournamentFormat == "Tables") TableStatisticsFragment() else KnockoutStatisticsFragment()
             3 -> TournamentSettingsFragment()
             else -> throw IllegalArgumentException("Invalid tab position: $position")
         }
 
         // Attach tournamentId to the fragment
-        fragment.arguments = Bundle().apply { putString("tournamentId", tournamentId) }
+        fragment.arguments = Bundle().apply {
+            putString("tournamentId", tournamentId)
+            putString("tournamentFormat", fragmentActivity.intent.getStringExtra("tournamentFormat"))
+        }
         return fragment
     }
 }

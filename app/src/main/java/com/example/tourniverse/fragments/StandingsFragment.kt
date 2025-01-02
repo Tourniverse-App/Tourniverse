@@ -25,14 +25,6 @@ class StandingsFragment : Fragment() {
     private val fixtures = mutableListOf<Match>()
     private var isOwner = false
 
-    /**
-     * Called to create and return the view hierarchy associated with the fragment.
-     *
-     * @param inflater LayoutInflater used to inflate any views in the fragment.
-     * @param container ViewGroup that contains the fragment's UI.
-     * @param savedInstanceState Bundle containing the fragment's previously saved state.
-     * @return The View for the fragment's UI.
-     */
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -44,11 +36,15 @@ class StandingsFragment : Fragment() {
         saveButton = view.findViewById(R.id.saveButton)
         fixturesRecyclerView.layoutManager = LinearLayoutManager(requireContext())
 
+        // Get arguments
         tournamentId = arguments?.getString("tournamentId")
-        isOwner = arguments?.getBoolean("isOwner") ?: false
+
+        // Check if user is owner (compare user ID with tournament owner ID)
+        isOwner = true // Replace this with actual ownership check logic
 
         Log.d("StandingsFragment", "tournamentId: $tournamentId, isOwner: $isOwner")
 
+        // Show or hide save button based on ownership
         saveButton.visibility = if (isOwner) View.VISIBLE else View.GONE
         saveButton.setOnClickListener { saveScoresToFirestore() }
 
@@ -132,7 +128,7 @@ class StandingsFragment : Fragment() {
                         .addOnSuccessListener {
                             Log.d("StandingsFragment", "saveScoresToFirestore commit success")
                             updateStandings()
-                            notifyStatisticsUpdate()
+                            notifyStatisticsFragments()
                         }
                         .addOnFailureListener { e ->
                             Log.e("StandingsFragment", "saveScoresToFirestore commit failed: ${e.message}")
@@ -140,6 +136,68 @@ class StandingsFragment : Fragment() {
                 }
                 .addOnFailureListener { e ->
                     Log.e("StandingsFragment", "saveScoresToFirestore failed: ${e.message}")
+                }
+        }
+    }
+
+    /**
+     * Updates standings for Table Statistics Fragment.
+     */
+    private fun notifyStatisticsFragments() {
+        Log.d("StandingsFragment", "notifyStatisticsFragments called")
+
+        // Notify Table Statistics Fragment
+        val tableFragment =
+            parentFragmentManager.findFragmentByTag("tableStatisticsFragment") as? TableStatisticsFragment
+        tableFragment?.updateTableStatistics(fixtures.map { match ->
+            TeamStanding(
+                match.teamA,
+                0,
+                0,
+                0,
+                match.scoreA,
+                match.scoreA * 3 // Example point logic
+            )
+        })
+
+        // Notify Knockout Statistics Fragment
+        val knockoutFragment =
+            parentFragmentManager.findFragmentByTag("knockoutStatisticsFragment") as? KnockoutStatisticsFragment
+        knockoutFragment?.updateKnockoutMatches(fixtures)
+    }
+
+    /**
+     * Updates specific match scores in Firestore.
+     */
+    private fun updateMatchScores(match: Match, newScoreA: Int, newScoreB: Int) {
+        Log.d("StandingsFragment", "updateMatchScores called for match: ${match.teamA} vs ${match.teamB}")
+        tournamentId?.let { id ->
+            db.collection("tournaments").document(id)
+                .collection("matches")
+                .whereEqualTo("teamA", match.teamA)
+                .whereEqualTo("teamB", match.teamB)
+                .get()
+                .addOnSuccessListener { documents ->
+                    for (document in documents) {
+                        val matchRef = db.collection("tournaments")
+                            .document(id)
+                            .collection("matches")
+                            .document(document.id)
+
+                        matchRef.update("scoreA", newScoreA, "scoreB", newScoreB)
+                            .addOnSuccessListener {
+                                Log.d("StandingsFragment", "Match scores updated successfully.")
+                                Toast.makeText(
+                                    context,
+                                    "Scores updated successfully.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                notifyStatisticsFragments()
+                            }
+                            .addOnFailureListener { e ->
+                                Log.e("StandingsFragment", "Failed to update match scores: ${e.message}")
+                            }
+                    }
                 }
         }
     }
@@ -169,13 +227,11 @@ class StandingsFragment : Fragment() {
                     standingA.points += 3
                     standingB.losses += 1
                 }
-
                 scoreA < scoreB -> {
                     standingB.wins += 1
                     standingB.points += 3
                     standingA.losses += 1
                 }
-
                 else -> {
                     standingA.draws += 1
                     standingA.points += 1
@@ -189,8 +245,7 @@ class StandingsFragment : Fragment() {
         }
 
         val batch = db.batch()
-        val standingsRef =
-            db.collection("tournaments").document(tournamentId!!).collection("standings")
+        val standingsRef = db.collection("tournaments").document(tournamentId!!).collection("standings")
         standingsMap.forEach { (teamName, standing) ->
             val docRef = standingsRef.document(teamName)
             batch.set(docRef, standing)
@@ -205,70 +260,4 @@ class StandingsFragment : Fragment() {
             }
     }
 
-    /**
-     * Notifies the StatisticsFragment to fetch the updated statistics data.
-     */
-    private fun notifyStatisticsUpdate() {
-        Log.d("StandingsFragment", "notifyStatisticsUpdate called")
-        val statisticsFragment =
-            parentFragmentManager.findFragmentByTag("statisticsFragment") as? StatisticsFragment
-        statisticsFragment?.fetchStatisticsData()
-    }
-
-    /**
-     * Updates the scores for a specific match in Firestore.
-     *
-     * @param match The match object containing the teams and current scores.
-     * @param newScoreA The new score for team A.
-     * @param newScoreB The new score for team B.
-     */
-    private fun updateMatchScores(match: Match, newScoreA: Int, newScoreB: Int) {
-        Log.d("StandingsFragment", "updateMatchScores called for match: ${match.teamA} vs ${match.teamB}")
-        tournamentId?.let { id ->
-            // Query Firestore for the match document using team names
-            db.collection("tournaments").document(id)
-                .collection("matches")
-                .whereEqualTo("teamA", match.teamA)
-                .whereEqualTo("teamB", match.teamB)
-                .get()
-                .addOnSuccessListener { documents ->
-                    for (document in documents) {
-                        val matchRef = db.collection("tournaments")
-                            .document(id)
-                            .collection("matches")
-                            .document(document.id)
-
-                        // Update scores in Firestore
-                        matchRef.update(
-                            "scoreA", newScoreA,
-                            "scoreB", newScoreB
-                        )
-                            .addOnSuccessListener {
-                                Log.d("StandingsFragment", "Match scores updated successfully.")
-                                Toast.makeText(
-                                    context,
-                                    "Scores updated successfully.",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                                notifyStatisticsUpdate()
-                            }
-                            .addOnFailureListener { e ->
-                                Log.e(
-                                    "StandingsFragment",
-                                    "Failed to update match scores: ${e.message}"
-                                )
-                                Toast.makeText(
-                                    context,
-                                    "Failed to update scores.",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                    }
-                }
-                .addOnFailureListener { e ->
-                    Log.e("StandingsFragment", "Failed to find match: ${e.message}")
-                    Toast.makeText(context, "Failed to find match.", Toast.LENGTH_SHORT).show()
-                }
-        }
-    }
 }

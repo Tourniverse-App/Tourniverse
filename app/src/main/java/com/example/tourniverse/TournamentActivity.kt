@@ -18,9 +18,10 @@ class TournamentActivity : AppCompatActivity() {
 
         // Retrieve tournamentId passed through intent
         val tournamentId = intent.getStringExtra("tournamentId") ?: ""
+        val tournamentFormat = intent.getStringExtra("tournamentFormat") ?: "Tables"
 
-        // Pass the tournamentId to the adapter
-        val adapter = TournamentPagerAdapter(this, tournamentId)
+        // Pass the tournamentId and tournamentFormat to the adapter
+        val adapter = TournamentPagerAdapter(this, tournamentId, tournamentFormat)
         viewPager.adapter = adapter
 
         TabLayoutMediator(tabLayout, viewPager) { tab, position ->

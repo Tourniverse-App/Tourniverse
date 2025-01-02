@@ -35,8 +35,7 @@
         android:textSize="16sp"
         android:singleLine="true"
         android:ellipsize="end"
-        android:layout_marginBottom="4dp"
-        android:visibility="gone" /> <!-- Initially hidden -->
+        android:layout_marginBottom="4dp" />
 
     <!-- Tournament Description -->
     <TextView
@@ -46,6 +45,15 @@
         android:textSize="16sp"
         android:singleLine="true"
         android:ellipsize="end"
+        android:layout_marginBottom="8dp"
+        android:visibility="gone" /> <!-- Initially hidden -->
+
+    <!-- View Statistics Button -->
+    <Button
+        android:id="@+id/btnViewStatistics"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="View Statistics"
         android:layout_marginBottom="8dp"
         android:visibility="gone" /> <!-- Initially hidden -->
 

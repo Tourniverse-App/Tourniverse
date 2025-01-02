@@ -5,9 +5,11 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import androidx.viewpager2.widget.ViewPager2
 import com.example.tourniverse.R
 import com.example.tourniverse.adapters.TournamentPagerAdapter
@@ -27,6 +29,7 @@ class TournamentDetailsFragment : Fragment() {
     private lateinit var tvTournamentType: TextView
     private lateinit var tvTournamentFormat: TextView
     private lateinit var tvTournamentDescription: TextView
+    private lateinit var btnViewStatistics: Button
 
     private val db = FirebaseFirestore.getInstance()
 
@@ -52,6 +55,7 @@ class TournamentDetailsFragment : Fragment() {
         tvTournamentType = view.findViewById(R.id.tvTournamentType)
         tvTournamentFormat = view.findViewById(R.id.tvTournamentFormat)
         tvTournamentDescription = view.findViewById(R.id.tvTournamentDescription)
+        btnViewStatistics = view.findViewById(R.id.btnViewStatistics)
 
         // Fetch tournament details if tournamentId is valid
         if (!tournamentId.isNullOrEmpty()) {
@@ -61,7 +65,7 @@ class TournamentDetailsFragment : Fragment() {
         // Setup TabLayout and ViewPager2
         val tabLayout = view.findViewById<TabLayout>(R.id.tabLayout)
         val viewPager = view.findViewById<ViewPager2>(R.id.viewPager)
-        val adapter = TournamentPagerAdapter(requireActivity(), tournamentId ?: "")
+        val adapter = TournamentPagerAdapter(requireActivity(), tournamentId ?: "", "Tables") // Pass the tournamentFormat
 
         viewPager.adapter = adapter
 
@@ -78,12 +82,6 @@ class TournamentDetailsFragment : Fragment() {
         return view
     }
 
-    /**
-     * Fetches the tournament details from Firestore using the provided tournamentId.
-     * Updates the UI with tournament name, type, format, and description.
-     *
-     * If certain fields (like format or description) are missing, the related views are hidden.
-     */
     private fun fetchTournamentDetails() {
         tournamentId?.let { id ->
             db.collection("tournaments").document(id)
@@ -95,48 +93,49 @@ class TournamentDetailsFragment : Fragment() {
                         val description = document.getString("description") ?: ""
                         val format = document.getString("type") ?: "Unknown"
 
-                        // Set tournament details in the UI
+                        // Set details in UI
                         tvTournamentName.text = name
                         tvTournamentType.text = "Type: $privacy"
+                        tvTournamentFormat.text = "Format: $format"
+                        tvTournamentDescription.text = description
 
-                        // Update format text
-                        if (format == "Tables") {
-                            tvTournamentFormat.text = "Format: Tables"
-                            tvTournamentFormat.visibility = View.VISIBLE
-                            displayTableStandings(id) // Fetch and display table standings
-                        } else if (format == "Knockout") {
-                            tvTournamentFormat.text = "Format: Knockout"
-                            tvTournamentFormat.visibility = View.VISIBLE
-                            displayKnockoutBrackets(id) // Fetch and display knockout brackets
-                        } else {
-                            tvTournamentFormat.visibility = View.GONE
-                        }
-
-                        // Update description text
-                        if (description.isNotEmpty()) {
-                            tvTournamentDescription.text = description
-                            tvTournamentDescription.visibility = View.VISIBLE
-                        } else {
-                            tvTournamentDescription.visibility = View.GONE
-                        }
+                        // Setup statistics button
+                        setupViewStatisticsButton(format)
                     } else {
-                        Log.e("TournamentDetails", "Tournament document not found.")
-                        Toast.makeText(
-                            requireContext(),
-                            "Tournament details not available.",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        Log.e("TournamentDetails", "Tournament not found.")
+                        Toast.makeText(requireContext(), "Tournament not available.", Toast.LENGTH_SHORT).show()
                     }
                 }
                 .addOnFailureListener { e ->
-                    Log.e("TournamentDetailsFragment", "Error fetching tournament details: ${e.message}")
-                    Toast.makeText(
-                        requireContext(),
-                        "Error loading tournament details. Please try again.",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    Log.e("TournamentDetailsFragment", "Error fetching details: ${e.message}")
+                    Toast.makeText(requireContext(), "Error loading details.", Toast.LENGTH_SHORT).show()
                 }
-        } ?: Log.e("TournamentDetailsFragment", "Tournament ID is null")
+        }
+    }
+
+    private fun setupViewStatisticsButton(format: String) {
+        btnViewStatistics.visibility = View.VISIBLE
+        btnViewStatistics.text = if (format == "Tables") "View Table Statistics" else "View Knockout Brackets"
+
+        btnViewStatistics.setOnClickListener {
+            when (format) {
+                "Tables" -> navigateToTableStatistics()
+                "Knockout" -> navigateToKnockoutStatistics()
+                else -> Toast.makeText(requireContext(), "Invalid format!", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun navigateToTableStatistics() {
+        val action = TournamentDetailsFragmentDirections
+            .actionTournamentDetailsFragmentToTableStatisticsFragment(tournamentId!!)
+        findNavController().navigate(action)
+    }
+
+    private fun navigateToKnockoutStatistics() {
+        val action = TournamentDetailsFragmentDirections
+            .actionTournamentDetailsFragmentToKnockoutStatisticsFragment(tournamentId!!)
+        findNavController().navigate(action)
     }
 
     private fun initializeStandings(tournamentId: String) {
@@ -173,7 +172,6 @@ class TournamentDetailsFragment : Fragment() {
                 Log.e("TournamentDetails", "Error checking standings: ${e.message}")
             }
     }
-
 
     private fun initializeKnockoutBracket(tournamentId: String) {
         db.collection("tournaments").document(tournamentId).collection("knockout_bracket").get()
@@ -243,5 +241,4 @@ class TournamentDetailsFragment : Fragment() {
                 Log.e("TournamentDetailsFragment", "Error fetching matches: ${e.message}")
             }
     }
-
 }
