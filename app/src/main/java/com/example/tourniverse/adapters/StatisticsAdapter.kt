@@ -11,7 +11,7 @@ import com.example.tourniverse.models.TeamStanding
 import com.example.tourniverse.models.Match
 
 class StatisticsAdapter(
-    private val items: List<Any>, // Can be TeamStanding for tables or Match for knockout
+    private var items: List<Any>, // Can be TeamStanding for tables or Match for knockout
     private val isKnockout: Boolean
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
@@ -33,7 +33,9 @@ class StatisticsAdapter(
 
     // ViewHolder for Knockout matches
     class KnockoutViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val matchTextView: TextView = view.findViewById(R.id.matchTextView)
+        val teamAName: TextView = view.findViewById(R.id.teamAName)
+        val scores: TextView = view.findViewById(R.id.scores)
+        val teamBName: TextView = view.findViewById(R.id.teamBName)
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -47,7 +49,7 @@ class StatisticsAdapter(
             TableViewHolder(view)
         } else {
             val view = LayoutInflater.from(parent.context)
-                .inflate(R.layout.item_statistics_knockout, parent, false)
+                .inflate(R.layout.item_knockout_square, parent, false)
             KnockoutViewHolder(view)
         }
     }
@@ -64,7 +66,14 @@ class StatisticsAdapter(
                 holder.pointsTextView.text = teamStat.points.toString()
             } else if (holder is KnockoutViewHolder && items[position] is Match) {
                 val match = items[position] as Match
-                holder.matchTextView.text = "${match.teamA} vs ${match.teamB} - Score: ${match.scoreA}:${match.scoreB}"
+                holder.teamAName.text = match.teamA
+                holder.teamBName.text = match.teamB
+                holder.scores.text = "${match.scoreA} : ${match.scoreB}"
+
+                // Highlight if scores are updated (Optional Feature)
+                if (match.scoreA > 0 || match.scoreB > 0) {
+                    holder.scores.setTextColor(holder.itemView.context.getColor(R.color.black))
+                }
             } else {
                 Log.w(TAG, "Unexpected item type or ViewHolder at position $position")
             }
@@ -74,4 +83,12 @@ class StatisticsAdapter(
     }
 
     override fun getItemCount(): Int = items.size
+
+    /**
+     * Updates the data dynamically when changes occur.
+     */
+    fun updateData(newItems: List<Any>) {
+        items = newItems
+        notifyDataSetChanged()
+    }
 }

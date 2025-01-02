@@ -5,6 +5,19 @@
     android:padding="16dp"
     android:background="@color/white">
 
+    <!-- Save Button (Visible only to owner) -->
+    <Button
+        android:id="@+id/saveButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Save"
+        android:visibility="gone"
+        android:backgroundTint="@color/black"
+        android:textColor="@color/white"
+        android:layout_gravity="end"
+        android:layout_marginBottom="8dp" />
+
+    <!-- RecyclerView for Fixtures -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewFixtures"
         android:layout_width="match_parent"

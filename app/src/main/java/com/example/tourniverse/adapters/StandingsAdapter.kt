@@ -55,10 +55,20 @@ class StandingsAdapter(
                 if (isUpdating) return
                 try {
                     val newScoreA = s?.toString()?.toIntOrNull() ?: 0
+
+                    // Highlight changes
+                    if (newScoreA != match.scoreA) {
+                        holder.scoreA.setTextColor(holder.itemView.context.getColor(R.color.black))
+                    }
+
                     Log.d(TAG, "ScoreA changed: $newScoreA for match: ${match.teamA} vs ${match.teamB}")
-                    isUpdating = true
-                    updateMatchScores(match, newScoreA, match.scoreB)
-                    isUpdating = false
+
+                    // Ignore updates for 0-0 unless changed
+                    if (newScoreA != 0 || match.scoreB != 0) {
+                        isUpdating = true
+                        updateMatchScores(match, newScoreA, match.scoreB)
+                        isUpdating = false
+                    }
                 } catch (e: Exception) {
                     Log.e(TAG, "Error updating ScoreA: ${e.message}")
                 }
@@ -73,10 +83,20 @@ class StandingsAdapter(
                 if (isUpdating) return
                 try {
                     val newScoreB = s?.toString()?.toIntOrNull() ?: 0
+
+                    // Highlight changes
+                    if (newScoreB != match.scoreB) {
+                        holder.scoreB.setTextColor(holder.itemView.context.getColor(R.color.black))
+                    }
+
                     Log.d(TAG, "ScoreB changed: $newScoreB for match: ${match.teamA} vs ${match.teamB}")
-                    isUpdating = true
-                    updateMatchScores(match, match.scoreA, newScoreB)
-                    isUpdating = false
+
+                    // Ignore updates for 0-0 unless changed
+                    if (match.scoreA != 0 || newScoreB != 0) {
+                        isUpdating = true
+                        updateMatchScores(match, match.scoreA, newScoreB)
+                        isUpdating = false
+                    }
                 } catch (e: Exception) {
                     Log.e(TAG, "Error updating ScoreB: ${e.message}")
                 }

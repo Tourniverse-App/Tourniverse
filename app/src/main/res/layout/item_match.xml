@@ -6,14 +6,16 @@
     android:orientation="horizontal"
     android:padding="8dp">
 
+    <!-- Team A Name -->
     <TextView
         android:id="@+id/teamA"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Team A"
         android:layout_weight="1"
+        android:text="Team A"
         android:textSize="16sp" />
 
+    <!-- Score Input for Team A -->
     <EditText
         android:id="@+id/scoreAInput"
         android:layout_width="40dp"
@@ -21,12 +23,14 @@
         android:hint="0"
         android:inputType="number" />
 
+    <!-- Separator -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text=":"
         android:layout_marginHorizontal="4dp" />
 
+    <!-- Score Input for Team B -->
     <EditText
         android:id="@+id/scoreBInput"
         android:layout_width="40dp"
@@ -34,61 +38,19 @@
         android:hint="0"
         android:inputType="number" />
 
+    <!-- Team B Name -->
     <TextView
         android:id="@+id/teamB"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Team B"
         android:layout_weight="1"
+        android:text="Team B"
         android:textSize="16sp" />
 
+    <!-- Update Score Button -->
     <Button
         android:id="@+id/updateScoreButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Update" />
 </LinearLayout>
-
-
-
-    <!--<?xml version="1.0" encoding="utf-8"?>-->
-    <!--<LinearLayout-->
-    <!--    xmlns:android="http://schemas.android.com/apk/res/android"-->
-    <!--    android:layout_width="match_parent"-->
-    <!--    android:layout_height="wrap_content"-->
-    <!--    android:orientation="horizontal"-->
-    <!--    android:padding="8dp"-->
-    <!--    android:background="@drawable/rounded_background"-->
-    <!--    android:layout_marginBottom="8dp">-->
-
-    <!--    &lt;!&ndash; Home Team &ndash;&gt;-->
-    <!--    <TextView-->
-    <!--        android:id="@+id/homeTeamTextView"-->
-    <!--        android:layout_width="0dp"-->
-    <!--        android:layout_height="wrap_content"-->
-    <!--        android:layout_weight="3"-->
-    <!--        android:textStyle="bold"-->
-    <!--        android:textSize="16sp"-->
-    <!--        android:gravity="center_vertical" />-->
-
-    <!--    &lt;!&ndash; Score &ndash;&gt;-->
-    <!--    <TextView-->
-    <!--        android:id="@+id/scoreTextView"-->
-    <!--        android:layout_width="0dp"-->
-    <!--        android:layout_height="wrap_content"-->
-    <!--        android:layout_weight="1"-->
-    <!--        android:textStyle="bold"-->
-    <!--        android:textSize="16sp"-->
-    <!--        android:gravity="center"-->
-    <!--        android:layout_marginHorizontal="8dp" />-->
-
-    <!--    &lt;!&ndash; Away Team &ndash;&gt;-->
-    <!--    <TextView-->
-    <!--        android:id="@+id/awayTeamTextView"-->
-    <!--        android:layout_width="0dp"-->
-    <!--        android:layout_height="wrap_content"-->
-    <!--        android:layout_weight="3"-->
-    <!--        android:textStyle="bold"-->
-    <!--        android:textSize="16sp"-->
-    <!--        android:gravity="center_vertical" />-->
-    <!--</LinearLayout>-->

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="8dp"
+    android:layout_margin="4dp"
+    android:background="@drawable/rounded_background">
+
+    <!-- Team A Name -->
+    <TextView
+        android:id="@+id/teamAName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Team A"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginBottom="4dp" />
+
+    <!-- Scores -->
+    <TextView
+        android:id="@+id/scores"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0 : 0"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:layout_marginBottom="4dp" />
+
+    <!-- Team B Name -->
+    <TextView
+        android:id="@+id/teamBName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Team B"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:gravity="center" />
+</LinearLayout>

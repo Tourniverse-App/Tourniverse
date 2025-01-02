@@ -49,10 +49,10 @@ object FirebaseHelper {
                     "description" to description,
                     "privacy" to privacy,
                     "teamNames" to teamNames,
+                    "format" to format, // Save the tournament format in Firestore
                     "ownerId" to ownerId,
                     "viewers" to emptyList<String>(),
-                    "createdAt" to System.currentTimeMillis(),
-                    "format" to format // Save the tournament format in Firestore
+                    "createdAt" to System.currentTimeMillis()
                 )
 
                 val tournamentRef = db.collection(TOURNAMENTS_COLLECTION)
@@ -91,24 +91,6 @@ object FirebaseHelper {
             }
     }
 
-
-
-    fun fetchTournamentIds(callback: (List<String>?, String?) -> Unit) {
-        db.collection(TOURNAMENTS_COLLECTION)
-            .get()
-            .addOnSuccessListener { documents ->
-                val tournamentIds = documents.map { it.id }
-                Log.d("FirebaseHelper", "Fetched Tournament IDs: $tournamentIds")
-                callback(tournamentIds, null)
-            }
-            .addOnFailureListener { e ->
-                Log.e("FirebaseHelper", "Error fetching tournaments: ${e.message}")
-                callback(null, e.message ?: "Failed to fetch tournament IDs")
-            }
-    }
-
-
-
     /**
      * Initializes subcollections for a new tournament.
      *
@@ -134,18 +116,6 @@ object FirebaseHelper {
             "createdAt" to System.currentTimeMillis()
         )
         batch.set(chatRef, welcomeMessage)
-
-        // Initialize scores collection (empty for now)
-        val scoresRef = db.collection(TOURNAMENTS_COLLECTION).document(tournamentId).collection("scores").document()
-        val placeholderScore = hashMapOf(
-            "teamA" to "",
-            "teamB" to "",
-            "scoreA" to 0,
-            "scoreB" to 0,
-            "winner" to "",
-            "playedAt" to System.currentTimeMillis()
-        )
-        batch.set(scoresRef, placeholderScore)
 
         // Generate matches based on format
         FirebaseHelper.generateMatches(tournamentId, teamNames, format) { success, error ->
@@ -181,6 +151,20 @@ object FirebaseHelper {
             .addOnFailureListener { e -> callback(false, e.message ?: "Failed to initialize subcollections") }
     }
 
+    fun fetchTournamentIds(callback: (List<String>?, String?) -> Unit) {
+        db.collection(TOURNAMENTS_COLLECTION)
+            .get()
+            .addOnSuccessListener { documents ->
+                val tournamentIds = documents.map { it.id }
+                Log.d("FirebaseHelper", "Fetched Tournament IDs: $tournamentIds")
+                callback(tournamentIds, null)
+            }
+            .addOnFailureListener { e ->
+                Log.e("FirebaseHelper", "Error fetching tournaments: ${e.message}")
+                callback(null, e.message ?: "Failed to fetch tournament IDs")
+            }
+    }
+
 
     fun generateMatches(
         tournamentId: String,
@@ -200,7 +184,6 @@ object FirebaseHelper {
                             "teamB" to teamNames[j],
                             "scoreA" to 0,
                             "scoreB" to 0,
-                            "round" to 0 // No rounds in tables, but default to 0
                         )
                     )
                 }

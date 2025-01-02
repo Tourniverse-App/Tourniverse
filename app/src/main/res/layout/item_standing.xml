@@ -18,7 +18,7 @@
         android:textStyle="bold"
         android:paddingEnd="8dp" />
 
-    <!-- Team A Score Input -->
+    <!-- Score Input for Team A -->
     <EditText
         android:id="@+id/scoreA"
         android:layout_width="40dp"
@@ -29,7 +29,7 @@
         android:textSize="16sp"
         android:padding="4dp" />
 
-    <!-- Team B Score Input -->
+    <!-- Score Input for Team B -->
     <EditText
         android:id="@+id/scoreB"
         android:layout_width="40dp"

@@ -10,7 +10,6 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tourniverse.R
-import com.example.tourniverse.adapters.StandingsAdapter
 import com.example.tourniverse.adapters.StatisticsAdapter
 import com.example.tourniverse.models.Match
 import com.example.tourniverse.models.TeamStanding
@@ -18,53 +17,64 @@ import com.google.firebase.firestore.FirebaseFirestore
 
 class StatisticsFragment : Fragment() {
 
-    private lateinit var standingsRecyclerView: RecyclerView
-    private lateinit var standingsAdapter: StandingsAdapter
+    private lateinit var statisticsRecyclerView: RecyclerView
+    private lateinit var statisticsAdapter: StatisticsAdapter
     private val teamStandings = mutableListOf<TeamStanding>()
+    private val knockoutMatches = mutableListOf<Match>()
     private val db = FirebaseFirestore.getInstance()
     private var tournamentId: String? = null
+    private var isKnockout: Boolean = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        Log.d("StatisticsFragment", "onCreateView called")
         val view = inflater.inflate(R.layout.fragment_statistics, container, false)
 
         // Initialize RecyclerView
-        val statisticsRecyclerView = view.findViewById<RecyclerView>(R.id.recyclerViewStatistics)
+        statisticsRecyclerView = view.findViewById(R.id.recyclerViewStatistics)
         statisticsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-        // Fetch tournament type and data
-        val isKnockout = arguments?.getBoolean("isKnockout") ?: false
-        val tournamentId = arguments?.getString("tournamentId") ?: ""
+        // Initialize the adapter
+        statisticsAdapter = StatisticsAdapter(teamStandings, false)
+        statisticsRecyclerView.adapter = statisticsAdapter
 
-        // Define collections
-        val teamStatistics = mutableListOf<TeamStanding>()
-        val knockoutMatches = mutableListOf<Match>()
+        // Fetch arguments
+        isKnockout = arguments?.getBoolean("isKnockout") ?: false
+        tournamentId = arguments?.getString("tournamentId") ?: ""
 
-        // Fetch data from Firestore
-        fetchStatisticsData(tournamentId, isKnockout, teamStatistics, knockoutMatches) {
-            val items = if (isKnockout) knockoutMatches else teamStatistics
-            val statisticsAdapter = StatisticsAdapter(items = items, isKnockout = isKnockout)
-            statisticsRecyclerView.adapter = statisticsAdapter
+        Log.d("StatisticsFragment", "isKnockout: $isKnockout, tournamentId: $tournamentId")
+
+        if (tournamentId.isNullOrEmpty()) {
+            Log.e("StatisticsFragment", "Tournament ID is missing.")
+            Toast.makeText(context, "Tournament ID is missing.", Toast.LENGTH_SHORT).show()
+            return view
         }
+
+        // Fetch data
+        fetchStatisticsData()
 
         return view
     }
 
-    private fun fetchStatisticsData(
-        tournamentId: String,
-        isKnockout: Boolean,
-        teamStatistics: MutableList<TeamStanding>,
-        knockoutMatches: MutableList<Match>,
-        callback: () -> Unit
-    ) {
-        val db = FirebaseFirestore.getInstance()
+    fun fetchStatisticsData() {
+        Log.d("StatisticsFragment", "Fetching statistics data for tournament: $tournamentId")
 
         if (isKnockout) {
-            db.collection("tournaments").document(tournamentId).collection("matches")
+            fetchKnockoutMatches()
+        } else {
+            fetchTeamStandings()
+        }
+    }
+
+    private fun fetchKnockoutMatches() {
+        Log.d("StatisticsFragment", "fetchKnockoutMatches called")
+        tournamentId?.let { id ->
+            db.collection("tournaments").document(id).collection("matches")
                 .get()
                 .addOnSuccessListener { snapshot ->
+                    Log.d("StatisticsFragment", "fetchKnockoutMatches success")
                     knockoutMatches.clear()
                     for (document in snapshot.documents) {
                         val matchesArray = document.get("matches") as? List<Map<String, Any>> ?: continue
@@ -73,27 +83,82 @@ class StatisticsFragment : Fragment() {
                             val teamB = match["teamB"] as? String ?: ""
                             val scoreA = (match["scoreA"] as? Long)?.toInt() ?: 0
                             val scoreB = (match["scoreB"] as? Long)?.toInt() ?: 0
-                            knockoutMatches.add(Match(teamA = teamA, teamB = teamB, scoreA = scoreA, scoreB = scoreB))
+
+                            // Only add matches that have scores updated
+                            if (!(scoreA == 0 && scoreB == 0)) {
+                                knockoutMatches.add(Match(teamA, teamB, scoreA, scoreB))
+                            }
                         }
                     }
-                    callback()
+                    updateKnockoutRounds()
                 }
-        } else {
-            db.collection("tournaments").document(tournamentId).collection("standings")
-                .get()
-                .addOnSuccessListener { snapshot ->
-                    teamStatistics.clear()
-                    for (document in snapshot.documents) {
-                        val teamStat = document.toObject(TeamStanding::class.java)
-                        teamStat?.let { teamStatistics.add(it) }
-                    }
-                    callback()
+                .addOnFailureListener { e ->
+                    Log.e("StatisticsFragment", "Failed to fetch knockout matches: ${e.message}")
                 }
         }
     }
 
+    private fun fetchTeamStandings() {
+        Log.d("StatisticsFragment", "fetchTeamStandings called")
 
-    private fun calculateStandings(matchResults: List<Pair<String, String>>, tournamentId: String) {
+        val standingsList = mutableListOf<TeamStanding>()
+
+        db.collection("tournaments").document(tournamentId!!).collection("standings")
+            .get()
+            .addOnSuccessListener { documents ->
+                Log.d("StatisticsFragment", "fetchTeamStandings success")
+                for (document in documents) {
+                    val standing = document.toObject(TeamStanding::class.java)
+                    standingsList.add(standing)
+                }
+
+                // Sort standings by points, then goal difference
+                standingsList.sortWith(compareByDescending<TeamStanding> { it.points }
+                    .thenByDescending { it.goals })
+
+                // Update the adapter with the sorted data
+                Log.d("StatisticsFragment", "Updating adapter with standings data")
+                statisticsAdapter.updateData(standingsList)
+            }
+            .addOnFailureListener { e ->
+                Log.e("StatisticsFragment", "Failed to fetch team standings: ${e.message}")
+            }
+    }
+
+    private fun updateKnockoutRounds() {
+        Log.d("StatisticsFragment", "updateKnockoutRounds called")
+
+        // Simulate advancing winners
+        val nextRound = mutableListOf<Match>()
+        for (i in 0 until knockoutMatches.size step 2) {
+            val match1 = knockoutMatches[i]
+            val winner = if (match1.scoreA > match1.scoreB) match1.teamA else match1.teamB
+
+            if (i + 1 < knockoutMatches.size) {
+                val match2 = knockoutMatches[i + 1]
+                val winner2 = if (match2.scoreA > match2.scoreB) match2.teamA else match2.teamB
+                nextRound.add(Match(winner, winner2, 0, 0)) // Next round match
+            }
+        }
+
+        knockoutMatches.addAll(nextRound)
+
+        Log.d("StatisticsFragment", "Updating adapter with knockout matches data")
+        statisticsAdapter = StatisticsAdapter(knockoutMatches, true)
+        statisticsRecyclerView.adapter = statisticsAdapter
+        statisticsAdapter.notifyDataSetChanged()
+    }
+
+    private fun updateTableStatistics() {
+        Log.d("StatisticsFragment", "updateTableStatistics called")
+
+        statisticsAdapter = StatisticsAdapter(teamStandings, false)
+        statisticsRecyclerView.adapter = statisticsAdapter
+        statisticsAdapter.notifyDataSetChanged()
+    }
+
+    private fun calculateStandings(matchResults: List<Pair<String, String>>) {
+        Log.d("StatisticsFragment", "calculateStandings called")
         val standingsMap = mutableMapOf<String, TeamStanding>()
 
         matchResults.forEach { (team, result) ->
@@ -117,7 +182,7 @@ class StatisticsFragment : Fragment() {
 
         // Update Firestore with calculated standings
         val batch = db.batch()
-        val standingsRef = db.collection("tournaments").document(tournamentId).collection("standings")
+        val standingsRef = db.collection("tournaments").document(tournamentId!!).collection("standings")
         standingsRef.get().addOnSuccessListener { documents ->
             documents.forEach { batch.delete(it.reference) }
 
@@ -129,7 +194,7 @@ class StatisticsFragment : Fragment() {
             batch.commit()
                 .addOnSuccessListener {
                     Log.d("StatisticsFragment", "Standings updated in Firestore.")
-                    standingsAdapter.notifyDataSetChanged()
+                    statisticsAdapter.notifyDataSetChanged()
                 }
                 .addOnFailureListener { e ->
                     Log.e("StatisticsFragment", "Failed to update standings in Firestore: ${e.message}")

@@ -194,7 +194,6 @@ class TournamentDetailsFragment : Fragment() {
                             "teamB" to teamB,
                             "scoreA" to 0,
                             "scoreB" to 0,
-                            "winner" to ""
                         )
                         batch.set(matchDoc, match)
                     }

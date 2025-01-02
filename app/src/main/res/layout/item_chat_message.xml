@@ -4,7 +4,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="8dp">
+    android:padding="8dp"
+    android:background="@drawable/rounded_background_black">
 
     <!-- User Image -->
     <ImageView
@@ -14,7 +15,7 @@
         android:src="@drawable/ic_user"
         android:scaleType="centerCrop"
         android:contentDescription="User Image"
-        android:background="@drawable/rounded_background"
+        android:background="@drawable/rounded_background_black"
         android:layout_marginEnd="8dp" />
 
     <!-- Vertical Content -->
@@ -34,34 +35,15 @@
             android:layout_marginBottom="4dp"
             android:contentDescription="User Name" />
 
-        <!-- Post Content with Timestamp -->
-
-        <!-- Likes and Comments -->
-        <RelativeLayout
-            android:layout_width="match_parent"
+        <!-- Post Content -->
+        <TextView
+            android:id="@+id/contentTextView"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp">
+            android:contentDescription="Post Content"
+            android:textSize="14sp" />
 
-            <!-- Post Content -->
-            <TextView
-                android:id="@+id/contentTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentStart="true"
-                android:contentDescription="Post Content"
-                android:textSize="14sp" />
-
-            <!-- Timestamp -->
-            <TextView
-                android:id="@+id/timestampTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:contentDescription="Timestamp"
-                android:textColor="@android:color/darker_gray"
-                android:textSize="12sp" />
-        </RelativeLayout>
-
+        <!-- Likes, Comments, and Timestamp -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -97,6 +79,18 @@
                 android:contentDescription="Comment Button"
                 android:layout_marginStart="16dp"
                 android:padding="4dp" />
+
+            <!-- Timestamp - Aligned Right -->
+            <TextView
+                android:id="@+id/timestampTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:contentDescription="Timestamp"
+                android:textColor="@android:color/darker_gray"
+                android:textSize="12sp" />
         </LinearLayout>
     </LinearLayout>
 
