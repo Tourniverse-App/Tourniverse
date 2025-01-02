@@ -25,9 +25,13 @@ class CommentAdapter(private val comments: List<Comment>) :
     override fun onBindViewHolder(holder: CommentViewHolder, position: Int) {
         val comment = comments[position]
 
-        holder.userNameTextView.text = comment.userId // Replace with actual username if needed
-        holder.commentTextView.text = comment.username
+        // Set username
+        holder.userNameTextView.text = comment.username
+
+        // Set comment text
         holder.commentTextView.text = comment.text
+
+        // Format and set timestamp
         holder.timestampTextView.text = formatTimestamp(comment.createdAt)
     }
 

@@ -8,50 +8,96 @@
 
     <!-- User Image -->
     <ImageView
-        android:id="@+id/userImage"
+        android:id="@+id/userImageView"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        android:layout_marginEnd="8dp"
-        android:contentDescription="@string/user_image"
+        android:src="@drawable/ic_user"
         android:scaleType="centerCrop"
-        android:background="@drawable/circle_background"
-        android:src="@drawable/ic_user" />
+        android:contentDescription="User Image"
+        android:background="@drawable/rounded_background"
+        android:layout_marginEnd="8dp" />
 
-    <!-- Message Content -->
+    <!-- Vertical Content -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:layout_weight="1">
 
-        <!-- Sender Name -->
+        <!-- User Name -->
         <TextView
-            android:id="@+id/senderName"
+            android:id="@+id/userNameTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Sender Name"
             android:textStyle="bold"
-            android:textSize="14sp"
-            android:layout_marginBottom="2dp"
-            android:textColor="@android:color/black" />
-
-        <!-- Message Text -->
-        <TextView
-            android:id="@+id/messageContent"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Message content"
             android:textSize="16sp"
-            android:textColor="@android:color/black"
-            android:layout_marginBottom="2dp" />
+            android:layout_marginBottom="4dp"
+            android:contentDescription="User Name" />
 
-        <!-- Timestamp -->
-        <TextView
-            android:id="@+id/timestamp"
-            android:layout_width="wrap_content"
+        <!-- Post Content with Timestamp -->
+
+        <!-- Likes and Comments -->
+        <RelativeLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="07:45 PM"
-            android:textSize="12sp"
-            android:textColor="@android:color/darker_gray" />
+            android:layout_marginBottom="8dp">
+
+            <!-- Post Content -->
+            <TextView
+                android:id="@+id/contentTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:contentDescription="Post Content"
+                android:textSize="14sp" />
+
+            <!-- Timestamp -->
+            <TextView
+                android:id="@+id/timestampTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:contentDescription="Timestamp"
+                android:textColor="@android:color/darker_gray"
+                android:textSize="12sp" />
+        </RelativeLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp">
+
+            <!-- Heart (Like) Button -->
+            <ImageView
+                android:id="@+id/likeButton"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_heart_outline"
+                android:contentDescription="Like Button"
+                android:padding="4dp" />
+
+            <!-- Like Count -->
+            <TextView
+                android:id="@+id/likeCountTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0 Likes"
+                android:layout_marginStart="8dp"
+                android:contentDescription="Like Count" />
+
+            <!-- Comment Button -->
+            <ImageView
+                android:id="@+id/commentButton"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_comment"
+                android:contentDescription="Comment Button"
+                android:layout_marginStart="16dp"
+                android:padding="4dp" />
+        </LinearLayout>
     </LinearLayout>
+
 </LinearLayout>

@@ -130,7 +130,7 @@ object FirebaseHelper {
         val welcomeMessage = hashMapOf(
             "senderId" to "System",
             "senderName" to "System",
-            "message" to "Welcome to the tournament!",
+            "message" to "Welcome to the tournament, please respect everyone and be nice!",
             "createdAt" to System.currentTimeMillis()
         )
         batch.set(chatRef, welcomeMessage)
@@ -643,6 +643,42 @@ object FirebaseHelper {
             Log.e("FirebaseHelper", "Failed to add comment: ${e.message}")
         }
     }
+
+    fun toggleLike(
+        tournamentId: String,
+        postId: String,
+        userId: String,
+        callback: (Int, Boolean) -> Unit
+    ) {
+        val db = FirebaseFirestore.getInstance()
+        val postRef = db.collection(TOURNAMENTS_COLLECTION)
+            .document(tournamentId)
+            .collection("chat")
+            .document(postId)
+
+        db.runTransaction { transaction ->
+            val snapshot = transaction.get(postRef)
+            val likedBy = snapshot.get("likedBy") as? MutableList<String> ?: mutableListOf()
+            val likesCount = snapshot.getLong("likesCount")?.toInt() ?: 0
+
+            if (likedBy.contains(userId)) {
+                // Unlike the post
+                likedBy.remove(userId)
+                transaction.update(postRef, "likedBy", likedBy)
+                transaction.update(postRef, "likesCount", likesCount - 1)
+                callback(likesCount - 1, false)
+            } else {
+                // Like the post
+                likedBy.add(userId)
+                transaction.update(postRef, "likedBy", likedBy)
+                transaction.update(postRef, "likesCount", likesCount + 1)
+                callback(likesCount + 1, true)
+            }
+        }.addOnFailureListener { e ->
+            Log.e("FirebaseHelper", "Failed to toggle like: ${e.message}")
+        }
+    }
+
 
 
 

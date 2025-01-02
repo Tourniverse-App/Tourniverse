@@ -226,9 +226,8 @@ class SocialFragment : Fragment() {
                 chatMessages.clear()
                 snapshot.documents.forEach { document ->
                     val message = document.toObject(ChatMessage::class.java)
-                    if (message != null) {
-                        chatMessages.add(message)
-                    }
+                    message?.documentId = document.id // Assign Firestore Document ID
+                    if (message != null) chatMessages.add(message)
                 }
                 adapter.notifyDataSetChanged()
                 chatRecyclerView.scrollToPosition(chatMessages.size - 1)

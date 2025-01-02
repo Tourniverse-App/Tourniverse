@@ -2,11 +2,13 @@ package com.example.tourniverse.adapters
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
@@ -15,6 +17,7 @@ import com.example.tourniverse.fragments.CommentFragment
 import com.example.tourniverse.models.ChatMessage
 import com.example.tourniverse.utils.FirebaseHelper
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 class ChatAdapter(
     private val context: Context,
@@ -53,50 +56,83 @@ class ChatAdapter(
         val time = android.text.format.DateFormat.format("hh:mm a", message.createdAt)
         holder.timestampTextView.text = time.toString()
 
-        // Handle likes
-        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
-        val isLiked = message.likedBy.contains(currentUserId)
+        // Get current user ID
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
-        // Update like button UI
-        holder.likeButton.setImageResource(
-            if (isLiked) R.drawable.ic_heart_filled else R.drawable.ic_heart_outline
-        )
-        holder.likeCountTextView.text = "${message.likesCount} Likes"
+        // Dynamically fetch document ID
+        val db = FirebaseFirestore.getInstance()
+        val chatRef = db.collection("tournaments").document(tournamentId).collection("chat")
 
-        // Like button click listener
-        holder.likeButton.setOnClickListener {
-            val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return@setOnClickListener
+        chatRef.whereEqualTo("message", message.message)
+            .get()
+            .addOnSuccessListener { documents ->
+                if (!documents.isEmpty) {
+                    val documentId = documents.documents[0].id // Retrieve the document ID
 
-            // Toggle like
-            if (message.likedBy.contains(currentUserId)) {
-                message.likedBy.remove(currentUserId)
-                message.likesCount--
-            } else {
-                message.likedBy.add(currentUserId)
-                message.likesCount++
+                    // Fetch the latest data from Firestore
+                    chatRef.document(documentId).get().addOnSuccessListener { snapshot ->
+                        if (snapshot.exists()) {
+                            // Get likes and likedBy fields
+                            val likesCount = snapshot.getLong("likesCount")?.toInt() ?: 0
+                            val likedBy = snapshot.get("likedBy") as? MutableList<String> ?: mutableListOf()
+                            val isLiked = likedBy.contains(currentUserId)
+
+                            // Update UI with latest data
+                            holder.likeCountTextView.text = "$likesCount Likes"
+                            holder.likeButton.setImageResource(
+                                if (isLiked) R.drawable.ic_heart_filled else R.drawable.ic_heart_outline
+                            )
+
+                            // Like button click listener
+                            holder.likeButton.setOnClickListener {
+                                db.runTransaction { transaction ->
+                                    val updatedSnapshot = transaction.get(chatRef.document(documentId))
+                                    val updatedLikedBy = updatedSnapshot.get("likedBy") as? MutableList<String> ?: mutableListOf()
+                                    val updatedLikesCount = updatedSnapshot.getLong("likesCount")?.toInt() ?: 0
+
+                                    if (updatedLikedBy.contains(currentUserId)) {
+                                        // Unlike the post
+                                        updatedLikedBy.remove(currentUserId)
+                                        transaction.update(chatRef.document(documentId), "likedBy", updatedLikedBy)
+                                        transaction.update(chatRef.document(documentId), "likesCount", updatedLikesCount - 1)
+
+                                        // Update UI directly
+                                        holder.likeButton.setImageResource(R.drawable.ic_heart_outline)
+                                        holder.likeCountTextView.text = "${updatedLikesCount - 1} Likes"
+                                    } else {
+                                        // Like the post
+                                        updatedLikedBy.add(currentUserId)
+                                        transaction.update(chatRef.document(documentId), "likedBy", updatedLikedBy)
+                                        transaction.update(chatRef.document(documentId), "likesCount", updatedLikesCount + 1)
+
+                                        // Update UI directly
+                                        holder.likeButton.setImageResource(R.drawable.ic_heart_filled)
+                                        holder.likeCountTextView.text = "${updatedLikesCount + 1} Likes"
+                                    }
+                                }.addOnFailureListener { e ->
+                                    Log.e("ChatAdapter", "Failed to toggle like: ${e.message}")
+                                    Toast.makeText(context, "Failed to update like!", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                    }.addOnFailureListener { e ->
+                        Log.e("ChatAdapter", "Failed to fetch updated document: ${e.message}")
+                    }
+                } else {
+                    Log.e("ChatAdapter", "Document not found for message: ${message.message}")
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("ChatAdapter", "Failed to fetch document ID: ${e.message}")
             }
 
-            // Update UI
-            holder.likeCountTextView.text = "${message.likesCount} Likes"
-            holder.likeButton.setImageResource(
-                if (message.likedBy.contains(currentUserId)) R.drawable.ic_heart_filled else R.drawable.ic_heart_outline
-            )
-
-            // Update Firebase
-            FirebaseHelper.updatePostLikes(
-                postId = message.senderId,
-                likesCount = message.likesCount,
-                likedBy = message.likedBy,
-                tournamentId = tournamentId
-            )
-        }
-
-        // Handle comment button click
+        // Comment button click listener
         holder.commentButton.setOnClickListener {
-            // Navigate to CommentFragment
             val commentFragment = CommentFragment()
             val bundle = Bundle()
-            bundle.putString("postId", message.senderId)
+
+            // Pass the document ID directly as an argument
+            bundle.putString("documentId", message.documentId) // Correct ID
             bundle.putString("tournamentId", tournamentId)
             commentFragment.arguments = bundle
 
