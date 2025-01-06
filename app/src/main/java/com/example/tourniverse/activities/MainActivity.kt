@@ -1,4 +1,4 @@
-package com.example.tourniverse
+package com.example.tourniverse.activities
 
 import android.os.Bundle
 import android.util.Log
@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.ui.setupWithNavController
+import com.example.tourniverse.R
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.ActionCodeSettings
 import com.google.firebase.auth.ktx.auth

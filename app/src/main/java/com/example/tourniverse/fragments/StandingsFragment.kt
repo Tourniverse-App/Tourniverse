@@ -12,6 +12,7 @@ import com.example.tourniverse.R
 import com.example.tourniverse.adapters.StandingsAdapter
 import com.example.tourniverse.models.Match
 import com.example.tourniverse.models.TeamStanding
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 class StandingsFragment : Fragment() {
@@ -39,18 +40,41 @@ class StandingsFragment : Fragment() {
         // Get arguments
         tournamentId = arguments?.getString("tournamentId")
 
-        // Check if user is owner (compare user ID with tournament owner ID)
-        isOwner = true // Replace this with actual ownership check logic
+        Log.d("StandingsFragment", "tournamentId: $tournamentId")
 
-        Log.d("StandingsFragment", "tournamentId: $tournamentId, isOwner: $isOwner")
+        // Hide the button initially until ownership is verified
+        saveButton.visibility = View.GONE
+
+        // Fetch and verify ownership
+        tournamentId?.let { id ->
+            db.collection("tournaments").document(id)
+                .get()
+                .addOnSuccessListener { document ->
+                    val ownerId = document.getString("ownerId") ?: ""
+                    val currentUserId = getCurrentUserId()
+
+                    // Check if the current user is the owner
+                    isOwner = (currentUserId == ownerId)
+
+                    // Show save button only if the user is the owner
+                    saveButton.visibility = if (isOwner) View.VISIBLE else View.GONE
+
+                    Log.d("StandingsFragment", "User ID: $currentUserId, Owner ID: $ownerId, isOwner: $isOwner")
+                }
+                .addOnFailureListener { e ->
+                    Log.e("StandingsFragment", "Failed to fetch owner ID: ${e.message}")
+                    isOwner = false
+                    saveButton.visibility = View.GONE // Hide button in case of error
+                }
+        }
 
         // Ensure standings are updated on fragment load
         updateStandings()
 
-        // Show or hide save button based on ownership
-        saveButton.visibility = if (isOwner) View.VISIBLE else View.GONE
+        // Set click listener for save button
         saveButton.setOnClickListener { saveScoresToFirestore() }
 
+        // Setup RecyclerView adapter
         fixturesAdapter = StandingsAdapter(fixtures) { match, newScoreA, newScoreB ->
             updateMatchScores(match, newScoreA, newScoreB)
         }
@@ -59,6 +83,14 @@ class StandingsFragment : Fragment() {
         fetchFixtures()
 
         return view
+    }
+
+    /**
+     * Fetches the current user's ID using Firebase Authentication.
+     */
+    private fun getCurrentUserId(): String {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        return currentUser?.uid ?: "" // Returns the user's UID or an empty string if not logged in
     }
 
 

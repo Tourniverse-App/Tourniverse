@@ -9,7 +9,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import com.example.tourniverse.LoginActivity
+import com.example.tourniverse.activities.LoginActivity
 import com.example.tourniverse.R
 import com.google.firebase.auth.FirebaseAuth
 

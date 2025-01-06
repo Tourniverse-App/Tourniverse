@@ -1,5 +1,7 @@
 package com.example.tourniverse.fragments
 
+import android.app.AlertDialog
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -19,6 +21,8 @@ class TournamentSettingsFragment : Fragment() {
     private lateinit var switchGameNotifications: Switch
     private lateinit var switchSocialNotifications: Switch
     private lateinit var buttonLeaveTournament: Button
+    private lateinit var buttonInvite: Button
+    private lateinit var buttonDeleteTournament: Button
 
     private val db = FirebaseFirestore.getInstance()
     private val userId: String by lazy { FirebaseAuth.getInstance().currentUser?.uid.orEmpty() }
@@ -28,111 +32,171 @@ class TournamentSettingsFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        Log.d("TournamentSettings", "onCreateView: Inflating layout")
         return inflater.inflate(R.layout.fragment_tournament_settings, container, false)
     }
 
-    /**
-     * Validates the tournamentId passed via arguments and initializes the settings screen.
-     * If the tournamentId is invalid, an error message is shown, and the fragment does not proceed.
-     *
-     * @param view The root view of the fragment.
-     * @param savedInstanceState Saved state of the fragment.
-     */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        Log.d("TournamentSettings", "onViewCreated: Starting setup")
+        // Retrieve tournament ID
         tournamentId = arguments?.getString("tournamentId") ?: run {
-            Log.e("TournamentSettings", "onViewCreated: Tournament ID is null")
             Toast.makeText(context, "Invalid tournament ID", Toast.LENGTH_SHORT).show()
             return
         }
-        Log.d("TournamentSettings", "onViewCreated: Tournament ID = $tournamentId")
 
-        try {
-            // Initialize views
-            switchGameNotifications = view.findViewById(R.id.switch_game_notifications)
-            switchSocialNotifications = view.findViewById(R.id.switch_social_notifications)
-            buttonLeaveTournament = view.findViewById(R.id.button_leave_tournament)
+        // Initialize views
+        switchGameNotifications = view.findViewById(R.id.switch_game_notifications)
+        switchSocialNotifications = view.findViewById(R.id.switch_social_notifications)
+        buttonLeaveTournament = view.findViewById(R.id.button_leave_tournament)
+        buttonInvite = view.findViewById(R.id.button_invite)
+        buttonDeleteTournament = view.findViewById(R.id.button_delete_tournament)
 
-            Log.d("TournamentSettings", "onViewCreated: Views initialized")
+        // Load user settings
+        loadSettings(userId, tournamentId)
 
-            loadSettings(userId, tournamentId)
-
-            // Listeners
-            switchGameNotifications.setOnCheckedChangeListener { _, isChecked ->
-                Log.d("TournamentSettings", "Game Notifications toggled: $isChecked")
-                updateNotificationSetting("gameNotifications", isChecked)
-            }
-
-            switchSocialNotifications.setOnCheckedChangeListener { _, isChecked ->
-                Log.d("TournamentSettings", "Social Notifications toggled: $isChecked")
-                updateNotificationSetting("socialNotifications", isChecked)
-            }
-
-            buttonLeaveTournament.setOnClickListener {
-                Log.d("TournamentSettings", "Leave Tournament button clicked")
-                leaveTournament()
-            }
-        } catch (e: Exception) {
-            Log.e("TournamentSettings", "onViewCreated: Exception occurred - ${e.message}", e)
-            Toast.makeText(context, "Error initializing settings: ${e.message}", Toast.LENGTH_SHORT).show()
+        // Notification switch listeners
+        switchGameNotifications.setOnCheckedChangeListener { _, isChecked ->
+            updateNotificationSetting("gameNotifications", isChecked)
         }
-    }
 
-    private fun loadSettings(userId: String, tournamentId: String) {
-        try {
-            val settingsRef = db.collection("users")
-                .document(userId)
-                .collection("tournamentSettings")
-                .document(tournamentId) // Ensure a valid document path with even segments
-
-            settingsRef.get()
-                .addOnSuccessListener { documentSnapshot ->
-                    if (documentSnapshot.exists()) {
-                        // Handle the settings data
-                        val settings = documentSnapshot.data
-                        Log.d("TournamentSettings", "Settings loaded: $settings")
-                    } else {
-                        Log.e("TournamentSettings", "Settings not found for tournamentId: $tournamentId")
-                    }
-                }
-                .addOnFailureListener { e ->
-                    Log.e("TournamentSettings", "Error fetching settings: ${e.message}")
-                }
-        } catch (e: Exception) {
-            Log.e("TournamentSettings", "Invalid document reference: ${e.message}")
+        switchSocialNotifications.setOnCheckedChangeListener { _, isChecked ->
+            updateNotificationSetting("socialNotifications", isChecked)
         }
+
+        // Leave Tournament button with confirmation dialog
+        buttonLeaveTournament.setOnClickListener {
+            showConfirmationDialog("Leave Tournament") {
+                leaveTournament() // Executes only if confirmed
+            }
+        }
+
+        // Delete Tournament button with confirmation dialog
+        buttonDeleteTournament.setOnClickListener {
+            showConfirmationDialog("Delete Tournament") {
+                deleteTournament() // Executes only if confirmed
+            }
+        }
+
+        // Invite button to generate or reuse invite link
+        buttonInvite.setOnClickListener {
+            generateInviteLink()
+        }
+
+        // Adjust visibility based on ownership
+        checkButtonVisibility()
     }
 
 
-    private fun updateNotificationSetting(field: String, value: Boolean) {
-        Log.d("TournamentSettings", "updateNotificationSetting: Updating $field to $value")
-        db.collection("users").document(userId)
-            .collection("tournamentSettings").document(tournamentId)
-            .update(field, value)
-            .addOnSuccessListener {
-                Log.d("TournamentSettings", "updateNotificationSetting: Successfully updated $field to $value")
+    private fun checkButtonVisibility() {
+        db.collection("tournaments").document(tournamentId).get()
+            .addOnSuccessListener { document ->
+                val ownerId = document.getString("ownerId")
+
+                if (ownerId == userId) {
+                    buttonDeleteTournament.visibility = View.VISIBLE
+                    buttonLeaveTournament.visibility = View.GONE // Owner sees only Delete
+                } else {
+                    buttonLeaveTournament.visibility = View.VISIBLE
+                    buttonDeleteTournament.visibility = View.GONE // Non-owners see only Leave
+                }
             }
             .addOnFailureListener { e ->
-                Log.e("TournamentSettings", "updateNotificationSetting: Failed to update $field - ${e.message}", e)
-                Toast.makeText(context, "Failed to update: ${e.message}", Toast.LENGTH_SHORT).show()
+                Log.e("TournamentSettings", "Error checking button visibility: ${e.message}")
             }
+    }
+
+
+
+    private fun inviteToTournament() {
+        val inviteMessage = "Join my tournament on Tourniverse! It's a fun competition format with teams. Don't miss out!"
+
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, inviteMessage)
+        }
+
+        startActivity(Intent.createChooser(intent, "Invite via"))
     }
 
     private fun leaveTournament() {
-        Log.d("TournamentSettings", "leaveTournament: Removing user from tournament: $tournamentId")
         db.collection("users").document(userId)
             .update("tournaments", FieldValue.arrayRemove(tournamentId))
             .addOnSuccessListener {
-                Log.d("TournamentSettings", "leaveTournament: Successfully left tournament")
                 Toast.makeText(context, "You have left the tournament.", Toast.LENGTH_SHORT).show()
                 activity?.finish()
             }
+    }
+
+    private fun deleteTournament() {
+        db.collection("tournaments").document(tournamentId).delete()
+            .addOnSuccessListener {
+                db.collection("users").get().addOnSuccessListener { users ->
+                    for (user in users) {
+                        user.reference.update("tournaments", FieldValue.arrayRemove(tournamentId))
+                    }
+                }
+                Toast.makeText(context, "Tournament deleted successfully.", Toast.LENGTH_SHORT).show()
+                activity?.finish()
+            }
             .addOnFailureListener { e ->
-                Log.e("TournamentSettings", "leaveTournament: Failed to leave tournament - ${e.message}", e)
-                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Failed to delete tournament: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }
+
+    private fun updateNotificationSetting(field: String, value: Boolean) {
+        db.collection("users").document(userId)
+            .collection("tournamentSettings").document(tournamentId)
+            .update(field, value)
+    }
+
+    private fun loadSettings(userId: String, tournamentId: String) {
+        db.collection("users").document(userId)
+            .collection("tournamentSettings").document(tournamentId).get()
+    }
+
+    private fun generateInviteLink() {
+        db.collection("tournaments").document(tournamentId).get()
+            .addOnSuccessListener { document ->
+                val existingLink = document.getString("link") // Check if a link already exists
+                val link = existingLink ?: "https://tourniverse.app/join?tournamentId=$tournamentId" // Use existing or create new
+
+                if (existingLink == null) { // Create link if it doesn't exist
+                    db.collection("tournaments").document(tournamentId)
+                        .update("link", link)
+                        .addOnSuccessListener {
+                            shareInviteLink(link)
+                        }
+                        .addOnFailureListener { e ->
+                            Toast.makeText(context, "Failed to create invite link: ${e.message}", Toast.LENGTH_SHORT).show()
+                        }
+                } else {
+                    shareInviteLink(link) // Share existing link
+                }
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(context, "Error fetching tournament details: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    /**
+     * Opens share dialog for the invite link.
+     */
+    private fun shareInviteLink(link: String) {
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, "Join my tournament: $link")
+        }
+        startActivity(Intent.createChooser(intent, "Invite via"))
+    }
+
+    private fun showConfirmationDialog(action: String, callback: () -> Unit) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("$action Confirmation")
+            .setMessage("Are you sure you want to $action?")
+            .setPositiveButton("Yes") { _, _ -> callback() }
+            .setNegativeButton("No", null)
+            .show()
+    }
+
+
 }
