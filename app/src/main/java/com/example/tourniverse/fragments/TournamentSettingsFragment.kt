@@ -12,6 +12,7 @@ import android.widget.Switch
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.example.tourniverse.R
+import com.example.tourniverse.activities.MainActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -86,7 +87,6 @@ class TournamentSettingsFragment : Fragment() {
         checkButtonVisibility()
     }
 
-
     private fun checkButtonVisibility() {
         db.collection("tournaments").document(tournamentId).get()
             .addOnSuccessListener { document ->
@@ -105,8 +105,6 @@ class TournamentSettingsFragment : Fragment() {
             }
     }
 
-
-
     private fun inviteToTournament() {
         val inviteMessage = "Join my tournament on Tourniverse! It's a fun competition format with teams. Don't miss out!"
 
@@ -119,28 +117,107 @@ class TournamentSettingsFragment : Fragment() {
     }
 
     private fun leaveTournament() {
-        db.collection("users").document(userId)
-            .update("tournaments", FieldValue.arrayRemove(tournamentId))
+        // Redirect user to Home Page first
+        val intent = Intent(requireContext(), MainActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+        startActivity(intent)
+        activity?.finish()
+
+        // Remove user from tournament's viewers list
+        db.collection("tournaments").document(tournamentId)
+            .update("viewers", FieldValue.arrayRemove(userId))
             .addOnSuccessListener {
-                Toast.makeText(context, "You have left the tournament.", Toast.LENGTH_SHORT).show()
-                activity?.finish()
+                // Remove tournament from user's viewed tournaments
+                db.collection("users").document(userId)
+                    .update("viewedTournaments", FieldValue.arrayRemove(tournamentId))
+                    .addOnSuccessListener {
+                        Log.d("TournamentSettings", "User removed successfully.")
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("TournamentSettings", "Failed to remove user from their tournaments: ${e.message}")
+                    }
+            }
+            .addOnFailureListener { e ->
+                Log.e("TournamentSettings", "Failed to remove user from tournament viewers: ${e.message}")
             }
     }
 
+
     private fun deleteTournament() {
-        db.collection("tournaments").document(tournamentId).delete()
-            .addOnSuccessListener {
-                db.collection("users").get().addOnSuccessListener { users ->
-                    for (user in users) {
-                        user.reference.update("tournaments", FieldValue.arrayRemove(tournamentId))
-                    }
+        // Redirect user to Home Page first
+        val intent = Intent(requireContext(), MainActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+        startActivity(intent)
+        activity?.finish()
+
+        // Fetch all viewers and owner ID
+        db.collection("tournaments").document(tournamentId).get()
+            .addOnSuccessListener { document ->
+                val viewers = document.get("viewers") as? List<String> ?: emptyList()
+                val ownerId = document.getString("ownerId") ?: ""
+
+                // Remove the tournament ID from all viewers' viewedTournaments
+                for (viewerId in viewers) {
+                    db.collection("users").document(viewerId)
+                        .update("viewedTournaments", FieldValue.arrayRemove(tournamentId))
+                        .addOnSuccessListener {
+                            Log.d("TournamentSettings", "Removed tournament from viewer: $viewerId")
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("TournamentSettings", "Failed to remove tournament from viewer $viewerId: ${e.message}")
+                        }
                 }
-                Toast.makeText(context, "Tournament deleted successfully.", Toast.LENGTH_SHORT).show()
-                activity?.finish()
+
+                // Remove the tournament ID from the owner's ownedTournaments
+                db.collection("users").document(ownerId)
+                    .update("ownedTournaments", FieldValue.arrayRemove(tournamentId))
+                    .addOnSuccessListener {
+                        Log.d("TournamentSettings", "Removed tournament from owner's ownedTournaments.")
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("TournamentSettings", "Failed to remove tournament from owner's ownedTournaments: ${e.message}")
+                    }
+
+                // Delete subcollections first
+                deleteSubcollectionsAndDocument("tournaments", tournamentId)
             }
             .addOnFailureListener { e ->
-                Toast.makeText(context, "Failed to delete tournament: ${e.message}", Toast.LENGTH_SHORT).show()
+                Log.e("TournamentSettings", "Failed to fetch tournament details: ${e.message}")
             }
+    }
+
+    /**
+     * Recursively deletes all subcollections and the parent document.
+     */
+    private fun deleteSubcollectionsAndDocument(collectionPath: String, documentId: String) {
+        val documentRef = db.collection(collectionPath).document(documentId)
+
+        documentRef.collection("chat").get().addOnSuccessListener { chatSnapshots ->
+            for (doc in chatSnapshots) {
+                doc.reference.delete()
+            }
+
+            documentRef.collection("matches").get().addOnSuccessListener { matchSnapshots ->
+                for (doc in matchSnapshots) {
+                    doc.reference.delete()
+                }
+
+                documentRef.collection("standings").get().addOnSuccessListener { standingsSnapshots ->
+                    for (doc in standingsSnapshots) {
+                        doc.reference.delete()
+                    }
+
+                    // Finally, delete the main document after subcollections are cleared
+                    documentRef.delete()
+                        .addOnSuccessListener {
+                            Log.d("TournamentSettings", "Tournament and subcollections deleted successfully.")
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("TournamentSettings", "Failed to delete tournament: ${e.message}")
+                        }
+                }
+            }
+        }
     }
 
     private fun updateNotificationSetting(field: String, value: Boolean) {
