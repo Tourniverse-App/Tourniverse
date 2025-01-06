@@ -41,7 +41,7 @@ class FixturesAdapter(
                 try {
                     val updatedScoreA = s?.toString()?.toIntOrNull() ?: 0
                     Log.d("FixturesAdapter", "ScoreA updated to $updatedScoreA for match: ${match.teamA} vs ${match.teamB}")
-                    updateMatchScores(match, updatedScoreA, match.scoreB)
+                    match.scoreB?.let { updateMatchScores(match, updatedScoreA, it) }
                 } catch (e: Exception) {
                     Log.e("FixturesAdapter", "Error in afterTextChanged for ScoreA: ${e.message}")
                 }
@@ -61,7 +61,7 @@ class FixturesAdapter(
                 try {
                     val updatedScoreB = s?.toString()?.toIntOrNull() ?: 0
                     Log.d("FixturesAdapter", "ScoreB updated to $updatedScoreB for match: ${match.teamA} vs ${match.teamB}")
-                    updateMatchScores(match, match.scoreA, updatedScoreB)
+                    match.scoreA?.let { updateMatchScores(match, it, updatedScoreB) }
                 } catch (e: Exception) {
                     Log.e("FixturesAdapter", "Error in afterTextChanged for ScoreB: ${e.message}")
                 }

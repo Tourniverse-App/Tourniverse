@@ -15,7 +15,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.tourniverse.R
 import com.example.tourniverse.fragments.CommentFragment
 import com.example.tourniverse.models.ChatMessage
-import com.example.tourniverse.utils.FirebaseHelper
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 

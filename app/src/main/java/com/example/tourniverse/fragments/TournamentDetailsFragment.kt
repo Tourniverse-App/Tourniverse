@@ -91,7 +91,7 @@ class TournamentDetailsFragment : Fragment() {
                         val name = document.getString("name") ?: "Unknown Tournament"
                         val privacy = document.getString("privacy") ?: "Unknown"
                         val description = document.getString("description") ?: ""
-                        val format = document.getString("type") ?: "Unknown"
+                        val format = document.getString("format") ?: "Unknown"
 
                         // Set details in UI
                         tvTournamentName.text = name
@@ -99,8 +99,8 @@ class TournamentDetailsFragment : Fragment() {
                         tvTournamentFormat.text = "Format: $format"
                         tvTournamentDescription.text = description
 
-                        // Setup statistics button
-                        setupViewStatisticsButton(format)
+                        // Setup statistics button - i dont like this button, should be like that
+                        //setupViewStatisticsButton(format)
                     } else {
                         Log.e("TournamentDetails", "Tournament not found.")
                         Toast.makeText(requireContext(), "Tournament not available.", Toast.LENGTH_SHORT).show()
@@ -113,18 +113,18 @@ class TournamentDetailsFragment : Fragment() {
         }
     }
 
-    private fun setupViewStatisticsButton(format: String) {
-        btnViewStatistics.visibility = View.VISIBLE
-        btnViewStatistics.text = if (format == "Tables") "View Table Statistics" else "View Knockout Brackets"
-
-        btnViewStatistics.setOnClickListener {
-            when (format) {
-                "Tables" -> navigateToTableStatistics()
-                "Knockout" -> navigateToKnockoutStatistics()
-                else -> Toast.makeText(requireContext(), "Invalid format!", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
+//    private fun setupViewStatisticsButton(format: String) {
+//        btnViewStatistics.visibility = View.VISIBLE
+//        //btnViewStatistics.text = if (format == "Tables") "View Table Statistics" else "View Knockout Brackets"
+//
+//        btnViewStatistics.setOnClickListener {
+//            when (format) {
+//                "Tables" -> navigateToTableStatistics()
+//                "Knockout" -> navigateToKnockoutStatistics()
+//                else -> Toast.makeText(requireContext(), "Invalid format!", Toast.LENGTH_SHORT).show()
+//            }
+//        }
+//    }
 
     private fun navigateToTableStatistics() {
         val action = TournamentDetailsFragmentDirections

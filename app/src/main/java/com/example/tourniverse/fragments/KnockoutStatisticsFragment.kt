@@ -86,14 +86,20 @@ class KnockoutStatisticsFragment : Fragment() {
     /**
      * Dynamically creates knockout brackets and updates the view.
      */
+    /**
+     * Dynamically creates knockout brackets and updates the view.
+     */
     private fun displayKnockoutBrackets() {
         Log.d("KnockoutStatisticsFragment", "displayKnockoutBrackets called")
 
+        // Clear the bracket container before adding new views
         bracketContainer.removeAllViews()
         val inflater = LayoutInflater.from(context)
 
+        // Start with the first round of matches
         var currentRound = knockoutMatches
 
+        // Loop through each round until there are no more matches
         while (currentRound.isNotEmpty()) {
             val roundContainer = LinearLayout(context).apply {
                 orientation = LinearLayout.VERTICAL
@@ -104,30 +110,47 @@ class KnockoutStatisticsFragment : Fragment() {
                 setPadding(16, 16, 16, 16)
             }
 
+            // Create views for each match in the current round
             currentRound.forEach { match ->
                 val matchView = inflater.inflate(R.layout.item_statistics_knockout, roundContainer, false)
 
                 val matchTextView = matchView.findViewById<android.widget.TextView>(R.id.matchTextView)
-                matchTextView.text = "${match.teamA} vs ${match.teamB}\n${match.scoreA} : ${match.scoreB}"
+
+                // Display scores, default to "-" if null
+                matchTextView.text = "${match.teamA} vs ${match.teamB}\n${match.scoreA ?: "-"} : ${match.scoreB ?: "-"}"
 
                 roundContainer.addView(matchView)
             }
 
+            // Add the round container to the main bracket container
             bracketContainer.addView(roundContainer)
 
-            // Prepare next round
+            // Prepare the next round by calculating winners
             val nextRound = mutableListOf<Match>()
             for (i in 0 until currentRound.size step 2) {
                 if (i + 1 < currentRound.size) {
-                    val winnerA = if (currentRound[i].scoreA > currentRound[i].scoreB) currentRound[i].teamA else currentRound[i].teamB
-                    val winnerB = if (currentRound[i + 1].scoreA > currentRound[i + 1].scoreB) currentRound[i + 1].teamA else currentRound[i + 1].teamB
-                    nextRound.add(Match(winnerA, winnerB, 0, 0))
+                    // Determine winners based on scores, defaulting to 0 if null
+                    val winnerA = if ((currentRound[i].scoreA ?: 0) > (currentRound[i].scoreB ?: 0))
+                        currentRound[i].teamA
+                    else
+                        currentRound[i].teamB
+
+                    val winnerB = if ((currentRound[i + 1].scoreA ?: 0) > (currentRound[i + 1].scoreB ?: 0))
+                        currentRound[i + 1].teamA
+                    else
+                        currentRound[i + 1].teamB
+
+                    // Create a new match for the next round with default scores
+                    nextRound.add(Match(winnerA, winnerB, null, null))
                 }
             }
+
+            // Move to the next round
             currentRound = nextRound
         }
         Log.d("KnockoutStatisticsFragment", "Knockout brackets displayed successfully.")
     }
+
 
     /**
      * Updates knockout data and refreshes the view.

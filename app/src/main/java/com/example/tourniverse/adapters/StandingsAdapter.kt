@@ -37,75 +37,66 @@ class StandingsAdapter(
 
     override fun onBindViewHolder(holder: StandingsViewHolder, position: Int) {
         val match = items[position]
-        Log.d(TAG, "Binding ViewHolder for match: ${match.teamA} vs ${match.teamB}")
 
-        // Populate data
+        // Set team names
         holder.teamAName.text = match.teamA
         holder.teamBName.text = match.teamB
 
-        // Temporary flag to disable TextWatcher while updating text programmatically
-        var isUpdating = false
+        // Display scores with "-" as default
+        holder.scoreA.setText(match.scoreA?.toString() ?: "-")
+        holder.scoreB.setText(match.scoreB?.toString() ?: "-")
 
-        holder.scoreA.setText(match.scoreA.toString())
-        holder.scoreB.setText(match.scoreB.toString())
+        var isUpdating = false // Prevents recursive updates while editing
 
-        // Add TextWatcher to score fields
+        // TextWatcher for scoreA
         holder.scoreA.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
-                if (isUpdating) return
-                try {
-                    val newScoreA = s?.toString()?.toIntOrNull() ?: 0
+                if (isUpdating) return // Skip if updating programmatically
+                val input = s.toString()
 
-                    // Highlight changes
-                    if (newScoreA != match.scoreA) {
-                        holder.scoreA.setTextColor(holder.itemView.context.getColor(R.color.black))
-                    }
-
-                    Log.d(TAG, "ScoreA changed: $newScoreA for match: ${match.teamA} vs ${match.teamB}")
-
-                    // Ignore updates for 0-0 unless changed
-                    if (newScoreA != 0 || match.scoreB != 0) {
-                        isUpdating = true
-                        updateMatchScores(match, newScoreA, match.scoreB)
-                        isUpdating = false
-                    }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error updating ScoreA: ${e.message}")
+                // Allow only valid inputs (0-9 or "-")
+                if (!input.matches(Regex("^[-0-9]*$"))) {
+                    isUpdating = true
+                    holder.scoreA.setText("-") // Reset to "-"
+                    holder.scoreA.setSelection(holder.scoreA.text.length) // Move cursor to end
+                    isUpdating = false
+                    return
                 }
+
+                // Update match score
+                val score = if (input == "-") null else input.toIntOrNull()
+                match.scoreA = score
             }
 
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
         })
 
+        // TextWatcher for scoreB
         holder.scoreB.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
-                if (isUpdating) return
-                try {
-                    val newScoreB = s?.toString()?.toIntOrNull() ?: 0
+                if (isUpdating) return // Skip if updating programmatically
+                val input = s.toString()
 
-                    // Highlight changes
-                    if (newScoreB != match.scoreB) {
-                        holder.scoreB.setTextColor(holder.itemView.context.getColor(R.color.black))
-                    }
-
-                    Log.d(TAG, "ScoreB changed: $newScoreB for match: ${match.teamA} vs ${match.teamB}")
-
-                    // Ignore updates for 0-0 unless changed
-                    if (match.scoreA != 0 || newScoreB != 0) {
-                        isUpdating = true
-                        updateMatchScores(match, match.scoreA, newScoreB)
-                        isUpdating = false
-                    }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error updating ScoreB: ${e.message}")
+                // Allow only valid inputs (0-9 or "-")
+                if (!input.matches(Regex("^[-0-9]*$"))) {
+                    isUpdating = true
+                    holder.scoreB.setText("-") // Reset to "-"
+                    holder.scoreB.setSelection(holder.scoreB.text.length) // Move cursor to end
+                    isUpdating = false
+                    return
                 }
+
+                // Update match score
+                val score = if (input == "-") null else input.toIntOrNull()
+                match.scoreB = score
             }
 
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
         })
     }
+
 
     override fun getItemCount(): Int {
         Log.d(TAG, "Total items: ${items.size}")

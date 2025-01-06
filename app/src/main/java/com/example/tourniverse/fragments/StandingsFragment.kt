@@ -63,23 +63,43 @@ class StandingsFragment : Fragment() {
      */
     private fun fetchFixtures() {
         Log.d("StandingsFragment", "fetchFixtures called")
+
         tournamentId?.let { id ->
             db.collection("tournaments").document(id)
-                .collection("matches").get()
+                .collection("matches") // Fetch individual match documents
+                .get()
                 .addOnSuccessListener { documents ->
                     Log.d("StandingsFragment", "fetchFixtures success")
                     fixtures.clear()
+
                     for (document in documents) {
-                        val matchesArray =
-                            document.get("matches") as? List<Map<String, Any>> ?: continue
-                        matchesArray.forEach { match ->
-                            val teamA = match["teamA"] as? String ?: ""
-                            val teamB = match["teamB"] as? String ?: ""
-                            val scoreA = (match["scoreA"] as? Long)?.toInt() ?: 0
-                            val scoreB = (match["scoreB"] as? Long)?.toInt() ?: 0
-                            fixtures.add(Match(teamA, teamB, scoreA, scoreB))
+                        // Read match fields directly
+                        val teamA = document.getString("teamA") ?: ""
+                        val teamB = document.getString("teamB") ?: ""
+
+                        // Handle scores safely by converting "-" to null
+                        val scoreA = when (val rawScoreA = document.get("scoreA")) {
+                            is String -> if (rawScoreA == "-") null else rawScoreA.toIntOrNull()
+                            is Long -> rawScoreA.toInt()
+                            else -> null
                         }
+
+                        val scoreB = when (val rawScoreB = document.get("scoreB")) {
+                            is String -> if (rawScoreB == "-") null else rawScoreB.toIntOrNull()
+                            is Long -> rawScoreB.toInt()
+                            else -> null
+                        }
+
+                        // Extract match ID
+                        val matchId = document.id
+
+                        Log.d("StandingsFragment", "Match: $teamA vs $teamB - Scores: $scoreA : $scoreB")
+
+                        // Add match with ID to fixtures list
+                        fixtures.add(Match(teamA, teamB, scoreA, scoreB, id = matchId))
                     }
+
+                    // Notify adapter with updated data
                     fixturesAdapter.notifyDataSetChanged()
                     Log.d("StandingsFragment", "Fixtures updated in adapter")
                 }
@@ -89,56 +109,77 @@ class StandingsFragment : Fragment() {
         }
     }
 
+
     /**
      * Saves the updated match scores to Firestore.
      */
     private fun saveScoresToFirestore() {
-        Log.d("StandingsFragment", "saveScoresToFirestore called")
+        Log.d("SaveButton", "Save button clicked.")
+
         tournamentId?.let { id ->
             val batch = db.batch()
-            db.collection("tournaments").document(id)
-                .collection("matches").get()
-                .addOnSuccessListener { documents ->
-                    Log.d("StandingsFragment", "saveScoresToFirestore success")
-                    for (document in documents) {
-                        val matchesArray = document.get("matches") as? MutableList<Map<String, Any>>
-                        if (matchesArray != null) {
-                            matchesArray.forEachIndexed { index, match ->
-                                val currentMatch = fixtures[index]
-                                if (!(currentMatch.scoreA == 0 && currentMatch.scoreB == 0)) {
-                                    matchesArray[index] = mapOf(
-                                        "teamA" to currentMatch.teamA,
-                                        "teamB" to currentMatch.teamB,
-                                        "scoreA" to currentMatch.scoreA,
-                                        "scoreB" to currentMatch.scoreB
-                                    )
-                                }
-                            }
+            var hasInvalidScores = false
 
-                            batch.update(
-                                db.collection("tournaments").document(id)
-                                    .collection("matches")
-                                    .document(document.id),
-                                "matches", matchesArray
-                            )
-                        }
-                    }
+            fixtures.forEach { match ->
+                val scoreA = match.scoreA
+                val scoreB = match.scoreB
 
-                    batch.commit()
-                        .addOnSuccessListener {
-                            Log.d("StandingsFragment", "saveScoresToFirestore commit success")
-                            updateStandings()
-                            notifyStatisticsFragments()
-                        }
-                        .addOnFailureListener { e ->
-                            Log.e("StandingsFragment", "saveScoresToFirestore commit failed: ${e.message}")
-                        }
+                Log.d("SaveButton", "Processing match: ${match.teamA} vs ${match.teamB} - Scores: $scoreA : $scoreB")
+
+                // Skip matches with null in both fields
+                if (scoreA == null && scoreB == null) {
+                    Log.d("SaveButton", "Skipping match with both scores null.")
+                    return@forEach
+                }
+
+                // Invalid cases: One field is null and the other is a number
+                if ((scoreA == null && scoreB != null) || (scoreB == null && scoreA != null)) {
+                    Log.d("SaveButton", "Invalid scores detected for match: ${match.teamA} vs ${match.teamB}")
+                    hasInvalidScores = true
+                    return@forEach
+                }
+
+                // Prepare valid updates for Firestore
+                val matchData = mapOf(
+                    "scoreA" to (scoreA ?: 0), // Default null to 0 instead of "-"
+                    "scoreB" to (scoreB ?: 0)
+                )
+
+                // Ensure match.id exists before creating a document reference
+                if (match.id.isNotEmpty()) {
+                    val matchRef = db.collection("tournaments").document(id)
+                        .collection("matches").document(match.id) // Use ID assigned earlier
+                    batch.update(matchRef, matchData)
+                    Log.d("SaveButton", "Added match to batch: ${match.teamA} vs ${match.teamB}")
+                } else {
+                    Log.e("SaveButton", "Match ID is missing for ${match.teamA} vs ${match.teamB}")
+                    hasInvalidScores = true
+                }
+            }
+
+            if (hasInvalidScores) {
+                Toast.makeText(
+                    context,
+                    "Invalid scores found. Please fix them.",
+                    Toast.LENGTH_LONG
+                ).show()
+                return
+            }
+
+            batch.commit()
+                .addOnSuccessListener {
+                    Log.d("SaveButton", "Scores saved successfully.")
+                    Toast.makeText(context, "Scores saved successfully.", Toast.LENGTH_SHORT).show()
+                    notifyStatisticsFragments()
                 }
                 .addOnFailureListener { e ->
-                    Log.e("StandingsFragment", "saveScoresToFirestore failed: ${e.message}")
+                    Log.e("SaveButton", "Failed to save scores: ${e.message}")
+                    Toast.makeText(context, "Failed to save scores: ${e.message}", Toast.LENGTH_LONG)
+                        .show()
                 }
-        }
+        } ?: Log.e("SaveButton", "Tournament ID is null!")
     }
+
 
     /**
      * Updates standings for Table Statistics Fragment.
@@ -152,19 +193,26 @@ class StandingsFragment : Fragment() {
         tableFragment?.updateTableStatistics(fixtures.map { match ->
             TeamStanding(
                 match.teamA,
-                0,
-                0,
-                0,
-                match.scoreA,
-                match.scoreA * 3 // Example point logic
+                0, // Wins
+                0, // Draws
+                0, // Losses
+                match.scoreA ?: 0, // Replace null with 0 for calculations
+                (match.scoreA ?: 0) * 3 // Example point logic
             )
         })
 
         // Notify Knockout Statistics Fragment
         val knockoutFragment =
             parentFragmentManager.findFragmentByTag("knockoutStatisticsFragment") as? KnockoutStatisticsFragment
-        knockoutFragment?.updateKnockoutMatches(fixtures)
+        knockoutFragment?.updateKnockoutMatches(fixtures.map { match ->
+            // Replace null scores with 0 for knockout rounds
+            match.copy(
+                scoreA = match.scoreA ?: 0,
+                scoreB = match.scoreB ?: 0
+            )
+        })
     }
+
 
     /**
      * Updates specific match scores in Firestore.
@@ -212,8 +260,10 @@ class StandingsFragment : Fragment() {
         fixtures.forEach { match ->
             val teamA = match.teamA
             val teamB = match.teamB
-            val scoreA = match.scoreA
-            val scoreB = match.scoreB
+
+            // Handle null scores by defaulting to 0
+            val scoreA = match.scoreA ?: 0
+            val scoreB = match.scoreB ?: 0
 
             val standingA = standingsMap.getOrDefault(teamA, TeamStanding(teamName = teamA))
             val standingB = standingsMap.getOrDefault(teamB, TeamStanding(teamName = teamB))
@@ -259,5 +309,6 @@ class StandingsFragment : Fragment() {
                 Log.e("StandingsFragment", "updateStandings commit failed: ${e.message}")
             }
     }
+
 
 }

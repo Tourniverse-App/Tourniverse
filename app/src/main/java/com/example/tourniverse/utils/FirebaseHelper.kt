@@ -172,20 +172,30 @@ object FirebaseHelper {
         format: String,
         callback: (Boolean, String?) -> Unit
     ) {
-        val matches = mutableListOf<HashMap<String, Any>>()
+        val batch = db.batch() // Use a batch for efficiency and consistency
 
         if (format == "Tables") {
             // Generate round-robin matches
             for (i in teamNames.indices) {
                 for (j in i + 1 until teamNames.size) {
-                    matches.add(
-                        hashMapOf(
-                            "teamA" to teamNames[i],
-                            "teamB" to teamNames[j],
-                            "scoreA" to 0,
-                            "scoreB" to 0,
-                        )
+                    // Create match data with unique ID
+                    val matchId = "${teamNames[i]}_${teamNames[j]}"
+                    val matchData = hashMapOf(
+                        "id" to matchId,                  // Unique ID
+                        "teamA" to teamNames[i],
+                        "teamB" to teamNames[j],
+                        "scoreA" to null,                 // Null for initial scores
+                        "scoreB" to null
                     )
+                    Log.d("generateMatches", "Adding match: $matchData")
+
+                    // Prepare to save each match as a separate document
+                    val matchRef = db.collection(TOURNAMENTS_COLLECTION)
+                        .document(tournamentId)
+                        .collection("matches")
+                        .document(matchId) // Use unique ID as Firestore document ID
+
+                    batch.set(matchRef, matchData)
                 }
             }
         } else if (format == "Knockout") {
@@ -193,29 +203,41 @@ object FirebaseHelper {
             val firstRoundMatches = teamNames.chunked(2) // Pair teams into matches
             firstRoundMatches.forEachIndexed { index, pair ->
                 if (pair.size == 2) {
-                    matches.add(
-                        hashMapOf(
-                            "teamA" to pair[0],
-                            "teamB" to pair[1],
-                            "scoreA" to 0,
-                            "scoreB" to 0,
-                            "round" to 1 // First round
-                        )
+                    // Create match data with unique ID
+                    val matchId = "${pair[0]}_${pair[1]}"
+                    val matchData = hashMapOf(
+                        "id" to matchId,                  // Unique ID
+                        "teamA" to pair[0],
+                        "teamB" to pair[1],
+                        "scoreA" to null,                 // Null for initial scores
+                        "scoreB" to null,
+                        "round" to 1                      // First round
                     )
+                    Log.d("generateMatches", "Adding knockout match: $matchData")
+
+                    // Prepare to save each match as a separate document
+                    val matchRef = db.collection(TOURNAMENTS_COLLECTION)
+                        .document(tournamentId)
+                        .collection("matches")
+                        .document(matchId) // Use unique ID as Firestore document ID
+
+                    batch.set(matchRef, matchData)
                 }
             }
         }
 
-        // Save matches to Firestore
-        val matchesRef = db.collection(TOURNAMENTS_COLLECTION).document(tournamentId).collection("matches")
-        matchesRef.add(mapOf("matches" to matches))
+        // Commit batch updates to Firestore
+        batch.commit()
             .addOnSuccessListener {
+                Log.d("generateMatches", "Matches successfully generated!")
                 callback(true, null)
             }
             .addOnFailureListener { e ->
+                Log.e("generateMatches", "Failed to generate matches: ${e.message}")
                 callback(false, e.message ?: "Failed to generate matches")
             }
     }
+
 
     fun progressKnockoutRound(
         tournamentId: String,
