@@ -37,7 +37,7 @@ class ChatAdapter(
     // Create ViewHolder
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChatViewHolder {
         val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_post, parent, false)
+            .inflate(R.layout.item_chat_message, parent, false)
         return ChatViewHolder(view)
     }
 

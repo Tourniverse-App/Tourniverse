@@ -1,11 +1,9 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="8dp"
-    android:background="@drawable/rounded_background_black">
+    android:padding="8dp">
 
     <!-- User Image -->
     <ImageView
@@ -44,11 +42,9 @@
             android:textSize="14sp" />
 
         <!-- Likes, Comments, and Timestamp -->
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
             android:paddingTop="4dp"
             android:paddingBottom="4dp">
 
@@ -59,7 +55,8 @@
                 android:layout_height="24dp"
                 android:src="@drawable/ic_heart_outline"
                 android:contentDescription="Like Button"
-                android:padding="4dp" />
+                android:padding="4dp"
+                android:layout_alignParentStart="true" />
 
             <!-- Like Count -->
             <TextView
@@ -67,6 +64,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="0 Likes"
+                android:layout_toEndOf="@id/likeButton"
                 android:layout_marginStart="8dp"
                 android:contentDescription="Like Count" />
 
@@ -77,21 +75,21 @@
                 android:layout_height="24dp"
                 android:src="@drawable/ic_comment"
                 android:contentDescription="Comment Button"
+                android:layout_toEndOf="@id/likeCountTextView"
                 android:layout_marginStart="16dp"
                 android:padding="4dp" />
 
-            <!-- Timestamp - Aligned Right -->
+            <!-- Timestamp -->
             <TextView
                 android:id="@+id/timestampTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_weight="1"
-                android:gravity="end"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:text="06:06 PM"
                 android:contentDescription="Timestamp"
                 android:textColor="@android:color/darker_gray"
                 android:textSize="12sp" />
-        </LinearLayout>
+        </RelativeLayout>
     </LinearLayout>
-
 </LinearLayout>

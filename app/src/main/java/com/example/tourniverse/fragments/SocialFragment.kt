@@ -92,6 +92,14 @@ class SocialFragment : Fragment() {
             }
         }
 
+        try {
+            val inputStream = requireContext().assets.open("Blacklist.txt")
+            val content = inputStream.bufferedReader().use { it.readText() }
+            Log.d("BlacklistDebug", "File content:\n$content")
+        } catch (e: Exception) {
+            Log.e("BlacklistDebug", "Failed to load file: ${e.message}")
+        }
+
         return view
     }
 
@@ -132,10 +140,13 @@ class SocialFragment : Fragment() {
             return
         }
 
+        // Load banned words from Blacklist.txt
+        val bannedWords = loadBannedWords()
+        Log.d("SocialFragment", "Loaded banned words: $bannedWords")
+
         // Profanity filter
-        val bannedWords = listOf("fuck", "bitch", "gay", "zona", "dick", "shit", "homo") // Replace with actual banned words
         val filteredContent = content.split(" ").joinToString(" ") { word ->
-            if (bannedWords.contains(word.lowercase())) "***" else word
+            if (bannedWords.contains(word.lowercase())) "***" else word // Replace banned words with ***
         }
 
         db.collection("users").document(userId).get()
@@ -166,6 +177,24 @@ class SocialFragment : Fragment() {
                 Log.e("SocialFragment", "Error fetching username for userId: $userId, ${e.message}")
             }
     }
+
+    private fun loadBannedWords(): List<String> {
+        return try {
+            // Open the Blacklist.txt file
+            val inputStream = requireContext().assets.open("Blacklist.txt")
+            val words = inputStream.bufferedReader().useLines { lines ->
+                lines.map { it.trim().lowercase() } // Clean each word (trim spaces and lowercase)
+                    .filter { it.isNotEmpty() }     // Ignore empty lines
+                    .toList()
+            }
+            Log.d("Blacklist", "Loaded banned words: $words") // Log the loaded words
+            words
+        } catch (e: Exception) {
+            Log.e("Blacklist", "Error loading banned words: ${e.message}")
+            emptyList()
+        }
+    }
+
 
     private fun updateLikes(postId: String, newLikesCount: Int, likedBy: List<String>) {
         val postRef = db.collection("tournaments")
