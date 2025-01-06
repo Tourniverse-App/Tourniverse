@@ -60,34 +60,65 @@ class TableStatisticsFragment : Fragment() {
     private fun fetchTeamStandings() {
         Log.d("TableStatisticsFragment", "fetchTeamStandings called")
 
-        val standingsList = mutableListOf<TeamStanding>()
+        // Ensure tournamentId is not null
+        tournamentId?.let { id ->
+            db.collection("tournaments").document(id)
+                .collection("standings") // Fetch individual documents in the 'standings' collection
+                .get()
+                .addOnSuccessListener { documents ->
+                    Log.d("TableStatisticsFragment", "fetchTeamStandings success")
+                    val standingsList = mutableListOf<TeamStanding>()
 
-        db.collection("tournaments").document(tournamentId!!).collection("standings")
-            .get()
-            .addOnSuccessListener { documents ->
-                Log.d("TableStatisticsFragment", "fetchTeamStandings success")
-                for (document in documents) {
-                    val standing = document.toObject(TeamStanding::class.java)
-                    standingsList.add(standing)
+                    // Process each document
+                    for (document in documents) {
+                        Log.d("TableStatisticsFragment", "Document ID: ${document.id}")
+
+                        // Extract data based on correct keys
+                        val teamName = document.id // Use the document ID as the team name
+                        val wins = document.getLong("wins")?.toInt() ?: 0
+                        val draws = document.getLong("draws")?.toInt() ?: 0
+                        val losses = document.getLong("losses")?.toInt() ?: 0
+                        val goals = document.getLong("goals")?.toInt() ?: 0
+                        val points = document.getLong("points")?.toInt() ?: 0
+
+                        Log.d(
+                            "TableStatisticsFragment",
+                            "Team: $teamName, Wins: $wins, Draws: $draws, Losses: $losses, Goals: $goals, Points: $points"
+                        )
+
+                        // Add team standing to the list
+                        standingsList.add(
+                            TeamStanding(
+                                teamName = teamName, // Use document ID directly as team name
+                                wins = wins,
+                                draws = draws,
+                                losses = losses,
+                                goals = goals,
+                                points = points
+                            )
+                        )
+                    }
+
+                    // Sort standings by points, then goal difference, then team name
+                    standingsList.sortWith(
+                        compareByDescending<TeamStanding> { it.points }
+                            .thenByDescending { it.goals }
+                            .thenBy { it.teamName } // Final fallback sort by team name
+                    )
+
+                    // Update the adapter with the sorted data
+                    Log.d("TableStatisticsFragment", "Updating adapter with standings data")
+                    teamStandings.clear()
+                    teamStandings.addAll(standingsList)
+                    statisticsAdapter.notifyDataSetChanged()
                 }
-
-                // Sort standings by points, then goal difference
-                standingsList.sortWith(
-                    compareByDescending<TeamStanding> { it.points }
-                        .thenByDescending { it.goals }
-                )
-
-                // Update the adapter with the sorted data
-                Log.d("TableStatisticsFragment", "Updating adapter with standings data")
-                teamStandings.clear()
-                teamStandings.addAll(standingsList)
-                statisticsAdapter.notifyDataSetChanged()
-            }
-            .addOnFailureListener { e ->
-                Log.e("TableStatisticsFragment", "Failed to fetch team standings: ${e.message}")
-                Toast.makeText(context, "Failed to load standings.", Toast.LENGTH_SHORT).show()
-            }
+                .addOnFailureListener { e ->
+                    Log.e("TableStatisticsFragment", "Failed to fetch team standings: ${e.message}")
+                    Toast.makeText(context, "Failed to load standings.", Toast.LENGTH_SHORT).show()
+                }
+        } ?: Log.e("TableStatisticsFragment", "Tournament ID is null!")
     }
+
 
     /**
      * Updates table data and refreshes the view.
@@ -95,11 +126,20 @@ class TableStatisticsFragment : Fragment() {
     fun updateTableStatistics(newData: List<TeamStanding>) {
         Log.d("TableStatisticsFragment", "updateTableStatistics called")
 
+        // Clear and update data
         teamStandings.clear()
         teamStandings.addAll(newData.sortedWith(
             compareByDescending<TeamStanding> { it.points }
                 .thenByDescending { it.goals }
+                .thenBy { it.teamName } // Sort by team name as fallback
         ))
         statisticsAdapter.notifyDataSetChanged()
     }
+
+    override fun onResume() {
+        super.onResume()
+        Log.d("TableStatisticsFragment", "onResume called - refreshing standings")
+        fetchTeamStandings() // Refresh standings when the user re-enters the page
+    }
+
 }

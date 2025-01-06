@@ -108,7 +108,8 @@ object FirebaseHelper {
         val batch = db.batch()
 
         // Initialize chat collection with a welcome message
-        val chatRef = db.collection(TOURNAMENTS_COLLECTION).document(tournamentId).collection("chat").document()
+        val chatRef = db.collection(TOURNAMENTS_COLLECTION).document(tournamentId)
+            .collection("chat").document()
         val welcomeMessage = hashMapOf(
             "senderId" to "System",
             "senderName" to "System",
@@ -131,8 +132,9 @@ object FirebaseHelper {
         // Initialize standings for Tables format
         if (format == "Tables") {
             val standingsRef = db.collection(TOURNAMENTS_COLLECTION).document(tournamentId).collection("standings")
+
+            // Use team names as document IDs instead of generating random IDs
             teamNames.forEach { teamName ->
-                val doc = standingsRef.document()
                 val teamStanding = hashMapOf(
                     "teamName" to teamName,
                     "points" to 0,
@@ -141,15 +143,22 @@ object FirebaseHelper {
                     "losses" to 0,
                     "goals" to 0
                 )
-                batch.set(doc, teamStanding)
+                batch.set(standingsRef.document(teamName), teamStanding) // Document ID = Team Name
             }
         }
 
         // Commit the batch
         batch.commit()
-            .addOnSuccessListener { callback(true, null) }
-            .addOnFailureListener { e -> callback(false, e.message ?: "Failed to initialize subcollections") }
+            .addOnSuccessListener {
+                Log.d("initializeSubcollections", "Subcollections initialized successfully.")
+                callback(true, null)
+            }
+            .addOnFailureListener { e ->
+                Log.e("initializeSubcollections", "Failed to initialize subcollections: ${e.message}")
+                callback(false, e.message ?: "Failed to initialize subcollections")
+            }
     }
+
 
     fun fetchTournamentIds(callback: (List<String>?, String?) -> Unit) {
         db.collection(TOURNAMENTS_COLLECTION)

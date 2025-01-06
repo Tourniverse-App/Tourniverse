@@ -44,6 +44,9 @@ class StandingsFragment : Fragment() {
 
         Log.d("StandingsFragment", "tournamentId: $tournamentId, isOwner: $isOwner")
 
+        // Ensure standings are updated on fragment load
+        updateStandings()
+
         // Show or hide save button based on ownership
         saveButton.visibility = if (isOwner) View.VISIBLE else View.GONE
         saveButton.setOnClickListener { saveScoresToFirestore() }
@@ -57,6 +60,7 @@ class StandingsFragment : Fragment() {
 
         return view
     }
+
 
     /**
      * Fetches the fixtures (matches) from Firestore for the given tournament.
@@ -126,29 +130,26 @@ class StandingsFragment : Fragment() {
 
                 Log.d("SaveButton", "Processing match: ${match.teamA} vs ${match.teamB} - Scores: $scoreA : $scoreB")
 
-                // Skip matches with null in both fields
-                if (scoreA == null && scoreB == null) {
-                    Log.d("SaveButton", "Skipping match with both scores null.")
-                    return@forEach
-                }
+                // Check if scores are reset to initial state (-:-)
+                val isResetToDefault = (scoreA == null && scoreB == null)
 
-                // Invalid cases: One field is null and the other is a number
-                if ((scoreA == null && scoreB != null) || (scoreB == null && scoreA != null)) {
+                // Invalid scores (e.g., one is null and the other isn't)
+                if (!isResetToDefault && ((scoreA == null && scoreB != null) || (scoreB == null && scoreA != null))) {
                     Log.d("SaveButton", "Invalid scores detected for match: ${match.teamA} vs ${match.teamB}")
                     hasInvalidScores = true
                     return@forEach
                 }
 
-                // Prepare valid updates for Firestore
+                // Prepare data for update
                 val matchData = mapOf(
-                    "scoreA" to (scoreA ?: 0), // Default null to 0 instead of "-"
-                    "scoreB" to (scoreB ?: 0)
+                    "scoreA" to if (isResetToDefault) "-" else (scoreA ?: 0), // Reset to "-"
+                    "scoreB" to if (isResetToDefault) "-" else (scoreB ?: 0)  // Reset to "-"
                 )
 
-                // Ensure match.id exists before creating a document reference
+                // Ensure match.id exists before updating
                 if (match.id.isNotEmpty()) {
                     val matchRef = db.collection("tournaments").document(id)
-                        .collection("matches").document(match.id) // Use ID assigned earlier
+                        .collection("matches").document(match.id) // Update the correct match
                     batch.update(matchRef, matchData)
                     Log.d("SaveButton", "Added match to batch: ${match.teamA} vs ${match.teamB}")
                 } else {
@@ -166,10 +167,16 @@ class StandingsFragment : Fragment() {
                 return
             }
 
+            // Commit batch
             batch.commit()
                 .addOnSuccessListener {
                     Log.d("SaveButton", "Scores saved successfully.")
                     Toast.makeText(context, "Scores saved successfully.", Toast.LENGTH_SHORT).show()
+
+                    // Update standings after saving
+                    updateStandings()
+
+                    // Notify other fragments to refresh views
                     notifyStatisticsFragments()
                 }
                 .addOnFailureListener { e ->
@@ -179,7 +186,6 @@ class StandingsFragment : Fragment() {
                 }
         } ?: Log.e("SaveButton", "Tournament ID is null!")
     }
-
 
     /**
      * Updates standings for Table Statistics Fragment.
@@ -255,60 +261,103 @@ class StandingsFragment : Fragment() {
      */
     private fun updateStandings() {
         Log.d("StandingsFragment", "updateStandings called")
-        val standingsMap = mutableMapOf<String, TeamStanding>()
 
-        fixtures.forEach { match ->
-            val teamA = match.teamA
-            val teamB = match.teamB
+        // Fetch all matches directly from Firestore
+        tournamentId?.let { id ->
+            db.collection("tournaments").document(id)
+                .collection("matches")
+                .get()
+                .addOnSuccessListener { documents ->
+                    Log.d("StandingsFragment", "Fetched all matches to recalculate standings")
 
-            // Handle null scores by defaulting to 0
-            val scoreA = match.scoreA ?: 0
-            val scoreB = match.scoreB ?: 0
+                    val standingsMap = mutableMapOf<String, TeamStanding>()
 
-            val standingA = standingsMap.getOrDefault(teamA, TeamStanding(teamName = teamA))
-            val standingB = standingsMap.getOrDefault(teamB, TeamStanding(teamName = teamB))
+                    for (document in documents) {
+                        // Extract match data
+                        val teamA = document.getString("teamA") ?: ""
+                        val teamB = document.getString("teamB") ?: ""
 
-            standingA.goals += scoreA
-            standingB.goals += scoreB
+                        // Get scores safely
+                        val scoreA = when (val rawScoreA = document.get("scoreA")) {
+                            is String -> if (rawScoreA == "-") null else rawScoreA.toIntOrNull()
+                            is Long -> rawScoreA.toInt()
+                            else -> null
+                        }
 
-            when {
-                scoreA > scoreB -> {
-                    standingA.wins += 1
-                    standingA.points += 3
-                    standingB.losses += 1
+                        val scoreB = when (val rawScoreB = document.get("scoreB")) {
+                            is String -> if (rawScoreB == "-") null else rawScoreB.toIntOrNull()
+                            is Long -> rawScoreB.toInt()
+                            else -> null
+                        }
+
+                        // Skip matches with scores reset to -:- (not played)
+                        if (scoreA == null && scoreB == null) {
+                            Log.d("StandingsFragment", "Skipping match: $teamA vs $teamB - Scores: - : - (Not played)")
+                            continue
+                        }
+
+                        // Default scores to 0 if null
+                        val actualScoreA = scoreA ?: 0
+                        val actualScoreB = scoreB ?: 0
+
+                        // Get or create standings for each team
+                        val standingA = standingsMap.getOrDefault(teamA, TeamStanding(teamName = teamA))
+                        val standingB = standingsMap.getOrDefault(teamB, TeamStanding(teamName = teamB))
+
+                        // Update goals
+                        standingA.goals += actualScoreA
+                        standingB.goals += actualScoreB
+
+                        // Update wins, losses, and draws
+                        when {
+                            actualScoreA > actualScoreB -> {
+                                standingA.wins += 1
+                                standingA.points += 3
+                                standingB.losses += 1
+                            }
+                            actualScoreA < actualScoreB -> {
+                                standingB.wins += 1
+                                standingB.points += 3
+                                standingA.losses += 1
+                            }
+                            else -> {
+                                standingA.draws += 1
+                                standingA.points += 1
+                                standingB.draws += 1
+                                standingB.points += 1
+                            }
+                        }
+
+                        // Save updated standings
+                        standingsMap[teamA] = standingA
+                        standingsMap[teamB] = standingB
+                    }
+
+                    // Prepare batch for Firestore updates
+                    val batch = db.batch()
+                    val standingsRef = db.collection("tournaments").document(id).collection("standings")
+
+                    standingsMap.forEach { (teamName, standing) ->
+                        val docRef = standingsRef.document(teamName)
+                        batch.set(docRef, standing) // Update each team's standings
+                        Log.d("updateStandings", "Updating standings for $teamName: $standing")
+                    }
+
+                    // Commit batch update
+                    batch.commit()
+                        .addOnSuccessListener {
+                            Log.d("StandingsFragment", "updateStandings commit success")
+                            Toast.makeText(context, "Standings updated successfully.", Toast.LENGTH_SHORT).show()
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("StandingsFragment", "updateStandings commit failed: ${e.message}")
+                            Toast.makeText(context, "Failed to update standings.", Toast.LENGTH_SHORT).show()
+                        }
                 }
-                scoreA < scoreB -> {
-                    standingB.wins += 1
-                    standingB.points += 3
-                    standingA.losses += 1
+                .addOnFailureListener { e ->
+                    Log.e("StandingsFragment", "Failed to fetch matches for standings: ${e.message}")
+                    Toast.makeText(context, "Failed to fetch matches for standings.", Toast.LENGTH_SHORT).show()
                 }
-                else -> {
-                    standingA.draws += 1
-                    standingA.points += 1
-                    standingB.draws += 1
-                    standingB.points += 1
-                }
-            }
-
-            standingsMap[teamA] = standingA
-            standingsMap[teamB] = standingB
         }
-
-        val batch = db.batch()
-        val standingsRef = db.collection("tournaments").document(tournamentId!!).collection("standings")
-        standingsMap.forEach { (teamName, standing) ->
-            val docRef = standingsRef.document(teamName)
-            batch.set(docRef, standing)
-        }
-
-        batch.commit()
-            .addOnSuccessListener {
-                Log.d("StandingsFragment", "updateStandings commit success")
-            }
-            .addOnFailureListener { e ->
-                Log.e("StandingsFragment", "updateStandings commit failed: ${e.message}")
-            }
     }
-
-
 }

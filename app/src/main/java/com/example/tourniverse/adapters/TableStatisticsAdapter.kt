@@ -39,6 +39,13 @@ class TableStatisticsAdapter(
     override fun onBindViewHolder(holder: TableViewHolder, position: Int) {
         val team = teamStandings[position]
 
+        // Alternating row colors
+        if (position % 2 == 0) {
+            holder.itemView.setBackgroundResource(R.drawable.table_row_odd) // Light blue
+        } else {
+            holder.itemView.setBackgroundResource(R.drawable.table_row_even) // White
+        }
+
         holder.teamNameTextView.text = team.teamName
         holder.winsTextView.text = team.wins.toString()
         holder.drawsTextView.text = team.draws.toString()
@@ -46,6 +53,7 @@ class TableStatisticsAdapter(
         holder.goalsTextView.text = team.goals.toString()
         holder.pointsTextView.text = team.points.toString()
     }
+
 
     /**
      * Returns the total number of items.
