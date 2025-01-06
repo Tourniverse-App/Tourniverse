@@ -17,6 +17,23 @@
         <item name="android:colorAccent">@color/accent</item>
     </style>
 
+    <style name="CustomButtonStyle" parent="Widget.MaterialComponents.Button">
+        <item name="android:fontFamily">@font/exo2_regular</item>
+    </style>
+
+    <style name="CustomEditTextStyle" parent="Widget.MaterialComponents.TextInputEditText.FilledBox">
+        <item name="android:fontFamily">@font/exo2_regular</item>
+    </style>
+
+    <style name="CustomToolbarStyle" parent="Widget.MaterialComponents.Toolbar">
+        <item name="android:fontFamily">@font/exo2_regular</item>
+    </style>
+
+    <style name="CustomTextAppearance" parent="TextAppearance.MaterialComponents.Body1">
+        <item name="android:fontFamily">@font/exo2_regular</item>
+    </style>
+
+
     <style name="GoogleButton" parent="Widget.MaterialComponents.Button.OutlinedButton">
         <item name="android:background">@color/white</item>
         <item name="android:strokeWidth">2</item>

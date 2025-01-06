@@ -22,5 +22,18 @@
 
         <!-- Status bar color -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+
+        <!-- Set default font -->
+        <item name="android:fontFamily">@font/exo2_regular</item>
+
+        <!-- Apply font globally to buttons -->
+        <item name="buttonStyle">@style/CustomButtonStyle</item>
+
+        <!-- Apply font globally to text input fields -->
+        <item name="editTextStyle">@style/CustomEditTextStyle</item>
+
+        <!-- Apply font globally to toolbars -->
+        <item name="toolbarStyle">@style/CustomToolbarStyle</item>
+
     </style>
 </resources>
