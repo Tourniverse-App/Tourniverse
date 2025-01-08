@@ -41,7 +41,7 @@
 
         <!-- Invite Handler Activity -->
         <activity
-            android:name=".InviteHandlerActivity"
+            android:name="InviteHandlerActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -53,6 +53,7 @@
                     android:pathPrefix="/join" />
             </intent-filter>
         </activity>
+
 
     </application>
 

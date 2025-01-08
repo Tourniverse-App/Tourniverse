@@ -2,6 +2,7 @@ package com.example.tourniverse.fragments
 
 import android.app.AlertDialog
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -13,7 +14,12 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.example.tourniverse.R
 import com.example.tourniverse.activities.MainActivity
+import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.dynamiclinks.DynamicLink
+import com.google.firebase.dynamiclinks.FirebaseDynamicLinks
+import com.google.firebase.dynamiclinks.dynamicLinks
+import com.google.firebase.dynamiclinks.shortLinkAsync
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -103,17 +109,6 @@ class TournamentSettingsFragment : Fragment() {
             .addOnFailureListener { e ->
                 Log.e("TournamentSettings", "Error checking button visibility: ${e.message}")
             }
-    }
-
-    private fun inviteToTournament() {
-        val inviteMessage = "Join my tournament on Tourniverse! It's a fun competition format with teams. Don't miss out!"
-
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "text/plain"
-            putExtra(Intent.EXTRA_TEXT, inviteMessage)
-        }
-
-        startActivity(Intent.createChooser(intent, "Invite via"))
     }
 
     private fun leaveTournament() {
@@ -232,28 +227,41 @@ class TournamentSettingsFragment : Fragment() {
     }
 
     private fun generateInviteLink() {
-        db.collection("tournaments").document(tournamentId).get()
-            .addOnSuccessListener { document ->
-                val existingLink = document.getString("link") // Check if a link already exists
-                val link = existingLink ?: "https://tourniverse.app/join?tournamentId=$tournamentId" // Use existing or create new
+        val baseUrl = "https://tourniverse.app/join?tournamentId=$tournamentId" // Replace with your deep link URL
+        val domainUriPrefix = "https://example.page.link" // Replace with your Firebase dynamic link domain!
 
-                if (existingLink == null) { // Create link if it doesn't exist
-                    db.collection("tournaments").document(tournamentId)
-                        .update("link", link)
-                        .addOnSuccessListener {
-                            shareInviteLink(link)
-                        }
-                        .addOnFailureListener { e ->
-                            Toast.makeText(context, "Failed to create invite link: ${e.message}", Toast.LENGTH_SHORT).show()
-                        }
-                } else {
-                    shareInviteLink(link) // Share existing link
-                }
+        FirebaseDynamicLinks.getInstance().createDynamicLink()
+            .setLink(Uri.parse(baseUrl)) // Deep link with parameters
+            .setDomainUriPrefix(domainUriPrefix) // Firebase Dynamic Link domain
+            .setAndroidParameters(
+                DynamicLink.AndroidParameters.Builder("com.example.tourniverse") // Replace with your package name
+                    .setMinimumVersion(1) // Minimum app version required
+                    .build()
+            )
+            .setNavigationInfoParameters(
+                DynamicLink.NavigationInfoParameters.Builder()
+                    .setForcedRedirectEnabled(true) // Redirect even if the app is not installed
+                    .build()
+            )
+            .buildShortDynamicLink() // Creates a short link
+            .addOnSuccessListener { shortDynamicLink ->
+                val shortLink = shortDynamicLink.shortLink.toString()
+
+                // Update Firestore with the generated link
+                db.collection("tournaments").document(tournamentId)
+                    .update("link", shortLink)
+                    .addOnSuccessListener {
+                        shareInviteLink(shortLink)
+                    }
+                    .addOnFailureListener { e ->
+                        Toast.makeText(context, "Failed to save invite link: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
             }
             .addOnFailureListener { e ->
-                Toast.makeText(context, "Error fetching tournament details: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Error generating link: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }
+
 
     /**
      * Opens share dialog for the invite link.

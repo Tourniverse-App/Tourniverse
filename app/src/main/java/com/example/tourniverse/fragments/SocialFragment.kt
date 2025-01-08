@@ -195,55 +195,6 @@ class SocialFragment : Fragment() {
         }
     }
 
-
-    private fun updateLikes(postId: String, newLikesCount: Int, likedBy: List<String>) {
-        val postRef = db.collection("tournaments")
-            .document(tournamentId!!)
-            .collection("chat")
-            .document(postId)
-
-        postRef.update(
-            mapOf(
-                "likesCount" to newLikesCount,
-                "likedBy" to likedBy
-            )
-        ).addOnFailureListener { e ->
-            Log.e("SocialFragment", "Failed to update likes: ${e.message}")
-        }
-    }
-
-    private fun addComment(postId: String, commentText: String) {
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        val userId = currentUser?.uid ?: "Unknown"
-
-        db.collection("users").document(userId).get()
-            .addOnSuccessListener { userSnapshot ->
-                val username = userSnapshot.getString("username") ?: "Anonymous"
-
-                // Create comment object
-                val comment = Comment(
-                    userId = userId,
-                    username = username,
-                    text = commentText,
-                    createdAt = System.currentTimeMillis()
-                )
-
-                // Update the comments array in Firebase
-                val postRef = db.collection("tournaments")
-                    .document(tournamentId!!)
-                    .collection("chat")
-                    .document(postId)
-
-                postRef.update(
-                    "comments", com.google.firebase.firestore.FieldValue.arrayUnion(comment)
-                ).addOnSuccessListener {
-                    Log.d("SocialFragment", "Comment added successfully!")
-                }.addOnFailureListener { e ->
-                    Log.e("SocialFragment", "Failed to add comment: ${e.message}")
-                }
-            }
-    }
-
     private fun fetchMessages() {
         chatCollection.addSnapshotListener { snapshot, e ->
             if (e != null) {

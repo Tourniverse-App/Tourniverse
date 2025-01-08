@@ -76,4 +76,8 @@ dependencies {
     // Core KTX
     implementation("androidx.core:core-ktx:1.12.0")
 
+    // Firebase Dynamic Links
+    implementation("com.google.firebase:firebase-dynamic-links-ktx:21.1.0")
+
+
 }

@@ -159,22 +159,6 @@ object FirebaseHelper {
             }
     }
 
-
-    fun fetchTournamentIds(callback: (List<String>?, String?) -> Unit) {
-        db.collection(TOURNAMENTS_COLLECTION)
-            .get()
-            .addOnSuccessListener { documents ->
-                val tournamentIds = documents.map { it.id }
-                Log.d("FirebaseHelper", "Fetched Tournament IDs: $tournamentIds")
-                callback(tournamentIds, null)
-            }
-            .addOnFailureListener { e ->
-                Log.e("FirebaseHelper", "Error fetching tournaments: ${e.message}")
-                callback(null, e.message ?: "Failed to fetch tournament IDs")
-            }
-    }
-
-
     fun generateMatches(
         tournamentId: String,
         teamNames: List<String>,
@@ -247,7 +231,6 @@ object FirebaseHelper {
             }
     }
 
-
     fun progressKnockoutRound(
         tournamentId: String,
         callback: (Boolean, String?) -> Unit
@@ -311,8 +294,6 @@ object FirebaseHelper {
         return 1 // Placeholder logic
     }
 
-
-
     /**
      * Updates the user's ownedTournaments list.
      */
@@ -333,209 +314,6 @@ object FirebaseHelper {
             callback(true, null)
         }.addOnFailureListener { e ->
             callback(false, e.message ?: "Failed to update user owned tournaments")
-        }
-    }
-
-
-    /**
-     * Fetches tournaments where the current user is either the owner or a viewer.
-     *
-     * @param callback Callback to return the list of tournaments as Maps.
-     */
-    fun getUserTournaments(callback: (List<Map<String, Any>>) -> Unit) {
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        val userId = currentUser?.uid ?: return callback(emptyList())
-
-        db.collection(USERS_COLLECTION).document(userId).get()
-            .addOnSuccessListener { document ->
-                val ownedTournaments = document["ownedTournaments"] as? List<String> ?: emptyList()
-                val viewedTournaments = document["viewedTournaments"] as? List<String> ?: emptyList()
-
-                val tournamentIds = ownedTournaments.union(viewedTournaments).toList()
-
-                if (tournamentIds.isEmpty()) {
-                    Log.d("FirestoreDebug", "No tournaments found for user $userId")
-                    callback(emptyList())
-                    return@addOnSuccessListener
-                }
-
-                db.collection(TOURNAMENTS_COLLECTION)
-                    .whereIn("__name__", tournamentIds)
-                    .get()
-                    .addOnSuccessListener { tournamentDocs ->
-                        val tournaments = tournamentDocs.mapNotNull { it.data }
-                        callback(tournaments)
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("FirestoreDebug", "Error fetching tournament details: ${e.message}")
-                        callback(emptyList())
-                    }
-            }
-            .addOnFailureListener { e ->
-                Log.e("FirestoreDebug", "Error fetching user document: ${e.message}")
-                callback(emptyList())
-            }
-    }
-
-    /**
-     * Updates the standings subcollection after a match is completed.
-     */
-    fun updateStandings(
-        tournamentId: String,
-        teamA: String,
-        teamB: String,
-        scoreA: Int,
-        scoreB: Int,
-        callback: (Boolean, String?) -> Unit
-    ) {
-        val standingsRef = db.collection(TOURNAMENTS_COLLECTION).document(tournamentId).collection("standings")
-
-        db.runBatch { batch ->
-            // Update teamA's stats
-            val teamARef = standingsRef.whereEqualTo("teamName", teamA)
-            teamARef.get().addOnSuccessListener { teamADocs ->
-                val teamADoc = teamADocs.documents.firstOrNull()
-                teamADoc?.let {
-                    val points = if (scoreA > scoreB) 3 else if (scoreA == scoreB) 1 else 0
-                    val updates: Map<String, Any> = mapOf(
-                        "points" to (it.getLong("points") ?: 0L) + points,
-                        "goals" to (it.getLong("goals") ?: 0L) + scoreA,
-                        "wins" to if (scoreA > scoreB) (it.getLong("wins") ?: 0L) + 1 else it.getLong("wins") ?: 0L,
-                        "draws" to if (scoreA == scoreB) (it.getLong("draws") ?: 0L) + 1 else it.getLong("draws") ?: 0L,
-                        "losses" to if (scoreA < scoreB) (it.getLong("losses") ?: 0L) + 1 else it.getLong("losses") ?: 0L
-                    )
-                    batch.update(teamADoc.reference, updates)
-                }
-            }
-
-            // Update teamB's stats
-            val teamBRef = standingsRef.whereEqualTo("teamName", teamB)
-            teamBRef.get().addOnSuccessListener { teamBDocs ->
-                val teamBDoc = teamBDocs.documents.firstOrNull()
-                teamBDoc?.let {
-                    val points = if (scoreB > scoreA) 3 else if (scoreA == scoreB) 1 else 0
-                    val updates: Map<String, Any> = mapOf( // Changed to Map<String, Any>
-                        "points" to (it.getLong("points") ?: 0L) + points,
-                        "goals" to (it.getLong("goals") ?: 0L) + scoreB,
-                        "wins" to if (scoreB > scoreA) (it.getLong("wins") ?: 0L) + 1 else it.getLong("wins") ?: 0L,
-                        "draws" to if (scoreA == scoreB) (it.getLong("draws") ?: 0L) + 1 else it.getLong("draws") ?: 0L,
-                        "losses" to if (scoreB < scoreA) (it.getLong("losses") ?: 0L) + 1 else it.getLong("losses") ?: 0L
-                    )
-                    batch.update(teamBDoc.reference, updates)
-                }
-            }
-        }.addOnSuccessListener {
-            callback(true, null)
-        }.addOnFailureListener { e ->
-            callback(false, e.message ?: "Failed to update standings")
-        }
-    }
-
-    /**
-     * Adds a viewer to a specific tournament document.
-     *
-     * @param tournamentId ID of the tournament document.
-     * @param newViewerId User ID of the viewer to be added.
-     * @param callback Callback to indicate success (Boolean) and optional error message.
-     */
-    fun addViewerToTournament(
-        tournamentId: String,
-        newViewerId: String,
-        callback: (Boolean, String?) -> Unit
-    ) {
-        val tournamentRef = db.collection(TOURNAMENTS_COLLECTION).document(tournamentId)
-        val userRef = db.collection(USERS_COLLECTION).document(newViewerId)
-
-        db.runTransaction { transaction ->
-            val tournamentSnapshot = transaction.get(tournamentRef)
-            val ownerId = tournamentSnapshot.get("ownerId") as? String ?: return@runTransaction
-            val viewers = tournamentSnapshot.get("viewers") as? MutableList<String> ?: mutableListOf()
-
-            // If the user is the owner, prevent adding as viewer
-            if (ownerId == newViewerId) {
-                throw IllegalStateException("Owner cannot be added as a viewer")
-            }
-
-            // Update viewers list
-            if (!viewers.contains(newViewerId)) {
-                viewers.add(newViewerId)
-                transaction.update(tournamentRef, "viewers", viewers)
-            }
-
-            // Update user's viewed tournaments
-            val userSnapshot = transaction.get(userRef)
-            val ownedTournaments = userSnapshot.get("ownedTournaments") as? MutableList<String> ?: mutableListOf()
-            val viewedTournaments = userSnapshot.get("viewedTournaments") as? MutableList<String> ?: mutableListOf()
-
-            // Prevent user from being a viewer if they are already the owner
-            if (tournamentId in ownedTournaments) {
-                throw IllegalStateException("User cannot view a tournament they own")
-            }
-
-            if (!viewedTournaments.contains(tournamentId)) {
-                viewedTournaments.add(tournamentId)
-                transaction.update(userRef, "viewedTournaments", viewedTournaments)
-            }
-        }.addOnSuccessListener {
-            callback(true, null)
-        }.addOnFailureListener { e ->
-            callback(false, e.message ?: "Failed to add viewer")
-        }
-    }
-
-
-    /**
-     * Updates a field in a specific tournament document.
-     *
-     * @param tournamentId ID of the tournament document.
-     * @param field The field name to update.
-     * @param value The new value for the field.
-     * @param callback Callback to indicate success (Boolean) and optional error message.
-     */
-    fun updateTournamentField(
-        tournamentId: String,
-        field: String,
-        value: Any,
-        callback: (Boolean, String?) -> Unit
-    ) {
-        db.collection(TOURNAMENTS_COLLECTION)
-            .document(tournamentId)
-            .update(field, value)
-            .addOnSuccessListener {
-                callback(true, null)
-            }
-            .addOnFailureListener { e ->
-                callback(false, e.message ?: "Failed to update field")
-            }
-    }
-
-    /**
-     * Ensures that a user document exists in Firestore, initializing it if needed.
-     *
-     * @param userId The ID of the user.
-     */
-    fun createUserDocumentIfNotExists(userId: String) {
-        val userRef = db.collection(USERS_COLLECTION).document(userId)
-
-        userRef.get().addOnSuccessListener { document ->
-            if (!document.exists()) {
-                val userData = hashMapOf(
-                    "username" to "",
-                    "bio" to "",
-                    "image" to null,
-                    "ownedTournaments" to mutableListOf<String>(),
-                    "viewedTournaments" to mutableListOf<String>()
-                )
-                userRef.set(userData)
-                    .addOnSuccessListener {
-                        println("User document created successfully")
-                    }
-                    .addOnFailureListener { e ->
-                        println("Failed to create user document: ${e.message}")
-                    }
-            }
-        }.addOnFailureListener { e ->
-            println("Failed to check user document: ${e.message}")
         }
     }
 
@@ -560,70 +338,6 @@ object FirebaseHelper {
             }
     }
 
-    /**
-     * Fetches tournaments where the current user is either the owner or a viewer.
-     *
-     * @param includeViewed If true, includes viewed tournaments. Otherwise, only owned tournaments are fetched.
-     * @param callback Callback to return the list of tournaments as Maps.
-     */
-    fun getUserTournaments(includeViewed: Boolean, callback: (List<Map<String, Any>>) -> Unit) {
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        val userId = currentUser?.uid ?: return callback(emptyList())
-
-        val userRef = db.collection(USERS_COLLECTION).document(userId)
-
-        userRef.get()
-            .addOnSuccessListener { document ->
-                val ownedTournaments = document["ownedTournaments"] as? List<String> ?: emptyList()
-                val viewedTournaments = if (includeViewed) {
-                    document["viewedTournaments"] as? List<String> ?: emptyList()
-                } else {
-                    emptyList()
-                }
-
-                // If includeViewed is true, we just append the viewed tournaments to the owned ones.
-                val tournamentIds = if (includeViewed) {
-                    ownedTournaments + viewedTournaments
-                } else {
-                    ownedTournaments
-                }
-
-                if (tournamentIds.isEmpty()) {
-                    Log.d("FirestoreDebug", "No tournaments found for user $userId")
-                    callback(emptyList())
-                    return@addOnSuccessListener
-                }
-
-                val tournaments = mutableListOf<Map<String, Any>>()
-                val tasks = tournamentIds.map { tournamentId ->
-                    db.collection(TOURNAMENTS_COLLECTION).document(tournamentId).get()
-                }
-
-                com.google.android.gms.tasks.Tasks.whenAllSuccess<Any>(tasks)
-                    .addOnSuccessListener { results ->
-                        results.forEach { result ->
-                            val snapshot = result as? com.google.firebase.firestore.DocumentSnapshot
-                            if (snapshot != null && snapshot.exists()) {
-                                snapshot.data?.let { data ->
-                                    tournaments.add(data)
-                                }
-                            } else {
-                                Log.w("FirestoreDebug", "Tournament not found or deleted")
-                            }
-                        }
-                        callback(tournaments)
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("FirestoreDebug", "Error fetching tournaments: ${e.message}")
-                        callback(emptyList())
-                    }
-            }
-            .addOnFailureListener { e ->
-                Log.e("FirestoreDebug", "Error fetching user document: ${e.message}")
-                callback(emptyList())
-            }
-    }
-
     fun updatePostLikes(postId: String, likesCount: Int, likedBy: List<String>, tournamentId: String) {
         val db = FirebaseFirestore.getInstance()
         db.collection("tournaments")
@@ -643,57 +357,4 @@ object FirebaseHelper {
                 Log.e("FirebaseHelper", "Error updating likes: ${e.message}")
             }
     }
-
-
-    fun addCommentToPost(postId: String, comment: Comment, tournamentId: String) {
-        val postRef = db.collection(TOURNAMENTS_COLLECTION)
-            .document(tournamentId)
-            .collection("chat")
-            .document(postId)
-
-        postRef.update(
-            "comments", com.google.firebase.firestore.FieldValue.arrayUnion(comment)
-        ).addOnFailureListener { e ->
-            Log.e("FirebaseHelper", "Failed to add comment: ${e.message}")
-        }
-    }
-
-    fun toggleLike(
-        tournamentId: String,
-        postId: String,
-        userId: String,
-        callback: (Int, Boolean) -> Unit
-    ) {
-        val db = FirebaseFirestore.getInstance()
-        val postRef = db.collection(TOURNAMENTS_COLLECTION)
-            .document(tournamentId)
-            .collection("chat")
-            .document(postId)
-
-        db.runTransaction { transaction ->
-            val snapshot = transaction.get(postRef)
-            val likedBy = snapshot.get("likedBy") as? MutableList<String> ?: mutableListOf()
-            val likesCount = snapshot.getLong("likesCount")?.toInt() ?: 0
-
-            if (likedBy.contains(userId)) {
-                // Unlike the post
-                likedBy.remove(userId)
-                transaction.update(postRef, "likedBy", likedBy)
-                transaction.update(postRef, "likesCount", likesCount - 1)
-                callback(likesCount - 1, false)
-            } else {
-                // Like the post
-                likedBy.add(userId)
-                transaction.update(postRef, "likedBy", likedBy)
-                transaction.update(postRef, "likesCount", likesCount + 1)
-                callback(likesCount + 1, true)
-            }
-        }.addOnFailureListener { e ->
-            Log.e("FirebaseHelper", "Failed to toggle like: ${e.message}")
-        }
-    }
-
-
-
-
 }

@@ -115,9 +115,6 @@ class RegisterActivity : AppCompatActivity() {
             }
     }
 
-
-
-
     private fun createProgressDialog(): AlertDialog {
         val builder = AlertDialog.Builder(this)
         builder.setView(layoutInflater.inflate(R.layout.dialog_loading, null)) // Use your existing layout

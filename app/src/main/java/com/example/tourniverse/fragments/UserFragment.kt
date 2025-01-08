@@ -157,7 +157,6 @@ class UserFragment : Fragment() {
             }
     }
 
-
     private fun navigateToTournamentDetails(tournament: Tournament) {
         val bundle = Bundle().apply {
             putString("tournamentId", tournament.id) // Pass the tournament ID

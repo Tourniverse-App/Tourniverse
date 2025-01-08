@@ -113,66 +113,6 @@ class TournamentDetailsFragment : Fragment() {
         }
     }
 
-//    private fun setupViewStatisticsButton(format: String) {
-//        btnViewStatistics.visibility = View.VISIBLE
-//        //btnViewStatistics.text = if (format == "Tables") "View Table Statistics" else "View Knockout Brackets"
-//
-//        btnViewStatistics.setOnClickListener {
-//            when (format) {
-//                "Tables" -> navigateToTableStatistics()
-//                "Knockout" -> navigateToKnockoutStatistics()
-//                else -> Toast.makeText(requireContext(), "Invalid format!", Toast.LENGTH_SHORT).show()
-//            }
-//        }
-//    }
-
-    private fun navigateToTableStatistics() {
-        val action = TournamentDetailsFragmentDirections
-            .actionTournamentDetailsFragmentToTableStatisticsFragment(tournamentId!!)
-        findNavController().navigate(action)
-    }
-
-    private fun navigateToKnockoutStatistics() {
-        val action = TournamentDetailsFragmentDirections
-            .actionTournamentDetailsFragmentToKnockoutStatisticsFragment(tournamentId!!)
-        findNavController().navigate(action)
-    }
-
-    private fun initializeStandings(tournamentId: String) {
-        db.collection("tournaments").document(tournamentId).collection("standings").get()
-            .addOnSuccessListener { snapshot ->
-                if (snapshot.isEmpty) {
-                    val batch = db.batch()
-                    val teamNames = listOf("Team A", "Team B", "Team C") // Replace with actual team names
-                    val standingsRef = db.collection("tournaments").document(tournamentId).collection("standings")
-
-                    teamNames.forEach { teamName ->
-                        val teamDoc = standingsRef.document()
-                        val teamStanding = hashMapOf(
-                            "teamName" to teamName,
-                            "points" to 0,
-                            "wins" to 0,
-                            "draws" to 0,
-                            "losses" to 0,
-                            "goals" to 0
-                        )
-                        batch.set(teamDoc, teamStanding)
-                    }
-
-                    batch.commit()
-                        .addOnSuccessListener {
-                            Log.d("TournamentDetails", "Standings initialized successfully.")
-                        }
-                        .addOnFailureListener { e ->
-                            Log.e("TournamentDetails", "Error initializing standings: ${e.message}")
-                        }
-                }
-            }
-            .addOnFailureListener { e ->
-                Log.e("TournamentDetails", "Error checking standings: ${e.message}")
-            }
-    }
-
     private fun initializeKnockoutBracket(tournamentId: String) {
         db.collection("tournaments").document(tournamentId).collection("knockout_bracket").get()
             .addOnSuccessListener { snapshot ->
@@ -207,22 +147,6 @@ class TournamentDetailsFragment : Fragment() {
             }
             .addOnFailureListener { e ->
                 Log.e("TournamentDetails", "Error checking knockout bracket: ${e.message}")
-            }
-    }
-
-    private fun displayTableStandings(tournamentId: String) {
-        db.collection("tournaments").document(tournamentId).collection("standings")
-            .get()
-            .addOnSuccessListener { snapshot ->
-                val standings = snapshot.documents.flatMap { doc ->
-                    (doc.get("teams") as? List<Map<String, Any>>)?.map { team ->
-                        "${team["teamName"]} - ${team["points"]} points"
-                    } ?: emptyList()
-                }
-                // Display standings in your UI
-            }
-            .addOnFailureListener { e ->
-                Log.e("TournamentDetailsFragment", "Error fetching standings: ${e.message}")
             }
     }
 

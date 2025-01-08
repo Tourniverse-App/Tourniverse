@@ -28,7 +28,6 @@ class AccountFragment : Fragment() {
         val nameEditText: EditText = view.findViewById(R.id.edit_name)
         val emailEditText: EditText = view.findViewById(R.id.edit_email)
         val phoneEditText: EditText = view.findViewById(R.id.edit_phone)
-        val profileImageView: ImageView = view.findViewById(R.id.profile_picture)
         val editPhotoText: TextView = view.findViewById(R.id.edit_photo)
         val saveButton: Button = view.findViewById(R.id.save_button)
 
