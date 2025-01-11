@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
@@ -37,7 +38,7 @@ class MembersAdapter(
     class MemberViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val nameTextView: TextView = itemView.findViewById(R.id.text_username)
         private val profileImageView: ImageView = itemView.findViewById(R.id.image_profile)
-        private val removeButton: Button = itemView.findViewById(R.id.button_remove)
+        private val removeButton: ImageButton = itemView.findViewById(R.id.button_remove)
 
         fun bind(
             user: User,

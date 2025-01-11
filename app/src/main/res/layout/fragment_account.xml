@@ -52,33 +52,12 @@
             android:lines="2"
             android:gravity="top" />
 
-
-        <!-- Password Management -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Password Management"
-            android:textSize="20sp"
-            android:fontFamily="@font/exo2_bold"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="8dp" />
-
         <Button
             android:id="@+id/reset_password"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Reset Password"
             android:layout_marginBottom="16dp" />
-
-        <!-- Account Management -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Account Management"
-            android:textSize="20sp"
-            android:fontFamily="@font/exo2_bold"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="8dp" />
 
         <Button
             android:id="@+id/delete_account"

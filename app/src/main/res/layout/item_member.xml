@@ -21,12 +21,15 @@
         android:text="Username"
         android:textSize="16sp" />
 
-    <Button
+    <ImageButton
         android:id="@+id/button_remove"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Remove"
-        android:backgroundTint="@color/errorColor"
-        android:textColor="@android:color/white"
+        android:layout_gravity="end"
+        android:layout_marginEnd="8dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@drawable/remove"
+        android:contentDescription="@string/remove_member"
         android:visibility="gone" />
+
 </LinearLayout>
