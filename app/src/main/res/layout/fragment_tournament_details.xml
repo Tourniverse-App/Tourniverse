@@ -11,8 +11,8 @@
         android:id="@+id/tvTournamentName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="20sp"
-        android:fontFamily="@font/exo2_bold"
+        android:textSize="30sp"
+        android:fontFamily="@font/exo2_black"
         android:singleLine="true"
         android:ellipsize="end"
         android:layout_marginBottom="8dp" />
@@ -24,6 +24,7 @@
         android:layout_height="wrap_content"
         android:textSize="16sp"
         android:singleLine="true"
+        android:fontFamily="@font/exo2_bold"
         android:ellipsize="end"
         android:layout_marginBottom="4dp" />
 
@@ -34,6 +35,7 @@
         android:layout_height="wrap_content"
         android:textSize="16sp"
         android:singleLine="true"
+        android:fontFamily="@font/exo2_bold"
         android:ellipsize="end"
         android:layout_marginBottom="4dp" />
 

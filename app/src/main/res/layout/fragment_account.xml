@@ -29,17 +29,6 @@
             android:contentDescription="Profile Picture"
             android:layout_marginBottom="8dp" />
 
-        <TextView
-            android:id="@+id/edit_photo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Edit"
-            android:textColor="@android:color/holo_blue_dark"
-            android:fontFamily="@font/exo2_bold"
-            android:layout_marginBottom="16dp"
-            android:clickable="true"
-            android:focusable="true" />
-
         <EditText
             android:id="@+id/edit_name"
             android:layout_width="match_parent"
@@ -53,6 +42,16 @@
             android:layout_height="wrap_content"
             android:hint="Email"
             android:layout_marginBottom="16dp" />
+
+        <EditText
+            android:id="@+id/edit_bio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Enter your bio"
+            android:inputType="textMultiLine"
+            android:lines="2"
+            android:gravity="top" />
+
 
         <!-- Password Management -->
         <TextView

@@ -5,6 +5,7 @@
     <color name="dark_gray">#505050</color>
     <color name="gray">#B0B0B0</color>
     <color name="light_gray">#E0E0E0</color>
+    <color name="errorColor">#FF0000</color>
 
     <!-- Application Theme Colors -->
     <color name="primary">@color/black</color>

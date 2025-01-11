@@ -28,7 +28,7 @@ class AccountFragment : Fragment() {
         // Profile Information
         val usernameEditText: EditText = view.findViewById(R.id.edit_name)
         val emailEditText: EditText = view.findViewById(R.id.edit_email)
-        val editPhotoText: TextView = view.findViewById(R.id.edit_photo)
+        val bioEditText: EditText = view.findViewById(R.id.edit_bio) // New bio field
         val saveButton: Button = view.findViewById(R.id.save_button)
 
         // Password Management
@@ -45,7 +45,9 @@ class AccountFragment : Fragment() {
                 .addOnSuccessListener { document ->
                     if (document.exists()) {
                         val username = document.getString("username") ?: ""
+                        val bio = document.getString("bio") ?: ""
                         usernameEditText.setText(username)
+                        bioEditText.setText(bio)
                     } else {
                         Log.w("AccountFragment", "User document does not exist.")
                     }
@@ -55,16 +57,11 @@ class AccountFragment : Fragment() {
                 }
         }
 
-        // Edit Photo Click Listener
-        editPhotoText.setOnClickListener {
-            Toast.makeText(context, "Edit Photo clicked", Toast.LENGTH_SHORT).show()
-            // TODO: Add logic for opening an image picker or photo editor
-        }
-
         // Save Button Click Listener
         saveButton.setOnClickListener {
             val newUsername = usernameEditText.text.toString().trim()
             val newEmail = emailEditText.text.toString().trim()
+            val newBio = bioEditText.text.toString().trim()
 
             if (newUsername.isEmpty()) {
                 Toast.makeText(context, "Username cannot be empty.", Toast.LENGTH_SHORT).show()
@@ -74,9 +71,9 @@ class AccountFragment : Fragment() {
             currentUser?.let { user ->
                 // Update Firestore with new username
                 db.collection("users").document(user.uid)
-                    .update("username", newUsername)
+                    .update("username", newUsername, "bio", newBio)
                     .addOnSuccessListener {
-                        Log.d("AccountFragment", "Username updated in Firestore.")
+                        Log.d("AccountFragment", "Username and bio updated in Firestore.")
                         Toast.makeText(context, "Username updated successfully!", Toast.LENGTH_SHORT).show()
                     }
                     .addOnFailureListener { e ->

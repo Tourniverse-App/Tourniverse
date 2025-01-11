@@ -241,22 +241,24 @@ class HomeFragment : Fragment() {
                     return@addOnSuccessListener
                 }
 
-                tournamentRef.update("viewers", FieldValue.arrayUnion(userId))
-                    .addOnSuccessListener {
-                        userRef.update("viewedTournaments", FieldValue.arrayUnion(tournamentId))
-                            .addOnSuccessListener {
-                                Toast.makeText(context, "Successfully joined the tournament!", Toast.LENGTH_SHORT).show()
-                                refreshFragment() // Refresh the fragment after joining
-                            }
-                            .addOnFailureListener { e ->
-                                Log.e("JoinTournament", "Failed to update user viewedTournaments: ${e.message}")
-                                Toast.makeText(context, "Error joining tournament.", Toast.LENGTH_SHORT).show()
-                            }
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("JoinTournament", "Failed to add user to tournament viewers: ${e.message}")
-                        Toast.makeText(context, "Error joining tournament.", Toast.LENGTH_SHORT).show()
-                    }
+                // Add user to the tournament viewers and increment the member count
+                tournamentRef.update(
+                    "viewers", FieldValue.arrayUnion(userId),
+                    "memberCount", FieldValue.increment(1) // Increment member count
+                ).addOnSuccessListener {
+                    userRef.update("viewedTournaments", FieldValue.arrayUnion(tournamentId))
+                        .addOnSuccessListener {
+                            Toast.makeText(context, "Successfully joined the tournament!", Toast.LENGTH_SHORT).show()
+                            refreshFragment() // Refresh the fragment after joining
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("JoinTournament", "Failed to update user viewedTournaments: ${e.message}")
+                            Toast.makeText(context, "Error joining tournament.", Toast.LENGTH_SHORT).show()
+                        }
+                }.addOnFailureListener { e ->
+                    Log.e("JoinTournament", "Failed to add user to tournament viewers: ${e.message}")
+                    Toast.makeText(context, "Error joining tournament.", Toast.LENGTH_SHORT).show()
+                }
             }
             .addOnFailureListener { e ->
                 Log.e("JoinTournament", "Error fetching tournament: ${e.message}")

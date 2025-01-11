@@ -28,7 +28,7 @@
             android:id="@+id/userNameTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="@font/exo2_bold"
+            android:fontFamily="@font/exo2_regular"
             android:textSize="16sp"
             android:layout_marginBottom="4dp"
             android:contentDescription="User Name" />
@@ -38,6 +38,7 @@
             android:id="@+id/contentTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:fontFamily="@font/exo2_regular"
             android:contentDescription="Post Content"
             android:textSize="14sp" />
 

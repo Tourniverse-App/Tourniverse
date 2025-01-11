@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.core.content.ContentProviderCompat.requireContext
 import com.example.tourniverse.models.Comment
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 
 object FirebaseHelper {
@@ -52,6 +53,7 @@ object FirebaseHelper {
                     "format" to format, // Save the tournament format in Firestore
                     "ownerId" to ownerId,
                     "viewers" to emptyList<String>(),
+                    "memberCount" to 1,
                     "createdAt" to System.currentTimeMillis()
                 )
 
@@ -89,6 +91,30 @@ object FirebaseHelper {
                 Log.e("FirebaseHelper", "Error fetching tournaments: ${e.message}")
                 callback(false, e.message)
             }
+    }
+
+    /**
+     * Adds a comment to a tournament's chat collection.
+     *
+     * @param tournamentId ID of the tournament.
+     */
+    fun incrementMemberCount(tournamentId: String) {
+        db.collection("tournaments").document(tournamentId)
+            .update("memberCount", FieldValue.increment(1))
+            .addOnSuccessListener { Log.d("FirebaseHelper", "Member count incremented.") }
+            .addOnFailureListener { e -> Log.e("FirebaseHelper", "Failed to increment member count: ${e.message}") }
+    }
+
+    /**
+     * Adds a comment to a tournament's chat collection.
+     *
+     * @param tournamentId ID of the tournament.
+     */
+    fun decrementMemberCount(tournamentId: String) {
+        db.collection("tournaments").document(tournamentId)
+            .update("memberCount", FieldValue.increment(-1))
+            .addOnSuccessListener { Log.d("FirebaseHelper", "Member count decremented.") }
+            .addOnFailureListener { e -> Log.e("FirebaseHelper", "Failed to decrement member count: ${e.message}") }
     }
 
     /**
