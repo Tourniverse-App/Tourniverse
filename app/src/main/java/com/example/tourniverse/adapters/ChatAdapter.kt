@@ -131,7 +131,7 @@ class ChatAdapter(
             val bundle = Bundle()
 
             // Pass the document ID directly as an argument
-            bundle.putString("documentId", message.documentId) // Correct ID
+            bundle.putString("documentId", message.documentId)
             bundle.putString("tournamentId", tournamentId)
             commentFragment.arguments = bundle
 

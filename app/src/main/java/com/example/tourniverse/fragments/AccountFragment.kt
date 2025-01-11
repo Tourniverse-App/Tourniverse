@@ -9,14 +9,15 @@ import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import com.example.tourniverse.R
-import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
 
 class AccountFragment : Fragment() {
 
-    // Firebase Auth instance
+    // Firebase Auth and Firestore instances
     private val auth = Firebase.auth
+    private val db = FirebaseFirestore.getInstance()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -25,9 +26,8 @@ class AccountFragment : Fragment() {
         val view = inflater.inflate(R.layout.fragment_account, container, false)
 
         // Profile Information
-        val nameEditText: EditText = view.findViewById(R.id.edit_name)
+        val usernameEditText: EditText = view.findViewById(R.id.edit_name)
         val emailEditText: EditText = view.findViewById(R.id.edit_email)
-        val phoneEditText: EditText = view.findViewById(R.id.edit_phone)
         val editPhotoText: TextView = view.findViewById(R.id.edit_photo)
         val saveButton: Button = view.findViewById(R.id.save_button)
 
@@ -39,10 +39,20 @@ class AccountFragment : Fragment() {
 
         // Load current user info
         val currentUser = auth.currentUser
-        currentUser?.let {
-            nameEditText.setText(it.displayName ?: "")
-            emailEditText.setText(it.email ?: "")
-            // Firebase doesn't store phone numbers directly for most providers
+        if (currentUser != null) {
+            emailEditText.setText(currentUser.email ?: "")
+            db.collection("users").document(currentUser.uid).get()
+                .addOnSuccessListener { document ->
+                    if (document.exists()) {
+                        val username = document.getString("username") ?: ""
+                        usernameEditText.setText(username)
+                    } else {
+                        Log.w("AccountFragment", "User document does not exist.")
+                    }
+                }
+                .addOnFailureListener { e ->
+                    Log.e("AccountFragment", "Error fetching user document: ${e.message}")
+                }
         }
 
         // Edit Photo Click Listener
@@ -53,32 +63,28 @@ class AccountFragment : Fragment() {
 
         // Save Button Click Listener
         saveButton.setOnClickListener {
-            val newName = nameEditText.text.toString().trim()
+            val newUsername = usernameEditText.text.toString().trim()
             val newEmail = emailEditText.text.toString().trim()
 
-            if (newName.isEmpty()) {
-                Toast.makeText(context, "Name cannot be empty.", Toast.LENGTH_SHORT).show()
+            if (newUsername.isEmpty()) {
+                Toast.makeText(context, "Username cannot be empty.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             currentUser?.let { user ->
-                val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
-                    .setDisplayName(newName)
-                    // Add logic to set the profile picture URL if available
-                    .build()
-
-                user.updateProfile(profileUpdates)
-                    .addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            Log.d("AccountFragment", "User profile updated.")
-                            Toast.makeText(context, "Profile updated successfully!", Toast.LENGTH_SHORT).show()
-                        } else {
-                            Log.e("AccountFragment", "Error updating profile", task.exception)
-                            Toast.makeText(context, "Failed to update profile: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
-                        }
+                // Update Firestore with new username
+                db.collection("users").document(user.uid)
+                    .update("username", newUsername)
+                    .addOnSuccessListener {
+                        Log.d("AccountFragment", "Username updated in Firestore.")
+                        Toast.makeText(context, "Username updated successfully!", Toast.LENGTH_SHORT).show()
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("AccountFragment", "Error updating username: ${e.message}")
+                        Toast.makeText(context, "Failed to update username.", Toast.LENGTH_SHORT).show()
                     }
 
-                // Update email
+                // Update email in Firebase Auth
                 if (newEmail != user.email) {
                     user.updateEmail(newEmail)
                         .addOnCompleteListener { task ->

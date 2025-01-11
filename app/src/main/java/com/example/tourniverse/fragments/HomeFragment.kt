@@ -5,9 +5,11 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
@@ -17,6 +19,7 @@ import com.example.tourniverse.adapters.TournamentAdapter
 import com.example.tourniverse.models.Tournament
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldPath
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 
 class HomeFragment : Fragment() {
@@ -56,6 +59,26 @@ class HomeFragment : Fragment() {
 
         return view
     }
+
+    /**
+     * Called when the fragment's activity has been created and the fragment's view hierarchy instantiated.
+     * It can be used to do final initialization once these pieces are in place, such as retrieving views or restoring state.
+     * It is called after onCreateView, and is called after onStart() and before onResume().
+     *
+     * @param view The View returned by onCreateView.
+     */
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        // Initialize views
+        val joinTournamentButton = view.findViewById<Button>(R.id.buttonJoinTournament)
+
+        // Set up join button click listener
+        joinTournamentButton.setOnClickListener {
+            showJoinTournamentDialog()
+        }
+    }
+
 
     /**
      * Fetches tournaments owned or viewed by the currently logged-in user from Firestore.
@@ -181,5 +204,94 @@ class HomeFragment : Fragment() {
             putString("tournamentDescription", tournament.description) // Pass the description
         }
         findNavController().navigate(R.id.action_homeFragment_to_tournamentDetailsFragment, bundle)
+    }
+
+    /**
+     * Joins a tournament as a viewer.
+     *
+     * @param tournamentId The ID of the tournament to join.
+     */
+    private fun joinTournament(tournamentId: String) {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        val userId = currentUser?.uid ?: run {
+            Toast.makeText(context, "User not logged in!", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val tournamentRef = db.collection("tournaments").document(tournamentId)
+        val userRef = db.collection("users").document(userId)
+
+        tournamentRef.get()
+            .addOnSuccessListener { document ->
+                if (!document.exists()) {
+                    Toast.makeText(context, "Tournament not found!", Toast.LENGTH_SHORT).show()
+                    return@addOnSuccessListener
+                }
+
+                val viewers = document.get("viewers") as? List<String> ?: emptyList()
+                val ownerId = document.getString("ownerId") ?: ""
+
+                if (userId == ownerId) {
+                    Toast.makeText(context, "You are the owner of this tournament!", Toast.LENGTH_SHORT).show()
+                    return@addOnSuccessListener
+                }
+
+                if (viewers.contains(userId)) {
+                    Toast.makeText(context, "You are already a viewer of this tournament!", Toast.LENGTH_SHORT).show()
+                    return@addOnSuccessListener
+                }
+
+                tournamentRef.update("viewers", FieldValue.arrayUnion(userId))
+                    .addOnSuccessListener {
+                        userRef.update("viewedTournaments", FieldValue.arrayUnion(tournamentId))
+                            .addOnSuccessListener {
+                                Toast.makeText(context, "Successfully joined the tournament!", Toast.LENGTH_SHORT).show()
+                                refreshFragment() // Refresh the fragment after joining
+                            }
+                            .addOnFailureListener { e ->
+                                Log.e("JoinTournament", "Failed to update user viewedTournaments: ${e.message}")
+                                Toast.makeText(context, "Error joining tournament.", Toast.LENGTH_SHORT).show()
+                            }
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("JoinTournament", "Failed to add user to tournament viewers: ${e.message}")
+                        Toast.makeText(context, "Error joining tournament.", Toast.LENGTH_SHORT).show()
+                    }
+            }
+            .addOnFailureListener { e ->
+                Log.e("JoinTournament", "Error fetching tournament: ${e.message}")
+                Toast.makeText(context, "Error joining tournament.", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    /**
+     * Shows a dialog to enter the tournament code.
+     */
+    private fun showJoinTournamentDialog() {
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_join_tournament, null)
+        val dialog = AlertDialog.Builder(requireContext())
+            .setTitle("Join Tournament")
+            .setView(dialogView)
+            .setPositiveButton("Join") { _, _ ->
+                val codeInput = dialogView.findViewById<EditText>(R.id.tournamentCodeInput)
+                val tournamentCode = codeInput.text.toString().trim()
+
+                if (tournamentCode.isNotEmpty()) {
+                    joinTournament(tournamentCode) // Call your join logic
+                } else {
+                    Toast.makeText(context, "Please enter a valid tournament code.", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .create()
+
+        dialog.show()
+    }
+
+    private fun refreshFragment() {
+        findNavController().run {
+            popBackStack() // Removes the current fragment from the stack
+            navigate(R.id.nav_home) // Navigates back to the same fragment using the correct ID
+        }
     }
 }

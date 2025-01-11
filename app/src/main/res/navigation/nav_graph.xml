@@ -119,9 +119,10 @@
     <fragment
         android:id="@+id/aboutFragment"
         android:name="com.example.tourniverse.fragments.AboutFragment"
-        android:label="About" />
+        android:label="About"
+        android:layout="@layout/fragment_about" />
 
-    <!-- Social Fragment -->
+    <!-- Comment Fragment -->
     <fragment
         android:id="@+id/commentFragment"
         android:name="com.example.tourniverse.fragments.CommentFragment"

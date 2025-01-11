@@ -51,4 +51,18 @@
         android:text="No\nTournaments\nYet"
         android:textSize="50sp"
         android:textStyle="bold" />
+
+    <!-- Join Tournament Button -->
+    <Button
+        android:id="@+id/buttonJoinTournament"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="0dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:text="Join\nTournament"
+        android:textSize="18sp"
+        android:backgroundTint="@color/black"
+        android:padding="8dp"
+        android:textColor="@android:color/white"
+        android:gravity="center" />
 </FrameLayout>

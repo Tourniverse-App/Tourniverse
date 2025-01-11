@@ -121,7 +121,6 @@ class CommentFragment : Fragment() {
             }
     }
 
-
     /**
      * Adds a comment to Firestore.
      */
@@ -130,10 +129,10 @@ class CommentFragment : Fragment() {
 
         // Load banned words from Blacklist.txt
         val bannedWords = loadBannedWords()
-        Log.d("CommentFragment", "Loaded banned words: $bannedWords")
+        Log.d("SocialFragment", "Loaded banned words: $bannedWords")
 
-        // Apply profanity filter
-        val filteredComment = commentText.split(" ").joinToString(" ") { word ->
+        // Profanity filter
+        val filteredContent = commentText.split(" ").joinToString(" ") { word ->
             if (bannedWords.contains(word.lowercase())) "***" else word // Replace banned words with ***
         }
 
@@ -186,16 +185,18 @@ class CommentFragment : Fragment() {
 
     private fun loadBannedWords(): List<String> {
         return try {
-            // Open Blacklist.txt from assets folder
+            // Open the Blacklist.txt file
             val inputStream = requireContext().assets.open("Blacklist.txt")
-            inputStream.bufferedReader().useLines { lines ->
-                lines.map { it.trim().lowercase() } // Trim spaces and convert to lowercase
+            val words = inputStream.bufferedReader().useLines { lines ->
+                lines.map { it.trim().lowercase() } // Clean each word (trim spaces and lowercase)
                     .filter { it.isNotEmpty() }     // Ignore empty lines
-                    .toList()                       // Return as a list
+                    .toList()
             }
+            Log.d("Blacklist", "Loaded banned words: $words") // Log the loaded words
+            words
         } catch (e: Exception) {
             Log.e("Blacklist", "Error loading banned words: ${e.message}")
-            emptyList() // Return empty list if something goes wrong
+            emptyList()
         }
     }
 }

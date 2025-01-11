@@ -120,8 +120,7 @@ class SocialFragment : Fragment() {
             setupDefaultChatCollection()
         }
     }
-
-
+    
     private fun setupDefaultChatCollection() {
         chatCollection = db.collection("tournaments")
             .document("default")
