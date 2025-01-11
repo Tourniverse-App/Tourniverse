@@ -16,7 +16,7 @@
         android:layout_height="wrap_content"
         android:text="Team A"
         android:textSize="14sp"
-        android:textStyle="bold"
+        android:fontFamily="@font/exo2_bold"
         android:gravity="center"
         android:layout_marginBottom="4dp" />
 
@@ -37,6 +37,6 @@
         android:layout_height="wrap_content"
         android:text="Team B"
         android:textSize="14sp"
-        android:textStyle="bold"
+        android:fontFamily="@font/exo2_bold"
         android:gravity="center" />
 </LinearLayout>

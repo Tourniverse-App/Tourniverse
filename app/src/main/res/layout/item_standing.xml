@@ -15,7 +15,7 @@
         android:gravity="start"
         android:text="Team A"
         android:textSize="16sp"
-        android:textStyle="bold"
+        android:fontFamily="@font/exo2_bold"
         android:paddingEnd="8dp" />
 
     <!-- Score Input for Team A -->
@@ -50,6 +50,6 @@
         android:gravity="end"
         android:text="Team B"
         android:textSize="16sp"
-        android:textStyle="bold"
+        android:fontFamily="@font/exo2_bold"
         android:paddingStart="8dp" />
 </LinearLayout>

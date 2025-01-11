@@ -46,8 +46,11 @@ class TournamentSettingsFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         // Retrieve tournament ID
-        tournamentId = arguments?.getString("tournamentId") ?: run {
+        tournamentId = arguments?.getString("tournamentId") ?: ""
+        if (tournamentId.isEmpty()) {
+            Log.e("TournamentSettings", "tournamentId is null or empty")
             Toast.makeText(context, "Invalid tournament ID", Toast.LENGTH_SHORT).show()
+            activity?.onBackPressed() // Navigate back or handle gracefully
             return
         }
 
@@ -57,6 +60,11 @@ class TournamentSettingsFragment : Fragment() {
         buttonLeaveTournament = view.findViewById(R.id.button_leave_tournament)
         buttonInvite = view.findViewById(R.id.button_invite)
         buttonDeleteTournament = view.findViewById(R.id.button_delete_tournament)
+
+        // Set default visibility for buttons
+        buttonDeleteTournament.visibility = View.GONE
+        buttonLeaveTournament.visibility = View.GONE
+        buttonInvite.visibility = View.GONE
 
         // Load user settings
         loadSettings(userId, tournamentId)
@@ -103,20 +111,16 @@ class TournamentSettingsFragment : Fragment() {
                     buttonDeleteTournament.visibility = View.VISIBLE
                     buttonLeaveTournament.visibility = View.GONE // Owner sees only Delete
                     buttonInvite.visibility = View.VISIBLE
-
                 } else {
                     buttonLeaveTournament.visibility = View.VISIBLE
                     buttonDeleteTournament.visibility = View.GONE // Non-owners see only Leave
 
-                    if(privacy == "private") {
-                        buttonInvite.visibility = View.GONE
-                    }else{
-                        buttonInvite.visibility = View.VISIBLE
-                    }
+                    buttonInvite.visibility = if (privacy == "private") View.GONE else View.VISIBLE
                 }
             }
             .addOnFailureListener { e ->
                 Log.e("TournamentSettings", "Error checking button visibility: ${e.message}")
+                Toast.makeText(context, "Failed to load tournament data", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -233,10 +237,24 @@ class TournamentSettingsFragment : Fragment() {
     private fun loadSettings(userId: String, tournamentId: String) {
         db.collection("users").document(userId)
             .collection("tournamentSettings").document(tournamentId).get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val gameNotifications = document.getBoolean("gameNotifications") ?: false
+                    val socialNotifications = document.getBoolean("socialNotifications") ?: false
+                    switchGameNotifications.isChecked = gameNotifications
+                    switchSocialNotifications.isChecked = socialNotifications
+                } else {
+                    Log.e("TournamentSettings", "No settings document found")
+                    Toast.makeText(context, "Settings not available for this tournament", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("TournamentSettings", "Error loading settings: ${e.message}")
+                Toast.makeText(context, "Failed to load settings", Toast.LENGTH_SHORT).show()
+            }
     }
 
     private fun shareTournamentInvite() {
-        // Fetch the tournament name from Firestore
         db.collection("tournaments").document(tournamentId).get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
@@ -255,6 +273,7 @@ class TournamentSettingsFragment : Fragment() {
             }
             .addOnFailureListener { e ->
                 Toast.makeText(context, "Error retrieving tournament: ${e.message}", Toast.LENGTH_SHORT).show()
+                Log.e("TournamentSettings", "Error retrieving tournament: ${e.message}")
             }
     }
 
@@ -266,6 +285,4 @@ class TournamentSettingsFragment : Fragment() {
             .setNegativeButton("No", null)
             .show()
     }
-
-
 }

@@ -18,7 +18,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="3"
         android:text="Team"
-        android:textStyle="bold"
+        android:fontFamily="@font/exo2_bold"
         android:textColor="#FFFFFF"
         android:gravity="center"
         android:textSize="16sp" />
@@ -28,7 +28,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:text="W"
-        android:textStyle="bold"
+        android:fontFamily="@font/exo2_bold"
         android:textColor="#FFFFFF"
         android:gravity="center"
         android:textSize="14sp" />
@@ -38,7 +38,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:text="D"
-        android:textStyle="bold"
+        android:fontFamily="@font/exo2_bold"
         android:textColor="#FFFFFF"
         android:gravity="center"
         android:textSize="14sp" />
@@ -48,7 +48,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:text="L"
-        android:textStyle="bold"
+        android:fontFamily="@font/exo2_bold"
         android:textColor="#FFFFFF"
         android:gravity="center"
         android:textSize="14sp" />
@@ -58,7 +58,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:text="GF"
-        android:textStyle="bold"
+        android:fontFamily="@font/exo2_bold"
         android:textColor="#FFFFFF"
         android:gravity="center"
         android:textSize="14sp" />
@@ -68,7 +68,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:text="Points"
-        android:textStyle="bold"
+        android:fontFamily="@font/exo2_bold"
         android:textColor="#FFFFFF"
         android:gravity="center"
         android:textSize="14sp" />

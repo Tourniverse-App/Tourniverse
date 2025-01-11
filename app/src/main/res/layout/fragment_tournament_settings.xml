@@ -10,7 +10,7 @@
         android:layout_height="wrap_content"
         android:text="Game Notifications"
         android:textSize="18sp"
-        android:textStyle="bold"
+        android:fontFamily="@font/exo2_bold"
         android:paddingTop="8dp" />
 
     <Switch
@@ -26,7 +26,7 @@
         android:layout_height="wrap_content"
         android:text="Social Notifications"
         android:textSize="18sp"
-        android:textStyle="bold"
+        android:fontFamily="@font/exo2_bold"
         android:paddingTop="16dp" />
 
     <Switch
@@ -71,4 +71,5 @@
         android:backgroundTint="@android:color/holo_red_light"
         android:textColor="@android:color/white"
         android:visibility="gone" />
+
 </LinearLayout>

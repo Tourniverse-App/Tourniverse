@@ -12,7 +12,7 @@
         android:id="@+id/matchTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textStyle="bold"
+        android:fontFamily="@font/exo2_bold"
         android:textSize="16sp"
         android:gravity="center"
         android:padding="4dp"

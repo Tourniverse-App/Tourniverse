@@ -17,7 +17,7 @@
             android:layout_height="wrap_content"
             android:text="Create Tournament"
             android:textSize="24sp"
-            android:textStyle="bold"
+            android:fontFamily="@font/exo2_bold"
             android:gravity="center"
             android:layout_marginBottom="16dp" />
 
