@@ -82,7 +82,8 @@ class RegisterActivity : AppCompatActivity() {
                     // Initialize user data for Firestore "users" collection
                     val userMap = hashMapOf(
                         "username" to username,
-                        "bio" to "This is ${username}'s bio!"
+                        "bio" to "This is ${username}'s bio!",
+                        "email" to email
                     )
 
                     val db = FirebaseFirestore.getInstance()
@@ -92,11 +93,7 @@ class RegisterActivity : AppCompatActivity() {
                     userRef.set(userMap)
                         .addOnCompleteListener { dbTask ->
                             if (dbTask.isSuccessful) {
-                                // Initialize subcollections for tournaments and notifications
-                                val tournamentsRef = userRef.collection("tournaments")
-                                val notificationsRef = userRef.collection("notifications")
-
-                                // Initialize notifications subcollection
+                                // Initialize notifications document
                                 val notificationsData = hashMapOf(
                                     "push" to false,
                                     "ChatMessages" to false,
@@ -104,7 +101,7 @@ class RegisterActivity : AppCompatActivity() {
                                     "Likes" to false,
                                     "Dnd" to false
                                 )
-                                notificationsRef.document("settings").set(notificationsData)
+                                userRef.collection("notifications").document("settings").set(notificationsData)
 
                                 progressDialog.dismiss()
                                 Toast.makeText(this, "Registration successful!", Toast.LENGTH_SHORT).show()

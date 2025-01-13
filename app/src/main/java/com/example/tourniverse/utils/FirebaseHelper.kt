@@ -1,9 +1,10 @@
 package com.example.tourniverse.utils
 
+import android.content.Context
+import android.content.Intent
 import android.util.Log
-import android.widget.Toast
-import androidx.core.content.ContentProviderCompat.requireContext
-import com.example.tourniverse.models.Comment
+import com.example.tourniverse.activities.LoginActivity
+import com.example.tourniverse.activities.MainActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -387,4 +388,109 @@ object FirebaseHelper {
                 Log.e("FirebaseHelper", "Error updating likes: ${e.message}")
             }
     }
+
+    fun deleteTournament(context: Context, tournamentId: String, isAccountDeletion: Boolean) {
+        if (!isAccountDeletion) {
+            // Redirect to home before deleting
+            val intent = Intent(context, MainActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+            intent.putExtra("REFRESH_HOME", true)
+            context.startActivity(intent)
+        }
+
+        // Fetch all viewers and owner ID
+        db.collection("tournaments").document(tournamentId).get()
+            .addOnSuccessListener { document ->
+                val viewers = document.get("viewers") as? List<String> ?: emptyList()
+                val ownerId = document.getString("ownerId") ?: ""
+
+                // Remove the tournament ID from all viewers' tournaments subcollection
+                for (viewerId in viewers) {
+                    db.collection("users").document(viewerId)
+                        .collection("tournaments").document(tournamentId).delete()
+                        .addOnSuccessListener {
+                            Log.d("FirebaseHelper", "Removed tournament from viewer: $viewerId")
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("FirebaseHelper", "Failed to remove tournament from viewer $viewerId: ${e.message}")
+                        }
+                }
+
+                // Remove the tournament ID from the owner's tournaments subcollection
+                db.collection("users").document(ownerId)
+                    .collection("tournaments").document(tournamentId).delete()
+                    .addOnSuccessListener {
+                        Log.d("FirebaseHelper", "Removed tournament from owner's tournaments.")
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("FirebaseHelper", "Failed to remove tournament from owner's tournaments: ${e.message}")
+                    }
+
+                // Delete subcollections first, then the main document
+                deleteSubcollectionsAndDocument(tournamentId)
+            }
+            .addOnFailureListener { e ->
+                Log.e("FirebaseHelper", "Failed to fetch tournament details: ${e.message}")
+            }
+    }
+
+    fun deleteSubcollectionsAndDocument(documentId: String) {
+        val documentRef = db.collection("tournaments").document(documentId)
+
+        documentRef.collection("chat").get().addOnSuccessListener { chatSnapshots ->
+            for (doc in chatSnapshots) {
+                doc.reference.delete()
+            }
+
+            documentRef.collection("matches").get().addOnSuccessListener { matchSnapshots ->
+                for (doc in matchSnapshots) {
+                    doc.reference.delete()
+                }
+
+                documentRef.collection("standings").get().addOnSuccessListener { standingsSnapshots ->
+                    for (doc in standingsSnapshots) {
+                        doc.reference.delete()
+                    }
+
+                    // Finally, delete the main document after subcollections are cleared
+                    documentRef.delete()
+                        .addOnSuccessListener {
+                            Log.d("FirebaseHelper", "Tournament and subcollections deleted successfully.")
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("FirebaseHelper", "Failed to delete tournament: ${e.message}")
+                        }
+                }
+            }
+        }
+    }
+
+    fun deleteUserData(userId: String, onComplete: (() -> Unit)? = null) {
+        val userRef = db.collection("users").document(userId)
+
+        userRef.collection("notifications").get().addOnSuccessListener { notificationSnapshots ->
+            for (doc in notificationSnapshots) {
+                doc.reference.delete()
+            }
+
+            userRef.collection("tournaments").get().addOnSuccessListener { tournamentSnapshots ->
+                for (doc in tournamentSnapshots) {
+                    doc.reference.delete()
+                }
+
+                // Finally, delete the main document
+                userRef.delete()
+                    .addOnSuccessListener {
+                        Log.d("FirebaseHelper", "User document and subcollections deleted successfully.")
+                        onComplete?.invoke()
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("FirebaseHelper", "Failed to delete user document: ${e.message}")
+                    }
+            }
+        }.addOnFailureListener { e ->
+            Log.e("FirebaseHelper", "Failed to delete user subcollections: ${e.message}")
+        }
+    }
+
 }

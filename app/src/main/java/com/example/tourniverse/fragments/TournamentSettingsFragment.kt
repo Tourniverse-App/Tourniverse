@@ -26,6 +26,7 @@ import com.google.firebase.dynamiclinks.shortLinkAsync
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.example.tourniverse.models.User
+import com.example.tourniverse.utils.FirebaseHelper
 
 class TournamentSettingsFragment : Fragment() {
 
@@ -105,7 +106,7 @@ class TournamentSettingsFragment : Fragment() {
         // Delete Tournament button with confirmation dialog
         buttonDeleteTournament.setOnClickListener {
             showConfirmationDialog("Delete Tournament") {
-                deleteTournament() // Executes only if confirmed
+                FirebaseHelper.deleteTournament(requireContext(), tournamentId, false) // Redirect to home
             }
         }
 
@@ -169,86 +170,6 @@ class TournamentSettingsFragment : Fragment() {
                 Log.e("TournamentSettings", "Failed to remove user from tournament viewers: ${e.message}")
             }
         intent.putExtra("REFRESH_HOME", true)
-    }
-
-    private fun deleteTournament() {
-        // Redirect user to Home Page first
-        val intent = Intent(requireContext(), MainActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-        startActivity(intent)
-        activity?.finish()
-
-        // Fetch all viewers and owner ID
-        db.collection("tournaments").document(tournamentId).get()
-            .addOnSuccessListener { document ->
-                val viewers = document.get("viewers") as? List<String> ?: emptyList()
-                val ownerId = document.getString("ownerId") ?: ""
-
-                // Remove the tournament ID from all viewers' tournaments subcollection
-                for (viewerId in viewers) {
-                    db.collection("users").document(viewerId)
-                        .collection("tournaments").document(tournamentId).delete()
-                        .addOnSuccessListener {
-                            Log.d("TournamentSettings", "Removed tournament from viewer: $viewerId")
-                        }
-                        .addOnFailureListener { e ->
-                            Log.e("TournamentSettings", "Failed to remove tournament from viewer $viewerId: ${e.message}")
-                        }
-                }
-
-                // Remove the tournament ID from the owner's tournaments subcollection
-                db.collection("users").document(ownerId)
-                    .collection("tournaments").document(tournamentId).delete()
-                    .addOnSuccessListener {
-                        Log.d("TournamentSettings", "Removed tournament from owner's tournaments.")
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("TournamentSettings", "Failed to remove tournament from owner's tournaments: ${e.message}")
-                    }
-
-                // Delete subcollections first
-                deleteSubcollectionsAndDocument("tournaments", tournamentId)
-            }
-            .addOnFailureListener { e ->
-                Log.e("TournamentSettings", "Failed to fetch tournament details: ${e.message}")
-            }
-
-        intent.putExtra("REFRESH_HOME", true)
-
-    }
-
-    /**
-     * Recursively deletes all subcollections and the parent document.
-     */
-    private fun deleteSubcollectionsAndDocument(collectionPath: String, documentId: String) {
-        val documentRef = db.collection(collectionPath).document(documentId)
-
-        documentRef.collection("chat").get().addOnSuccessListener { chatSnapshots ->
-            for (doc in chatSnapshots) {
-                doc.reference.delete()
-            }
-
-            documentRef.collection("matches").get().addOnSuccessListener { matchSnapshots ->
-                for (doc in matchSnapshots) {
-                    doc.reference.delete()
-                }
-
-                documentRef.collection("standings").get().addOnSuccessListener { standingsSnapshots ->
-                    for (doc in standingsSnapshots) {
-                        doc.reference.delete()
-                    }
-
-                    // Finally, delete the main document after subcollections are cleared
-                    documentRef.delete()
-                        .addOnSuccessListener {
-                            Log.d("TournamentSettings", "Tournament and subcollections deleted successfully.")
-                        }
-                        .addOnFailureListener { e ->
-                            Log.e("TournamentSettings", "Failed to delete tournament: ${e.message}")
-                        }
-                }
-            }
-        }
     }
 
     private fun updateNotificationSetting(field: String, value: Boolean) {

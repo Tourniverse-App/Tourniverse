@@ -15,6 +15,9 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
+import com.example.tourniverse.utils.FirebaseHelper
+import com.google.android.gms.tasks.Task
+import com.google.android.gms.tasks.Tasks
 
 class AccountFragment : Fragment() {
 
@@ -136,70 +139,74 @@ class AccountFragment : Fragment() {
                         val userEmail = user.email
 
                         if (userEmail != null) {
+                            // Step 0: Sign out the user to prevent auto-login
+                            auth.signOut()
+
+                            // Redirect to LoginActivity
+                            val intent = Intent(context, LoginActivity::class.java)
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            intent.putExtra("ACCOUNT_DELETION_MESSAGE", "Your account is being deleted.")
+                            startActivity(intent)
+
+                            // Perform account deletion tasks in the background
+
                             // Step 1: Remove user from all tournaments
                             db.collection("tournaments")
                                 .whereArrayContains("viewers", user.uid)
                                 .get()
                                 .addOnSuccessListener { querySnapshot ->
+                                    val tasks = mutableListOf<Task<Void>>()
+
                                     for (document in querySnapshot.documents) {
                                         val tournamentId = document.id
-                                        db.collection("tournaments").document(tournamentId)
+                                        val removeViewerTask = db.collection("tournaments").document(tournamentId)
                                             .update("viewers", FieldValue.arrayRemove(user.uid))
-                                            .addOnSuccessListener {
-                                                Log.d("AccountFragment", "User removed from tournament: $tournamentId")
-                                            }
-                                            .addOnFailureListener { e ->
-                                                Log.e("AccountFragment", "Error removing user from tournament: ${e.message}")
-                                            }
+                                        tasks.add(removeViewerTask)
                                     }
 
-                                    // Step 2: Delete Firestore user document
-                                    db.collection("users").document(user.uid)
-                                        .delete()
+                                    Tasks.whenAll(tasks)
                                         .addOnSuccessListener {
-                                            Log.d("AccountFragment", "User document deleted successfully.")
+                                            // Step 2: Delete tournaments owned by the user
+                                            db.collection("tournaments")
+                                                .whereEqualTo("ownerId", user.uid)
+                                                .get()
+                                                .addOnSuccessListener { ownerQuerySnapshot ->
+                                                    val deleteTournamentTasks = mutableListOf<Task<Void>>()
 
-                                            // Step 3: Delete user from Firebase Authentication
-                                            user.delete()
-                                                .addOnCompleteListener { task ->
-                                                    if (task.isSuccessful) {
-                                                        Log.d("AccountFragment", "User account deleted from Firebase Authentication.")
-                                                        Toast.makeText(
-                                                            context,
-                                                            "Account deleted successfully.",
-                                                            Toast.LENGTH_SHORT
-                                                        ).show()
-
-                                                        // Step 4: Redirect to Login Activity
-                                                        val intent = Intent(context, LoginActivity::class.java)
-                                                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                                                        startActivity(intent)
-                                                    } else {
-                                                        Log.e("AccountFragment", "Failed to delete user from Authentication: ${task.exception?.message}")
-                                                        Toast.makeText(
-                                                            context,
-                                                            "Failed to delete account: ${task.exception?.message}",
-                                                            Toast.LENGTH_SHORT
-                                                        ).show()
+                                                    for (document in ownerQuerySnapshot.documents) {
+                                                        val tournamentId = document.id
+                                                        FirebaseHelper.deleteSubcollectionsAndDocument(tournamentId)
                                                     }
+
+                                                    Tasks.whenAll(deleteTournamentTasks)
+                                                        .addOnSuccessListener {
+                                                            // Step 3: Delete user data (subcollections and Firestore document)
+                                                            FirebaseHelper.deleteUserData(user.uid) {
+                                                                // Step 4: Delete user from Firebase Authentication
+                                                                user.delete()
+                                                                    .addOnCompleteListener { task ->
+                                                                        if (task.isSuccessful) {
+                                                                            Log.d("AccountFragment", "User account deleted from Firebase Authentication.")
+                                                                        } else {
+                                                                            Log.e("AccountFragment", "Failed to delete user from Authentication: ${task.exception?.message}")
+                                                                        }
+                                                                    }
+                                                            }
+                                                        }
+                                                        .addOnFailureListener { e ->
+                                                            Log.e("AccountFragment", "Failed to delete owned tournaments: ${e.message}")
+                                                        }
+                                                }
+                                                .addOnFailureListener { e ->
+                                                    Log.e("AccountFragment", "Failed to query owned tournaments: ${e.message}")
                                                 }
                                         }
                                         .addOnFailureListener { e ->
-                                            Log.e("AccountFragment", "Failed to delete user document: ${e.message}")
-                                            Toast.makeText(
-                                                context,
-                                                "Failed to delete account data: ${e.message}",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
+                                            Log.e("AccountFragment", "Failed to remove user from tournaments: ${e.message}")
                                         }
                                 }
                                 .addOnFailureListener { e ->
                                     Log.e("AccountFragment", "Failed to query tournaments: ${e.message}")
-                                    Toast.makeText(
-                                        context,
-                                        "Failed to remove user from tournaments: ${e.message}",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
                                 }
                         } else {
                             Toast.makeText(context, "No email associated with this account.", Toast.LENGTH_SHORT).show()
@@ -212,7 +219,36 @@ class AccountFragment : Fragment() {
                 .create()
                 .show()
         }
-
         return view
+    }
+
+    private fun deleteUserSubcollections(userId: String, onComplete: () -> Unit) {
+        val db = FirebaseFirestore.getInstance()
+        val userDocRef = db.collection("users").document(userId)
+
+        // List of subcollections to delete
+        val subcollections = listOf("tournaments", "notifications")
+
+        val batch = db.batch()
+        val tasks = mutableListOf<Task<Void>>()
+
+        for (subcollection in subcollections) {
+            val task = userDocRef.collection(subcollection).get()
+                .continueWithTask { querySnapshot ->
+                    for (document in querySnapshot.result.documents) {
+                        batch.delete(document.reference)
+                    }
+                    batch.commit()
+                }
+            tasks.add(task)
+        }
+
+        Tasks.whenAll(tasks)
+            .addOnSuccessListener {
+                onComplete()
+            }
+            .addOnFailureListener { e ->
+                Log.e("AccountFragment", "Failed to delete subcollections: ${e.message}")
+            }
     }
 }
