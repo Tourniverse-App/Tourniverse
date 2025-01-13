@@ -90,7 +90,7 @@ class NotificationsFragment : Fragment() {
                 if (document.exists()) {
                     pushSwitch.isChecked = document.getBoolean("Push") ?: true
                     scoresSwitch.isChecked = document.getBoolean("Scores") ?: true
-                    chatSwitch.isChecked = document.getBoolean("ChatMessage") ?: true
+                    chatSwitch.isChecked = document.getBoolean("ChatMessages") ?: true
                     commentsSwitch.isChecked = document.getBoolean("Comments") ?: true
                     likesSwitch.isChecked = document.getBoolean("Likes") ?: true
                 }

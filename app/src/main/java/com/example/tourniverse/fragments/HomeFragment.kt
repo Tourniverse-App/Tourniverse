@@ -97,9 +97,9 @@ class HomeFragment : Fragment() {
         val userId = currentUser.uid
         Log.d("HomeFragment", "Logged-in user ID: $userId")
 
-        // Fetch user's owned tournaments
+        // Fetch user's tournaments
         db.collection("users").document(userId)
-            .collection("tournaments").whereEqualTo("isOwner", true).get()
+            .collection("tournaments").get()
             .addOnSuccessListener { querySnapshot ->
                 tournaments.clear()
 
@@ -218,7 +218,8 @@ class HomeFragment : Fragment() {
                     // Add tournament to user's tournaments subcollection with booleans
                     val tournamentData = mapOf(
                         "isOwner" to false,
-                        "push" to true,
+                        "Push" to true,
+                        "Scores" to true,
                         "ChatMessages" to true,
                         "Comments" to true,
                         "Likes" to true
