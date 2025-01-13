@@ -221,8 +221,7 @@ class HomeFragment : Fragment() {
                         "push" to true,
                         "ChatMessages" to true,
                         "Comments" to true,
-                        "Likes" to true,
-                        "Dnd" to false
+                        "Likes" to true
                     )
                     userRef.collection("tournaments").document(tournamentId).set(tournamentData)
                         .addOnSuccessListener {

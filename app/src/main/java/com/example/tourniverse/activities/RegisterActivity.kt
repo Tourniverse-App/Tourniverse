@@ -95,11 +95,11 @@ class RegisterActivity : AppCompatActivity() {
                             if (dbTask.isSuccessful) {
                                 // Initialize notifications document
                                 val notificationsData = hashMapOf(
-                                    "push" to false,
+                                    "Push" to false,
+                                    "Scores" to false,
                                     "ChatMessages" to false,
                                     "Comments" to false,
                                     "Likes" to false,
-                                    "Dnd" to false
                                 )
                                 userRef.collection("notifications").document("settings").set(notificationsData)
 

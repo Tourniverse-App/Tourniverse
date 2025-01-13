@@ -1,6 +1,5 @@
 package com.example.tourniverse.fragments
 
-import android.content.Context
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -11,6 +10,7 @@ import android.widget.Switch
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.example.tourniverse.R
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 class NotificationsFragment : Fragment() {
@@ -23,7 +23,7 @@ class NotificationsFragment : Fragment() {
     private lateinit var dndSwitch: Switch
 
     private val db = FirebaseFirestore.getInstance()
-    private val userId = "exampleUserId" // Replace with actual user ID from authentication
+    private lateinit var userId: String
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -37,45 +37,41 @@ class NotificationsFragment : Fragment() {
         chatSwitch = view.findViewById(R.id.switchChatNotifications)
         commentsSwitch = view.findViewById(R.id.switchCommentsNotifications)
         likesSwitch = view.findViewById(R.id.switchLikesNotifications)
-        dndSwitch = view.findViewById(R.id.switchDndMode)
 
-        // Load preferences from Firebase
-        loadPreferences()
+        // Get the current user ID
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser != null) {
+            userId = currentUser.uid
+            // Load preferences from Firebase
+            loadPreferences()
+        } else {
+            showToast("User not authenticated")
+        }
 
         // Set listeners for switches
         pushSwitch.setOnCheckedChangeListener { _, isChecked ->
-            updatePreference("push_notifications", isChecked)
+            updatePreference("Push", isChecked)
             showToast("Push Notifications ${if (isChecked) "Enabled" else "Disabled"}")
         }
 
         scoresSwitch.setOnCheckedChangeListener { _, isChecked ->
-            updatePreference("scores_notifications", isChecked)
+            updatePreference("Scores", isChecked)
             showToast("Scores Notifications ${if (isChecked) "Enabled" else "Disabled"}")
         }
 
         chatSwitch.setOnCheckedChangeListener { _, isChecked ->
-            updatePreference("chat_notifications", isChecked)
+            updatePreference("ChatMessages", isChecked)
             showToast("Chat Notifications ${if (isChecked) "Enabled" else "Disabled"}")
         }
 
         commentsSwitch.setOnCheckedChangeListener { _, isChecked ->
-            updatePreference("comments_notifications", isChecked)
+            updatePreference("Comments", isChecked)
             showToast("Comments Notifications ${if (isChecked) "Enabled" else "Disabled"}")
         }
 
         likesSwitch.setOnCheckedChangeListener { _, isChecked ->
-            updatePreference("likes_notifications", isChecked)
+            updatePreference("Likes", isChecked)
             showToast("Likes Notifications ${if (isChecked) "Enabled" else "Disabled"}")
-        }
-
-        dndSwitch.setOnCheckedChangeListener { _, isChecked ->
-            updatePreference("dnd_mode", isChecked)
-            if (isChecked) {
-                showToast("Do Not Disturb Mode Enabled for 24 hours")
-                deactivateDndAfter24Hours()
-            } else {
-                showToast("Do Not Disturb Mode Disabled")
-            }
         }
 
         return view
@@ -87,17 +83,16 @@ class NotificationsFragment : Fragment() {
     private fun loadPreferences() {
         db.collection("users")
             .document(userId)
-            .collection("preferences")
-            .document("notifications")
+            .collection("notifications")
+            .document("settings")
             .get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
-                    pushSwitch.isChecked = document.getBoolean("push_notifications") ?: true
-                    scoresSwitch.isChecked = document.getBoolean("scores_notifications") ?: true
-                    chatSwitch.isChecked = document.getBoolean("chat_notifications") ?: true
-                    commentsSwitch.isChecked = document.getBoolean("comments_notifications") ?: true
-                    likesSwitch.isChecked = document.getBoolean("likes_notifications") ?: true
-                    dndSwitch.isChecked = document.getBoolean("dnd_mode") ?: false
+                    pushSwitch.isChecked = document.getBoolean("Push") ?: true
+                    scoresSwitch.isChecked = document.getBoolean("Scores") ?: true
+                    chatSwitch.isChecked = document.getBoolean("ChatMessage") ?: true
+                    commentsSwitch.isChecked = document.getBoolean("Comments") ?: true
+                    likesSwitch.isChecked = document.getBoolean("Likes") ?: true
                 }
             }
             .addOnFailureListener {
@@ -113,26 +108,15 @@ class NotificationsFragment : Fragment() {
 
         db.collection("users")
             .document(userId)
-            .collection("preferences")
-            .document("notifications")
+            .collection("notifications")
+            .document("settings")
             .set(updates, com.google.firebase.firestore.SetOptions.merge())
             .addOnSuccessListener {
-                // Successfully updated
+                showToast("Preference Updated: $key")
             }
             .addOnFailureListener {
                 showToast("Failed to update preference: $key")
             }
-    }
-
-    /**
-     * Disable Do Not Disturb mode automatically after 24 hours.
-     */
-    private fun deactivateDndAfter24Hours() {
-        Handler(Looper.getMainLooper()).postDelayed({
-            dndSwitch.isChecked = false
-            updatePreference("dnd_mode", false)
-            showToast("Do Not Disturb Mode Disabled Automatically")
-        }, 24 * 60 * 60 * 1000) // 24 hours in milliseconds
     }
 
     /**

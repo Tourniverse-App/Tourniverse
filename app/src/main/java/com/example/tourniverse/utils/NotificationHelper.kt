@@ -35,18 +35,34 @@ object NotificationHelper {
      * @param context The application context.
      * @param title The notification title.
      * @param message The notification message.
+     * @param notificationId Optional notification ID for reusing/updating notifications.
+     * @param silent Whether the notification should be silent (no sound or vibration).
      */
-    fun showNotification(context: Context, title: String, message: String) {
+    fun showNotification(
+        context: Context,
+        title: String,
+        message: String,
+        notificationId: Int? = null,
+        silent: Boolean = false
+    ) {
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+        val notificationBuilder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(message)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(message)) // Expandable style
             .setSmallIcon(R.drawable.t32) // Replace with your app's notification icon
             .setAutoCancel(true)
-            .build()
 
-        notificationManager.notify(System.currentTimeMillis().toInt(), notification)
+        if (silent) {
+            notificationBuilder.setPriority(NotificationCompat.PRIORITY_LOW)
+            notificationBuilder.setNotificationSilent()
+        }
+
+        notificationManager.notify(notificationId ?: System.currentTimeMillis().toInt(), notificationBuilder.build())
+
+        // Log the notification
+        android.util.Log.d("NotificationHelper", "Notification sent: Title = $title, Message = $message")
     }
 }

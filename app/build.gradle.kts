@@ -80,5 +80,7 @@ dependencies {
     // Firebase Dynamic Links
     implementation("com.google.firebase:firebase-dynamic-links-ktx:21.1.0") // Firebase Dynamic Links
 
+    // WorkManager
+    implementation("androidx.work:work-runtime-ktx:2.7.1") // WorkManager
 
 }

@@ -31,8 +31,11 @@ import com.example.tourniverse.utils.FirebaseHelper
 class TournamentSettingsFragment : Fragment() {
 
     private lateinit var buttonMembers: Button
-    private lateinit var switchGameNotifications: Switch
-    private lateinit var switchSocialNotifications: Switch
+    private lateinit var switchPushNotifications: Switch
+    private lateinit var switchScoresNotifications: Switch
+    private lateinit var switchChatNotifications: Switch
+    private lateinit var switchCommentsNotifications: Switch
+    private lateinit var switchLikesNotifications: Switch
     private lateinit var buttonLeaveTournament: Button
     private lateinit var buttonInvite: Button
     private lateinit var buttonDeleteTournament: Button
@@ -62,8 +65,11 @@ class TournamentSettingsFragment : Fragment() {
         }
 
         // Initialize views
-        switchGameNotifications = view.findViewById(R.id.switch_game_notifications)
-        switchSocialNotifications = view.findViewById(R.id.switch_social_notifications)
+        switchPushNotifications = view.findViewById(R.id.switchPushNotifications)
+        switchScoresNotifications = view.findViewById(R.id.switchScoresNotifications)
+        switchChatNotifications = view.findViewById(R.id.switchChatNotifications)
+        switchCommentsNotifications = view.findViewById(R.id.switchCommentsNotifications)
+        switchLikesNotifications = view.findViewById(R.id.switchLikesNotifications)
         buttonLeaveTournament = view.findViewById(R.id.button_leave_tournament)
         buttonInvite = view.findViewById(R.id.button_invite)
         buttonDeleteTournament = view.findViewById(R.id.button_delete_tournament)
@@ -74,7 +80,7 @@ class TournamentSettingsFragment : Fragment() {
         buttonInvite.visibility = View.GONE
 
         // Load user settings
-        loadSettings(userId, tournamentId)
+        loadTournamentNotificationSettings(userId, tournamentId)
 
         buttonMembers = view.findViewById(R.id.button_members)
         db.collection("tournaments").document(tournamentId).get()
@@ -87,13 +93,64 @@ class TournamentSettingsFragment : Fragment() {
                 }
             }
 
-        // Notification switch listeners
-        switchGameNotifications.setOnCheckedChangeListener { _, isChecked ->
-            updateNotificationSetting("gameNotifications", isChecked)
+        // Load settings
+        loadTournamentNotificationSettings(userId, tournamentId)
+
+        // Set listeners for notification switches
+        switchPushNotifications.setOnCheckedChangeListener { _, isChecked ->
+            updateNotificationSetting("Push", isChecked)
+            showToast("Push Notifications ${if (isChecked) "Enabled" else "Disabled"}")
         }
 
-        switchSocialNotifications.setOnCheckedChangeListener { _, isChecked ->
-            updateNotificationSetting("socialNotifications", isChecked)
+        // Set listeners for notification switches
+        switchPushNotifications.setOnCheckedChangeListener { _, isChecked ->
+            if (switchPushNotifications.isEnabled) {
+                updateNotificationSetting("push", isChecked)
+                showToast("Push Notifications ${if (isChecked) "Enabled" else "Disabled"}")
+            } else {
+                showToast("Push Notifications are disabled in the global settings.")
+                switchPushNotifications.isChecked = false
+            }
+        }
+
+        switchScoresNotifications.setOnCheckedChangeListener { _, isChecked ->
+            if (switchScoresNotifications.isEnabled) {
+                updateNotificationSetting("Scores", isChecked)
+                showToast("Scores Notifications ${if (isChecked) "Enabled" else "Disabled"}")
+            } else {
+                showToast("Scores Notifications are disabled in the global settings.")
+                switchScoresNotifications.isChecked = false
+            }
+        }
+
+        switchChatNotifications.setOnCheckedChangeListener { _, isChecked ->
+            if (switchChatNotifications.isEnabled) {
+                updateNotificationSetting("ChatMessages", isChecked)
+                showToast("Chat Notifications ${if (isChecked) "Enabled" else "Disabled"}")
+            } else {
+                showToast("Chat Notifications are disabled in the global settings.")
+                switchChatNotifications.isChecked = false
+            }
+        }
+
+        switchCommentsNotifications.setOnCheckedChangeListener { _, isChecked ->
+            if (switchCommentsNotifications.isEnabled) {
+                updateNotificationSetting("Comments", isChecked)
+                showToast("Comments Notifications ${if (isChecked) "Enabled" else "Disabled"}")
+            } else {
+                showToast("Comments Notifications are disabled in the global settings.")
+                switchCommentsNotifications.isChecked = false
+            }
+        }
+
+        switchLikesNotifications.setOnCheckedChangeListener { _, isChecked ->
+            if (switchLikesNotifications.isEnabled) {
+                updateNotificationSetting("Likes", isChecked)
+                showToast("Likes Notifications ${if (isChecked) "Enabled" else "Disabled"}")
+            } else {
+                showToast("Likes Notifications are disabled in the global settings.")
+                switchLikesNotifications.isChecked = false
+            }
         }
 
         // Leave Tournament button with confirmation dialog
@@ -172,29 +229,20 @@ class TournamentSettingsFragment : Fragment() {
         intent.putExtra("REFRESH_HOME", true)
     }
 
+
+    /**
+     * Update a specific notification setting in Firestore.
+     */
     private fun updateNotificationSetting(field: String, value: Boolean) {
         db.collection("users").document(userId)
             .collection("tournaments").document(tournamentId)
             .update(field, value)
-    }
-
-    private fun loadSettings(userId: String, tournamentId: String) {
-        db.collection("users").document(userId)
-            .collection("tournaments").document(tournamentId).get()
-            .addOnSuccessListener { document ->
-                if (document.exists()) {
-                    val gameNotifications = document.getBoolean("gameNotifications") ?: false
-                    val socialNotifications = document.getBoolean("socialNotifications") ?: false
-                    switchGameNotifications.isChecked = gameNotifications
-                    switchSocialNotifications.isChecked = socialNotifications
-                } else {
-                    Log.e("TournamentSettings", "No settings document found")
-                    Toast.makeText(context, "Settings not available for this tournament", Toast.LENGTH_SHORT).show()
-                }
+            .addOnSuccessListener {
+                Log.d("TournamentSettings", "Notification setting updated: $field = $value")
             }
             .addOnFailureListener { e ->
-                Log.e("TournamentSettings", "Error loading settings: ${e.message}")
-                Toast.makeText(context, "Failed to load settings", Toast.LENGTH_SHORT).show()
+                Log.e("TournamentSettings", "Failed to update notification setting: $field, Error: ${e.message}")
+                Toast.makeText(context, "Failed to update notification setting for $field", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -332,5 +380,81 @@ class TournamentSettingsFragment : Fragment() {
             .addOnFailureListener {
                 Toast.makeText(requireContext(), "Failed to refresh tournament settings", Toast.LENGTH_SHORT).show()
             }
+    }
+
+    /**
+     * Load tournament-specific notification settings, respecting global restrictions.
+     */
+    private fun loadTournamentNotificationSettings(userId: String, tournamentId: String) {
+        loadGlobalSettings { globalSettings ->
+            db.collection("users").document(userId)
+                .collection("tournaments").document(tournamentId).get()
+                .addOnSuccessListener { document ->
+                    if (document.exists()) {
+                        switchPushNotifications.isChecked =
+                            (globalSettings["push"] == true) && (document.getBoolean("push") ?: true)
+                        switchPushNotifications.isEnabled = globalSettings["push"] == true
+
+                        switchScoresNotifications.isChecked =
+                            (globalSettings["Scores"] == true) && (document.getBoolean("Scores") ?: true)
+                        switchScoresNotifications.isEnabled = globalSettings["Scores"] == true
+
+                        switchChatNotifications.isChecked =
+                            (globalSettings["ChatMessages"] == true) && (document.getBoolean("ChatMessages") ?: false)
+                        switchChatNotifications.isEnabled = globalSettings["ChatMessages"] == true
+
+                        switchCommentsNotifications.isChecked =
+                            (globalSettings["Comments"] == true) && (document.getBoolean("Comments") ?: false)
+                        switchCommentsNotifications.isEnabled = globalSettings["Comments"] == true
+
+                        switchLikesNotifications.isChecked =
+                            (globalSettings["Likes"] == true) && (document.getBoolean("Likes") ?: false)
+                        switchLikesNotifications.isEnabled = globalSettings["Likes"] == true
+                    } else {
+                        Log.e("TournamentSettings", "No notification settings document found")
+                        Toast.makeText(context, "Settings not available for this tournament", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                .addOnFailureListener { e ->
+                    Log.e("TournamentSettings", "Error loading notification settings: ${e.message}")
+                    Toast.makeText(context, "Failed to load notification settings", Toast.LENGTH_SHORT).show()
+                }
+        }
+    }
+
+    /**
+     * Load global notification settings and apply restrictions in the tournament settings.
+     */
+    private fun loadGlobalSettings(callback: (Map<String, Boolean>) -> Unit) {
+        db.collection("users").document(userId)
+            .collection("notifications").document("settings")
+            .get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val globalSettings = mapOf(
+                        "push" to (document.getBoolean("Push") ?: true),
+                        "Scores" to (document.getBoolean("Scores") ?: true),
+                        "ChatMessages" to (document.getBoolean("ChatMessages") ?: true),
+                        "Comments" to (document.getBoolean("Comments") ?: true),
+                        "Likes" to (document.getBoolean("Likes") ?: true),
+                    )
+                    callback(globalSettings)
+                } else {
+                    Log.e("TournamentSettings", "Global settings not found")
+                    callback(emptyMap()) // Default to all enabled
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("TournamentSettings", "Error loading global settings: ${e.message}")
+                callback(emptyMap()) // Default to all enabled
+            }
+    }
+
+
+    /**
+     * Show a short toast message.
+     */
+    private fun showToast(message: String) {
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
 }
