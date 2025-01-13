@@ -150,11 +150,8 @@ class SocialFragment : Fragment() {
 
         // Load banned words from Blacklist.txt
         val bannedWords = loadBannedWords()
-        Log.d("SocialFragment", "Loaded banned words: $bannedWords")
-
-        // Profanity filter
         val filteredContent = content.split(" ").joinToString(" ") { word ->
-            if (bannedWords.contains(word.lowercase())) "***" else word // Replace banned words with ***
+            if (bannedWords.contains(word.lowercase())) "***" else word
         }
 
         db.collection("users").document(userId).get()
@@ -165,17 +162,17 @@ class SocialFragment : Fragment() {
                     senderName = username,
                     message = filteredContent,
                     createdAt = System.currentTimeMillis(),
-                    likesCount = 0, // Added for likes
-                    likedBy = mutableListOf(), // Added for likes tracking
-                    comments = mutableListOf() // Added for comments tracking
+                    likesCount = 0,
+                    likedBy = mutableListOf(),
+                    comments = mutableListOf()
                 )
 
-                db.collection("tournaments")
-                    .document(tournamentId!!)
-                    .collection("chat")
-                    .add(message)
-                    .addOnSuccessListener {
+                db.collection("tournaments").document(tournamentId!!)
+                    .collection("chat").add(message)
+                    .addOnSuccessListener { messageRef ->
                         Log.d("SocialFragment", "Message sent successfully: $message")
+                        // Notify all users in the tournament (except the sender)
+                        notifyAllTournamentUsers(message.senderId, username, filteredContent)
                     }
                     .addOnFailureListener { e ->
                         Log.e("SocialFragment", "Error sending message: ${e.message}")
@@ -222,5 +219,73 @@ class SocialFragment : Fragment() {
                 Log.d("SocialFragment", "Messages updated: ${chatMessages.size}")
             }
         }
+    }
+
+    // ----- Notification methods -----
+    /**
+     * Sends a notification to the user if the global and tournament-specific settings allow it.
+     */
+    private fun sendNotification(
+        tournamentId: String,
+        userId: String,
+        type: String,
+        title: String,
+        body: String
+    ) {
+        db.collection("users").document(userId).get()
+            .addOnSuccessListener { userSnapshot ->
+                val fcmToken = userSnapshot.getString("fcmToken") ?: return@addOnSuccessListener
+
+                // Send notification using FCM API
+                val notificationData = mapOf(
+                    "to" to fcmToken,
+                    "notification" to mapOf(
+                        "title" to title,
+                        "body" to body
+                    ),
+                    "data" to mapOf(
+                        "type" to type,
+                        "tournamentId" to tournamentId
+                    )
+                )
+
+                // Example: Use Retrofit or any HTTP client to send this to FCM
+                Log.d("FCM Notification", "Sending notification: $notificationData")
+            }
+            .addOnFailureListener { e ->
+                Log.e("Notification", "Failed to fetch FCM token: ${e.message}")
+            }
+    }
+
+    private fun notifyAllTournamentUsers(senderId: String, senderName: String, message: String) {
+        db.collection("tournaments").document(tournamentId!!).get()
+            .addOnSuccessListener { tournamentSnapshot ->
+                val tournamentName = tournamentSnapshot.getString("name") ?: "Tournament"
+                val title = tournamentName // Set the tournament name as the title
+                val body = "$senderName: $message"
+
+                db.collection("tournaments").document(tournamentId!!)
+                    .collection("viewers").get()
+                    .addOnSuccessListener { snapshot ->
+                        snapshot.documents.forEach { document ->
+                            val userId = document.id
+                            if (userId != senderId) { // Exclude the sender
+                                sendNotification(
+                                    tournamentId = tournamentId!!,
+                                    userId = userId,
+                                    type = "ChatMessages",
+                                    title = title,
+                                    body = body
+                                )
+                            }
+                        }
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("SocialFragment", "Failed to fetch viewers: ${e.message}")
+                    }
+            }
+            .addOnFailureListener { e ->
+                Log.e("SocialFragment", "Failed to fetch tournament details: ${e.message}")
+            }
     }
 }

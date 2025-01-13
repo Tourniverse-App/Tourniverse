@@ -14,7 +14,8 @@ import com.example.tourniverse.models.Match
 
 class StandingsAdapter(
     private val items: List<Match>,
-    private val updateMatchScores: (Match, Int, Int) -> Unit
+    private val updateMatchScores: (Match, Int, Int) -> Unit,
+    private val notifyScoresUpdated: () -> Unit
 ) : RecyclerView.Adapter<StandingsAdapter.StandingsViewHolder>() {
 
     companion object {
@@ -66,6 +67,9 @@ class StandingsAdapter(
                 // Update match score
                 val score = if (input == "-") null else input.toIntOrNull()
                 match.scoreA = score
+
+                // Trigger notification when the score changes
+                notifyScoresUpdated()
             }
 
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -90,6 +94,9 @@ class StandingsAdapter(
                 // Update match score
                 val score = if (input == "-") null else input.toIntOrNull()
                 match.scoreB = score
+
+                // Trigger notification when the score changes
+                notifyScoresUpdated()
             }
 
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -102,4 +109,8 @@ class StandingsAdapter(
         Log.d(TAG, "Total items: ${items.size}")
         return items.size
     }
+
+    // ---- Notifications ----
+
+
 }

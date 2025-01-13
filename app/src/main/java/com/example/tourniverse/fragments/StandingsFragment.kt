@@ -74,11 +74,14 @@ class StandingsFragment : Fragment() {
         // Set click listener for save button
         saveButton.setOnClickListener { saveScoresToFirestore() }
 
-        // Setup RecyclerView adapter
-        fixturesAdapter = StandingsAdapter(fixtures) { match, newScoreA, newScoreB ->
-            updateMatchScores(match, newScoreA, newScoreB)
-        }
+        // Initialize and set up RecyclerView adapter
+        fixturesAdapter = StandingsAdapter(
+            items = fixtures, // The list of matches
+            updateMatchScores = { match, newScoreA, newScoreB -> updateMatchScores(match, newScoreA, newScoreB) },
+            notifyScoresUpdated = { notifyScoreUpdate() } // Pass the notification callback
+        )
         fixturesRecyclerView.adapter = fixturesAdapter
+
 
         fetchFixtures()
 
@@ -392,4 +395,88 @@ class StandingsFragment : Fragment() {
                 }
         }
     }
+
+    // --- Notifications ---
+
+    /**
+     * Notify all users that scores have been updated, based on their notification settings.
+     */
+    private fun notifyScoreUpdate() {
+        db.collection("tournaments").document(tournamentId!!)
+            .collection("viewers").get()
+            .addOnSuccessListener { viewersSnapshot ->
+                viewersSnapshot.documents.forEach { document ->
+                    val userId = document.id
+
+                    db.collection("users").document(userId)
+                        .collection("notifications").document("settings")
+                        .get()
+                        .addOnSuccessListener { settingsSnapshot ->
+                            val pushEnabled = settingsSnapshot.getBoolean("Push") ?: false
+                            val scoresEnabled = settingsSnapshot.getBoolean("Scores") ?: false
+
+                            if (pushEnabled && scoresEnabled) {
+                                db.collection("users").document(userId)
+                                    .get()
+                                    .addOnSuccessListener { userSnapshot ->
+                                        val fcmToken = userSnapshot.getString("fcmToken")
+                                        if (!fcmToken.isNullOrEmpty()) {
+                                            sendFCMNotification(
+                                                fcmToken = fcmToken,
+                                                title = getTournamentName(),
+                                                body = "Scores have been updated!"
+                                            )
+                                        }
+                                    }
+                                    .addOnFailureListener { e ->
+                                        Log.e("Fragment", "Failed to fetch user FCM token: ${e.message}")
+                                    }
+                            }
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("Fragment", "Failed to fetch user notification settings: ${e.message}")
+                        }
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("Fragment", "Failed to fetch tournament viewers: ${e.message}")
+            }
+    }
+
+    /**
+     * Sends an FCM notification to the specified FCM token.
+     */
+    private fun sendFCMNotification(fcmToken: String, title: String, body: String) {
+        val notificationData = mapOf(
+            "to" to fcmToken,
+            "notification" to mapOf(
+                "title" to title,
+                "body" to body
+            ),
+            "data" to mapOf(
+                "type" to "Scores",
+                "tournamentId" to tournamentId
+            )
+        )
+
+        Log.d("FCM Notification", "Sending notification: $notificationData")
+
+        // Replace this with your HTTP client logic (e.g., Retrofit, Volley, etc.)
+    }
+
+    /**
+     * Helper to retrieve the tournament name.
+     */
+    private fun getTournamentName(): String {
+        var tournamentName = "Tournament"
+        db.collection("tournaments").document(tournamentId!!).get()
+            .addOnSuccessListener { snapshot ->
+                tournamentName = snapshot.getString("name") ?: "Tournament"
+            }
+            .addOnFailureListener { e ->
+                Log.e("Fragment", "Failed to fetch tournament name: ${e.message}")
+            }
+        return tournamentName
+    }
+
 }

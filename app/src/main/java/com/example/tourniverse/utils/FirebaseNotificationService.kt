@@ -5,6 +5,8 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.example.tourniverse.R
@@ -59,7 +61,23 @@ class FirebaseNotificationService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        // Optionally, send the updated token to your server for targeted notifications
+
+        // Save the new FCM token to Firestore
+        val userId = FirebaseAuth.getInstance().currentUser?.uid
+        if (userId != null) {
+            FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(userId)
+                .update("fcmToken", token)
+                .addOnSuccessListener {
+                    // Token successfully saved
+                    android.util.Log.d("FCM Token", "Token saved successfully: $token")
+                }
+                .addOnFailureListener { e ->
+                    // Handle failure
+                    android.util.Log.e("FCM Token", "Failed to save token: ${e.message}")
+                }
+        }
     }
 
     /**

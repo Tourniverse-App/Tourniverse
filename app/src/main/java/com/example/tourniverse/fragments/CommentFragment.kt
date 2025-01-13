@@ -122,14 +122,14 @@ class CommentFragment : Fragment() {
     }
 
     /**
-     * Adds a comment to Firestore.
+     * Adds a comment to Firestore and notifies the message owner if settings allow.
      */
     private fun addComment(commentText: String) {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
         // Load banned words from Blacklist.txt
         val bannedWords = loadBannedWords()
-        Log.d("SocialFragment", "Loaded banned words: $bannedWords")
+        Log.d("CommentFragment", "Loaded banned words: $bannedWords")
 
         // Profanity filter
         val filteredContent = commentText.split(" ").joinToString(" ") { word ->
@@ -145,7 +145,7 @@ class CommentFragment : Fragment() {
                 val newComment = hashMapOf(
                     "userId" to userId,
                     "username" to username,
-                    "text" to commentText,
+                    "text" to filteredContent,
                     "createdAt" to System.currentTimeMillis()
                 )
 
@@ -165,6 +165,17 @@ class CommentFragment : Fragment() {
                                 // Append to existing comments array
                                 postRef.update("comments", FieldValue.arrayUnion(newComment))
                             }
+
+                            // Notify the message owner if settings allow
+                            val senderId = document.getString("senderId") ?: return@addOnSuccessListener
+                            if (senderId != userId) { // Ensure the commenter is not the sender
+                                notifyMessageOwner(
+                                    senderId = senderId,
+                                    commenterName = username,
+                                    commentText = filteredContent
+                                )
+                            }
+
                             Log.d("CommentFragment", "Comment added successfully!")
                             Toast.makeText(context, "Comment added!", Toast.LENGTH_SHORT).show()
                         } else {
@@ -199,4 +210,63 @@ class CommentFragment : Fragment() {
             emptyList()
         }
     }
+
+    // ---- Notifications ----
+
+    /**
+     * Notifies the message owner about a new comment on their message.
+     */
+    private fun notifyMessageOwner(senderId: String, commenterName: String, commentText: String) {
+        db.collection("users").document(senderId)
+            .collection("notifications").document("settings")
+            .get()
+            .addOnSuccessListener { settingsSnapshot ->
+                val pushEnabled = settingsSnapshot.getBoolean("Push") ?: false
+                val commentsEnabled = settingsSnapshot.getBoolean("Comments") ?: false
+
+                if (pushEnabled && commentsEnabled) {
+                    db.collection("users").document(senderId)
+                        .get()
+                        .addOnSuccessListener { userSnapshot ->
+                            val fcmToken = userSnapshot.getString("fcmToken")
+                            if (!fcmToken.isNullOrEmpty()) {
+                                sendFCMNotification(
+                                    fcmToken = fcmToken,
+                                    title = "New Comment on Your Message!",
+                                    body = "$commenterName commented: \"$commentText\""
+                                )
+                            }
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("CommentFragment", "Failed to fetch user FCM token: ${e.message}")
+                        }
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("CommentFragment", "Failed to fetch user notification settings: ${e.message}")
+            }
+    }
+
+    /**
+     * Sends an FCM notification to the specified FCM token.
+     */
+    private fun sendFCMNotification(fcmToken: String, title: String, body: String) {
+        val notificationData = mapOf(
+            "to" to fcmToken,
+            "notification" to mapOf(
+                "title" to title,
+                "body" to body
+            ),
+            "data" to mapOf(
+                "type" to "Comment",
+                "tournamentId" to tournamentId,
+                "messageId" to documentId
+            )
+        )
+
+        Log.d("FCM Notification", "Sending notification: $notificationData")
+
+        // Replace this with your HTTP client logic (e.g., Retrofit, Volley, etc.)
+    }
+
 }
