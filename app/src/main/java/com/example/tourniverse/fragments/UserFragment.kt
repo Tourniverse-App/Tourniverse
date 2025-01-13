@@ -87,73 +87,56 @@ class UserFragment : Fragment() {
     private fun fetchOwnedTournaments() {
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
-        FirebaseFirestore.getInstance().collection("users").document(currentUserId).get()
-            .addOnSuccessListener { userDocument ->
-                if (!userDocument.exists()) {
-                    Log.d("UserFragment", "User document does not exist.")
-                    Toast.makeText(requireContext(), "No Owned Tournaments Yet", Toast.LENGTH_SHORT).show()
-                    return@addOnSuccessListener
-                }
+        FirebaseFirestore.getInstance().collection("users").document(currentUserId)
+            .collection("tournaments").whereEqualTo("isOwner", true).get()
+            .addOnSuccessListener { querySnapshot ->
+                ownedTournaments.clear()
 
-                // Extract owned tournaments
-                val ownedTournamentsIds = userDocument.get("ownedTournaments") as? List<String> ?: emptyList()
-                Log.d("UserFragment", "Owned Tournaments IDs: $ownedTournamentsIds")
-
-                if (ownedTournamentsIds.isEmpty()) {
+                if (querySnapshot.isEmpty) {
                     Log.d("UserFragment", "No owned tournaments found.")
                     Toast.makeText(requireContext(), "No Owned Tournaments Yet", Toast.LENGTH_SHORT).show()
                     return@addOnSuccessListener
                 }
 
-                // Fetch tournament data
-                FirebaseFirestore.getInstance().collection("tournaments")
-                    .whereIn(FieldPath.documentId(), ownedTournamentsIds)
-                    .get()
-                    .addOnSuccessListener { querySnapshot ->
-                        ownedTournaments.clear()
+                for (document in querySnapshot.documents) {
+                    val tournamentId = document.id
 
-                        if (querySnapshot.isEmpty) {
-                            Log.d("UserFragment", "No tournaments matched the owned IDs.")
-                            Toast.makeText(requireContext(), "No Owned Tournaments Yet", Toast.LENGTH_SHORT).show()
-                            return@addOnSuccessListener
-                        }
+                    // Fetch tournament details from the main tournaments collection
+                    FirebaseFirestore.getInstance().collection("tournaments").document(tournamentId).get()
+                        .addOnSuccessListener { tournamentDocument ->
+                            if (tournamentDocument.exists()) {
+                                val name = tournamentDocument.getString("name") ?: "Unknown"
+                                val privacy = tournamentDocument.getString("privacy") ?: "Private"
+                                val description = tournamentDocument.getString("description") ?: ""
+                                val teamNames = tournamentDocument.get("teamNames") as? List<String> ?: emptyList()
+                                val viewers = tournamentDocument.get("viewers") as? List<String> ?: emptyList()
+                                val format = tournamentDocument.getString("type") ?: ""
 
-                        for (document in querySnapshot.documents) {
-                            Log.d("UserFragment", "Fetched tournament: ${document.data}")
-
-                            val id = document.id
-                            val name = document.getString("name") ?: "Unknown"
-                            val privacy = document.getString("privacy") ?: "Private"
-                            val description = document.getString("description") ?: ""
-                            val teamNames = document.get("teamNames") as? List<String> ?: emptyList()
-                            val viewers = document.get("viewers") as? List<String> ?: emptyList()
-                            val format = document.getString("type") ?: ""
-
-                            ownedTournaments.add(
-                                Tournament(
-                                    id = id,
-                                    name = name,
-                                    type = privacy,
-                                    description = description,
-                                    teamNames = teamNames,
-                                    owner = currentUserId,
-                                    viewers = viewers,
-                                    format = format
+                                ownedTournaments.add(
+                                    Tournament(
+                                        id = tournamentId,
+                                        name = name,
+                                        type = privacy,
+                                        description = description,
+                                        teamNames = teamNames,
+                                        owner = currentUserId,
+                                        viewers = viewers,
+                                        format = format
+                                    )
                                 )
-                            )
-                        }
 
-                        adapter.filter("") // Show all tournaments initially
-                        adapter.notifyDataSetChanged()
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("UserFragment", "Error fetching owned tournaments: ${e.message}")
-                        Toast.makeText(requireContext(), "Failed to load owned tournaments.", Toast.LENGTH_SHORT).show()
-                    }
+                                adapter.filter("") // Show all tournaments initially
+                                adapter.notifyDataSetChanged()
+                            }
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("UserFragment", "Error fetching tournament details: ${e.message}")
+                        }
+                }
             }
             .addOnFailureListener { e ->
-                Log.e("UserFragment", "Error fetching user data: ${e.message}")
-                Toast.makeText(requireContext(), "Failed to load user data.", Toast.LENGTH_SHORT).show()
+                Log.e("UserFragment", "Error fetching owned tournaments: ${e.message}")
+                Toast.makeText(requireContext(), "Failed to load owned tournaments.", Toast.LENGTH_SHORT).show()
             }
     }
 

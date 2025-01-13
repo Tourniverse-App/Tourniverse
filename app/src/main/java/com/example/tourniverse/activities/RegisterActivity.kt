@@ -82,20 +82,31 @@ class RegisterActivity : AppCompatActivity() {
                     // Initialize user data for Firestore "users" collection
                     val userMap = hashMapOf(
                         "username" to username,
-                        "bio" to "This is ${username}'s bio!",
-                        "ownedTournaments" to mutableListOf<String>(), // Empty list for owned tournaments
-                        "viewedTournaments" to mutableListOf<String>() // Empty list for viewed tournaments
+                        "bio" to "This is ${username}'s bio!"
                     )
 
-                    // Use set() to create or overwrite the user document
-                    FirebaseFirestore.getInstance()
-                        .collection("users")
-                        .document(userId)
-                        .set(userMap)
-                        .addOnCompleteListener { dbTask ->
-                            progressDialog.dismiss()
+                    val db = FirebaseFirestore.getInstance()
+                    val userRef = db.collection("users").document(userId)
 
+                    // Use set() to create or overwrite the user document
+                    userRef.set(userMap)
+                        .addOnCompleteListener { dbTask ->
                             if (dbTask.isSuccessful) {
+                                // Initialize subcollections for tournaments and notifications
+                                val tournamentsRef = userRef.collection("tournaments")
+                                val notificationsRef = userRef.collection("notifications")
+
+                                // Initialize notifications subcollection
+                                val notificationsData = hashMapOf(
+                                    "push" to false,
+                                    "ChatMessages" to false,
+                                    "Comments" to false,
+                                    "Likes" to false,
+                                    "Dnd" to false
+                                )
+                                notificationsRef.document("settings").set(notificationsData)
+
+                                progressDialog.dismiss()
                                 Toast.makeText(this, "Registration successful!", Toast.LENGTH_SHORT).show()
 
                                 // Navigate to MainActivity
@@ -104,6 +115,7 @@ class RegisterActivity : AppCompatActivity() {
                                 startActivity(intent)
                                 finish()
                             } else {
+                                progressDialog.dismiss()
                                 Toast.makeText(this, "Failed to save user data: ${dbTask.exception?.message}", Toast.LENGTH_SHORT).show()
                             }
                         }

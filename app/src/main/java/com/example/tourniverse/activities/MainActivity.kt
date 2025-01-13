@@ -57,6 +57,11 @@ class MainActivity : AppCompatActivity() {
                 else -> false
             }
         }
+
+        // Check for REFRESH_HOME flag
+        if (intent.getBooleanExtra("REFRESH_HOME", false)) {
+            refreshHomeScreen()
+        }
     }
 
     /**
@@ -135,5 +140,9 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(this, "Failed to send sign-in link: $errorMessage", Toast.LENGTH_LONG).show()
                 }
             }
+    }
+
+    private fun refreshHomeScreen() {
+        navController.navigate(R.id.nav_home)
     }
 }

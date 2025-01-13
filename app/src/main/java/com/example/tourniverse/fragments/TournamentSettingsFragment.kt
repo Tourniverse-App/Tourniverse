@@ -155,9 +155,9 @@ class TournamentSettingsFragment : Fragment() {
                 "memberCount", FieldValue.increment(-1) // Decrement the member count
             )
             .addOnSuccessListener {
-                // Remove tournament from user's viewed tournaments
+                // Remove tournament from user's tournaments subcollection
                 db.collection("users").document(userId)
-                    .update("viewedTournaments", FieldValue.arrayRemove(tournamentId))
+                    .collection("tournaments").document(tournamentId).delete()
                     .addOnSuccessListener {
                         Log.d("TournamentSettings", "User removed successfully and member count updated.")
                     }
@@ -168,6 +168,7 @@ class TournamentSettingsFragment : Fragment() {
             .addOnFailureListener { e ->
                 Log.e("TournamentSettings", "Failed to remove user from tournament viewers: ${e.message}")
             }
+        intent.putExtra("REFRESH_HOME", true)
     }
 
     private fun deleteTournament() {
@@ -183,10 +184,10 @@ class TournamentSettingsFragment : Fragment() {
                 val viewers = document.get("viewers") as? List<String> ?: emptyList()
                 val ownerId = document.getString("ownerId") ?: ""
 
-                // Remove the tournament ID from all viewers' viewedTournaments
+                // Remove the tournament ID from all viewers' tournaments subcollection
                 for (viewerId in viewers) {
                     db.collection("users").document(viewerId)
-                        .update("viewedTournaments", FieldValue.arrayRemove(tournamentId))
+                        .collection("tournaments").document(tournamentId).delete()
                         .addOnSuccessListener {
                             Log.d("TournamentSettings", "Removed tournament from viewer: $viewerId")
                         }
@@ -195,14 +196,14 @@ class TournamentSettingsFragment : Fragment() {
                         }
                 }
 
-                // Remove the tournament ID from the owner's ownedTournaments
+                // Remove the tournament ID from the owner's tournaments subcollection
                 db.collection("users").document(ownerId)
-                    .update("ownedTournaments", FieldValue.arrayRemove(tournamentId))
+                    .collection("tournaments").document(tournamentId).delete()
                     .addOnSuccessListener {
-                        Log.d("TournamentSettings", "Removed tournament from owner's ownedTournaments.")
+                        Log.d("TournamentSettings", "Removed tournament from owner's tournaments.")
                     }
                     .addOnFailureListener { e ->
-                        Log.e("TournamentSettings", "Failed to remove tournament from owner's ownedTournaments: ${e.message}")
+                        Log.e("TournamentSettings", "Failed to remove tournament from owner's tournaments: ${e.message}")
                     }
 
                 // Delete subcollections first
@@ -211,6 +212,9 @@ class TournamentSettingsFragment : Fragment() {
             .addOnFailureListener { e ->
                 Log.e("TournamentSettings", "Failed to fetch tournament details: ${e.message}")
             }
+
+        intent.putExtra("REFRESH_HOME", true)
+
     }
 
     /**
@@ -249,13 +253,13 @@ class TournamentSettingsFragment : Fragment() {
 
     private fun updateNotificationSetting(field: String, value: Boolean) {
         db.collection("users").document(userId)
-            .collection("tournamentSettings").document(tournamentId)
+            .collection("tournaments").document(tournamentId)
             .update(field, value)
     }
 
     private fun loadSettings(userId: String, tournamentId: String) {
         db.collection("users").document(userId)
-            .collection("tournamentSettings").document(tournamentId).get()
+            .collection("tournaments").document(tournamentId).get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
                     val gameNotifications = document.getBoolean("gameNotifications") ?: false

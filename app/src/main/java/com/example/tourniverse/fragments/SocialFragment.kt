@@ -103,6 +103,15 @@ class SocialFragment : Fragment() {
         return view
     }
 
+    /**
+     * Set up the chat collection based on the tournament ID.
+     * If the tournament ID is null or empty, use the default collection.
+     * If the tournament ID is invalid, log an error and use the default collection.
+     * If the tournament ID is valid, set up the chat collection for that tournament.
+     * If an error occurs, log the error and use the default collection.
+     *
+     * @param tournamentId The ID of the tournament to set up the chat collection for.
+     */
     private fun setupChatCollection() {
         if (!tournamentId.isNullOrEmpty()) {
             try {

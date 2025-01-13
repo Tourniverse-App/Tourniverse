@@ -90,12 +90,7 @@ class MembersAdapter(
                         )
                         .addOnSuccessListener {
                             db.collection("users").document(user.userId)
-                                .update(
-                                    "viewedTournaments",
-                                    com.google.firebase.firestore.FieldValue.arrayRemove(
-                                        tournamentId
-                                    )
-                                )
+                                .collection("tournaments").document(tournamentId).delete()
                                 .addOnSuccessListener {
                                     android.widget.Toast.makeText(
                                         fragment.requireContext(),
@@ -116,7 +111,7 @@ class MembersAdapter(
                                 .addOnFailureListener {
                                     android.widget.Toast.makeText(
                                         fragment.requireContext(),
-                                        "Failed to update user viewedTournaments",
+                                        "Failed to update user tournaments",
                                         android.widget.Toast.LENGTH_SHORT
                                     ).show()
                                 }

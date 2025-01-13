@@ -97,88 +97,57 @@ class HomeFragment : Fragment() {
         val userId = currentUser.uid
         Log.d("HomeFragment", "Logged-in user ID: $userId")
 
-        // Fetch user's data
-        db.collection("users").document(userId).get()
-            .addOnSuccessListener { userDocument ->
-                if (!userDocument.exists()) {
-                    Log.d("HomeFragment", "User document does not exist.")
+        // Fetch user's owned tournaments
+        db.collection("users").document(userId)
+            .collection("tournaments").whereEqualTo("isOwner", true).get()
+            .addOnSuccessListener { querySnapshot ->
+                tournaments.clear()
+
+                if (querySnapshot.isEmpty) {
+                    Log.d("HomeFragment", "No owned tournaments found.")
                     showNoTournamentsMessage()
                     return@addOnSuccessListener
                 }
 
-                // Log fetched document
-                Log.d("HomeFragment", "User document data: ${userDocument.data}")
+                for (document in querySnapshot.documents) {
+                    val tournamentId = document.id
 
-                // Extract owned and viewed tournaments
-                val ownedTournaments = userDocument.get("ownedTournaments") as? List<String> ?: emptyList()
-                val viewedTournaments = userDocument.get("viewedTournaments") as? List<String> ?: emptyList()
-                val allTournaments = ownedTournaments + viewedTournaments
+                    // Fetch tournament details from the main tournaments collection
+                    db.collection("tournaments").document(tournamentId).get()
+                        .addOnSuccessListener { tournamentDocument ->
+                            if (tournamentDocument.exists()) {
+                                val name = tournamentDocument.getString("name") ?: "Unknown"
+                                val privacy = tournamentDocument.getString("privacy") ?: "Private"
+                                val description = tournamentDocument.getString("description") ?: ""
+                                val teamNames = tournamentDocument.get("teamNames") as? List<String> ?: emptyList()
+                                val ownerId = tournamentDocument.getString("ownerId") ?: "Unknown"
 
-                Log.d("HomeFragment", "Owned Tournaments: $ownedTournaments")
-                Log.d("HomeFragment", "Viewed Tournaments: $viewedTournaments")
-                Log.d("HomeFragment", "All Tournaments: $allTournaments")
-
-                if (allTournaments.isEmpty()) {
-                    Log.d("HomeFragment", "User has no tournaments.")
-                    showNoTournamentsMessage()
-                    return@addOnSuccessListener
-                }
-
-                // Fetch tournament data
-                db.collection("tournaments")
-                    .whereIn(FieldPath.documentId(), allTournaments)
-                    .get()
-                    .addOnSuccessListener { querySnapshot ->
-                        tournaments.clear()
-
-                        if (querySnapshot.isEmpty) {
-                            Log.d("HomeFragment", "No tournaments matched the IDs.")
-                            showNoTournamentsMessage()
-                            return@addOnSuccessListener
-                        }
-
-                        for (document in querySnapshot.documents) {
-                            Log.d("HomeFragment", "Fetched tournament: ${document.data}")
-
-                            val id = document.id
-                            val name = document.getString("name") ?: "Unknown"
-                            val privacy = document.getString("privacy") ?: "Private"
-                            val description = document.getString("description") ?: ""
-                            val teamNames = document.get("teamNames") as? List<String> ?: emptyList()
-                            val ownerId = document.getString("ownerId") ?: "Unknown"
-
-                            tournaments.add(
-                                Tournament(
-                                    id = id,
-                                    name = name,
-                                    type = privacy,
-                                    description = description,
-                                    teamNames = teamNames,
-                                    owner = ownerId,
-                                    viewers = emptyList()
+                                tournaments.add(
+                                    Tournament(
+                                        id = tournamentId,
+                                        name = name,
+                                        type = privacy,
+                                        description = description,
+                                        teamNames = teamNames,
+                                        owner = ownerId,
+                                        viewers = emptyList()
+                                    )
                                 )
-                            )
-                        }
 
-                        // Update UI
-                        Log.d("HomeFragment", "Final tournament list size: ${tournaments.size}")
-                        recyclerView.visibility = View.VISIBLE
-                        noTournamentsView.visibility = View.GONE
-                        adapter.filter("")
-                        adapter.notifyDataSetChanged()
-                        Toast.makeText(requireContext(), "${tournaments.size} tournaments loaded.", Toast.LENGTH_SHORT).show()
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("HomeFragment", "Error fetching tournaments: ${e.message}")
-                        showNoTournamentsMessage()
-                    }
+                                adapter.filter("") // Show all tournaments initially
+                                adapter.notifyDataSetChanged()
+                            }
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("HomeFragment", "Error fetching tournament details: ${e.message}")
+                        }
+                }
             }
             .addOnFailureListener { e ->
-                Log.e("HomeFragment", "Error fetching user data: ${e.message}")
+                Log.e("HomeFragment", "Error fetching owned tournaments: ${e.message}")
                 showNoTournamentsMessage()
             }
     }
-
 
     /**
      * Displays a message when no tournaments are found.
@@ -244,15 +213,24 @@ class HomeFragment : Fragment() {
                 // Add user to the tournament viewers and increment the member count
                 tournamentRef.update(
                     "viewers", FieldValue.arrayUnion(userId),
-                    "memberCount", FieldValue.increment(1) // Increment member count
+                    "memberCount", FieldValue.increment(1)
                 ).addOnSuccessListener {
-                    userRef.update("viewedTournaments", FieldValue.arrayUnion(tournamentId))
+                    // Add tournament to user's tournaments subcollection with booleans
+                    val tournamentData = mapOf(
+                        "isOwner" to false,
+                        "push" to true,
+                        "ChatMessages" to true,
+                        "Comments" to true,
+                        "Likes" to true,
+                        "Dnd" to false
+                    )
+                    userRef.collection("tournaments").document(tournamentId).set(tournamentData)
                         .addOnSuccessListener {
                             Toast.makeText(context, "Successfully joined the tournament!", Toast.LENGTH_SHORT).show()
                             refreshFragment() // Refresh the fragment after joining
                         }
                         .addOnFailureListener { e ->
-                            Log.e("JoinTournament", "Failed to update user viewedTournaments: ${e.message}")
+                            Log.e("JoinTournament", "Failed to update user tournaments: ${e.message}")
                             Toast.makeText(context, "Error joining tournament.", Toast.LENGTH_SHORT).show()
                         }
                 }.addOnFailureListener { e ->

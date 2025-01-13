@@ -145,7 +145,7 @@ object FirebaseHelper {
         batch.set(chatRef, welcomeMessage)
 
         // Generate matches based on format
-        FirebaseHelper.generateMatches(tournamentId, teamNames, format) { success, error ->
+        generateMatches(tournamentId, teamNames, format) { success, error ->
             if (success) {
                 Log.d("FirebaseHelper", "Matches initialized successfully for format: $format")
             } else {
@@ -329,18 +329,22 @@ object FirebaseHelper {
         callback: (Boolean, String?) -> Unit
     ) {
         val userRef = db.collection(USERS_COLLECTION).document(userId)
-        db.runTransaction { transaction ->
-            val snapshot = transaction.get(userRef)
-            val ownedTournaments = snapshot.get("ownedTournaments") as? MutableList<String> ?: mutableListOf()
-            if (!ownedTournaments.contains(tournamentId)) {
-                ownedTournaments.add(tournamentId)
-                transaction.update(userRef, "ownedTournaments", ownedTournaments)
+        val tournamentData = hashMapOf(
+            "isOwner" to true,
+            "push" to false,
+            "ChatMessages" to false,
+            "Comments" to false,
+            "Likes" to false,
+            "Dnd" to false
+        )
+
+        userRef.collection("tournaments").document(tournamentId).set(tournamentData)
+            .addOnSuccessListener {
+                callback(true, null)
             }
-        }.addOnSuccessListener {
-            callback(true, null)
-        }.addOnFailureListener { e ->
-            callback(false, e.message ?: "Failed to update user owned tournaments")
-        }
+            .addOnFailureListener { e ->
+                callback(false, e.message ?: "Failed to update user owned tournaments")
+            }
     }
 
     /**

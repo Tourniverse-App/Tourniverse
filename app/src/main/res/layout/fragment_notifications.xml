@@ -40,7 +40,7 @@
                 android:layout_height="wrap_content" />
         </LinearLayout>
 
-        <!-- Email Notifications -->
+        <!-- Scores Notifications -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -52,16 +52,16 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Email Notifications"
+                android:text="Scores Update"
                 android:textSize="16sp" />
 
             <Switch
-                android:id="@+id/switchEmailNotifications"
+                android:id="@+id/switchScoresNotifications"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
         </LinearLayout>
 
-        <!-- SMS Notifications -->
+        <!-- Chat Notifications -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -73,11 +73,53 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="SMS Notifications"
+                android:text="Chat Messages"
                 android:textSize="16sp" />
 
             <Switch
-                android:id="@+id/switchSmsNotifications"
+                android:id="@+id/switchChatNotifications"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <!-- Comments Notifications -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingVertical="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Comments"
+                android:textSize="16sp" />
+
+            <Switch
+                android:id="@+id/switchCommentsNotifications"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <!-- Likes Notifications -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingVertical="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Comments"
+                android:textSize="16sp" />
+
+            <Switch
+                android:id="@+id/switchLikesNotifications"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
         </LinearLayout>
