@@ -46,21 +46,6 @@
             android:layout_marginBottom="8dp"
             android:gravity="center_vertical"
             android:textSize="16sp" />
-
-        <!-- Privacy & Security Settings -->
-        <TextView
-            android:id="@+id/privacySettings"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Privacy &amp; Security"
-            android:drawableStart="@drawable/ic_privacy"
-            android:drawablePadding="8dp"
-            android:padding="8dp"
-            android:background="@drawable/list_item_background"
-            android:layout_marginBottom="8dp"
-            android:gravity="center_vertical"
-            android:textSize="16sp" />
-
         <!-- Help & Support -->
         <TextView
             android:id="@+id/helpSupport"

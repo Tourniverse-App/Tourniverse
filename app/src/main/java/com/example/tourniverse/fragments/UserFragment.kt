@@ -72,7 +72,6 @@ class UserFragment : Fragment() {
             userData?.let { data ->
                 val userName = data["username"] as? String ?: "User"
                 val userBio = data["bio"] as? String ?: "No bio available"
-                val profileImageUrl = data["image"] as? String
 
                 userNameTextView.text = userName
                 userBioTextView.text = userBio

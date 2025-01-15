@@ -17,7 +17,6 @@ import com.example.tourniverse.models.ChatMessage
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import com.example.tourniverse.models.Comment
 
 class SocialFragment : Fragment() {
 
@@ -33,57 +32,28 @@ class SocialFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         val view = inflater.inflate(R.layout.fragment_social, container, false)
-
-        // Log at the start of onCreateView
-        Log.d("SocialFragment", "onCreateView called")
-
-        // Retrieve tournamentId from arguments
         tournamentId = arguments?.getString("tournamentId")
-        Log.d("SocialFragment", "Tournament ID from arguments: $tournamentId")
+        initializeViews(view)
+        setupChatCollection()
+        fetchMessages()
+        return view
+    }
 
-        if (tournamentId.isNullOrEmpty()) {
-            Log.e("SocialFragment", "Tournament ID is missing. Cannot proceed.")
-            db.collection("tournaments")
-                .get()
-                .addOnSuccessListener { documents ->
-                    for (document in documents) {
-                        tournamentId = document.id
-                        Log.d("SocialFragment", "Fetched fallback Tournament ID: $tournamentId")
-                        setupChatCollection()
-                        fetchMessages()
-                        break
-                    }
-                }
-                .addOnFailureListener { e ->
-                    Log.e("SocialFragment", "Error fetching tournaments for fallback ID: ${e.message}")
-                    setupDefaultChatCollection()
-                    fetchMessages()
-                }
-        } else {
-            setupChatCollection()
-            fetchMessages()
-        }
-
-        // Initialize views
+    private fun initializeViews(view: View) {
         chatRecyclerView = view.findViewById(R.id.postsRecyclerView)
         messageInput = view.findViewById(R.id.newPostInput)
         sendIcon = view.findViewById(R.id.sendPostButton)
 
-        // RecyclerView setup
         chatRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         adapter = ChatAdapter(
-            requireContext(),         // Pass Context using 'requireContext()'
-            chatMessages,             // Pass the list of messages
-            tournamentId ?: ""        // Pass the tournamentId (fallback to empty string if null)
+            requireContext(),
+            chatMessages,
+            tournamentId.orEmpty()
         )
         chatRecyclerView.adapter = adapter
 
-        // Log RecyclerView initialization
-        Log.d("SocialFragment", "RecyclerView and adapter initialized")
-
-        // Send button logic
         sendIcon.setOnClickListener {
             val messageContent = messageInput.text.toString().trim()
             if (messageContent.isNotEmpty()) {
@@ -91,109 +61,84 @@ class SocialFragment : Fragment() {
                 messageInput.text.clear()
             }
         }
-
-        try {
-            val inputStream = requireContext().assets.open("Blacklist.txt")
-            val content = inputStream.bufferedReader().use { it.readText() }
-            Log.d("BlacklistDebug", "File content:\n$content")
-        } catch (e: Exception) {
-            Log.e("BlacklistDebug", "Failed to load file: ${e.message}")
-        }
-
-        return view
     }
 
-    /**
-     * Set up the chat collection based on the tournament ID.
-     * If the tournament ID is null or empty, use the default collection.
-     * If the tournament ID is invalid, log an error and use the default collection.
-     * If the tournament ID is valid, set up the chat collection for that tournament.
-     * If an error occurs, log the error and use the default collection.
-     *
-     * @param tournamentId The ID of the tournament to set up the chat collection for.
-     */
     private fun setupChatCollection() {
-        if (!tournamentId.isNullOrEmpty()) {
-            try {
-                chatCollection = db.collection("tournaments")
-                    .document(tournamentId!!)
-                    .collection("chat")
-                    .orderBy("createdAt", Query.Direction.ASCENDING)
-                Log.d("SocialFragment", "Chat collection set up for Tournament ID: $tournamentId")
-            } catch (e: Exception) {
-                Log.e("SocialFragment", "Error setting up chat collection: ${e.message}")
-                setupDefaultChatCollection()
-            }
-        } else {
-            Log.e("SocialFragment", "Tournament ID is null or empty. Setting up default chat collection.")
-            setupDefaultChatCollection()
-        }
-    }
-    
-    private fun setupDefaultChatCollection() {
+        tournamentId = tournamentId ?: fetchFallbackTournamentId()
         chatCollection = db.collection("tournaments")
-            .document("default")
+            .document(tournamentId.orEmpty())
             .collection("chat")
             .orderBy("createdAt", Query.Direction.ASCENDING)
-        Log.d("SocialFragment", "Using default chat collection")
+    }
+
+    private fun fetchFallbackTournamentId(): String {
+        var fallbackId = "default"
+        db.collection("tournaments")
+            .get()
+            .addOnSuccessListener { documents ->
+                fallbackId = documents.firstOrNull()?.id ?: fallbackId
+                Log.d("SocialFragment", "Fallback Tournament ID fetched: $fallbackId")
+            }
+            .addOnFailureListener { e ->
+                Log.e("SocialFragment", "Error fetching fallback Tournament ID: ${e.message}")
+            }
+        return fallbackId
     }
 
     private fun sendMessage(content: String) {
         val currentUser = FirebaseAuth.getInstance().currentUser
-        val userId = currentUser?.uid ?: "Unknown"
+        val userId = currentUser?.uid.orEmpty()
 
         if (tournamentId.isNullOrEmpty()) {
-            Log.e("SocialFragment", "Cannot send message. Tournament ID is null or empty.")
-            Toast.makeText(context, "Cannot send message without a valid tournament ID.", Toast.LENGTH_SHORT).show()
+            showToast("Cannot send message without a valid tournament ID.")
             return
         }
 
-        // Load banned words from Blacklist.txt
-        val bannedWords = loadBannedWords()
-        val filteredContent = content.split(" ").joinToString(" ") { word ->
-            if (bannedWords.contains(word.lowercase())) "***" else word
+        val filteredContent = filterProfanity(content)
+        fetchUsername(userId) { username ->
+            val message = ChatMessage(
+                senderId = userId,
+                senderName = username,
+                message = filteredContent,
+                createdAt = System.currentTimeMillis(),
+                likesCount = 0,
+                likedBy = mutableListOf(),
+                comments = mutableListOf()
+            )
+            db.collection("tournaments").document(tournamentId!!)
+                .collection("chat").add(message)
+                .addOnSuccessListener {
+                    Log.d("SocialFragment", "Message sent successfully: $message")
+                    notifyAllTournamentUsers(userId, username, filteredContent)
+                }
+                .addOnFailureListener { e ->
+                    Log.e("SocialFragment", "Error sending message: ${e.message}")
+                }
         }
+    }
 
+    private fun fetchUsername(userId: String, callback: (String) -> Unit) {
         db.collection("users").document(userId).get()
-            .addOnSuccessListener { userSnapshot ->
-                val username = userSnapshot.getString("username") ?: "Anonymous"
-                val message = ChatMessage(
-                    senderId = userId,
-                    senderName = username,
-                    message = filteredContent,
-                    createdAt = System.currentTimeMillis(),
-                    likesCount = 0,
-                    likedBy = mutableListOf(),
-                    comments = mutableListOf()
-                )
-
-                db.collection("tournaments").document(tournamentId!!)
-                    .collection("chat").add(message)
-                    .addOnSuccessListener { messageRef ->
-                        Log.d("SocialFragment", "Message sent successfully: $message")
-                        // Notify all users in the tournament (except the sender)
-                        notifyAllTournamentUsers(message.senderId, username, filteredContent)
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("SocialFragment", "Error sending message: ${e.message}")
-                    }
+            .addOnSuccessListener { snapshot ->
+                callback(snapshot.getString("username") ?: "Anonymous")
             }
             .addOnFailureListener { e ->
-                Log.e("SocialFragment", "Error fetching username for userId: $userId, ${e.message}")
+                Log.e("SocialFragment", "Error fetching username: ${e.message}")
             }
+    }
+
+    private fun filterProfanity(content: String): String {
+        val bannedWords = loadBannedWords()
+        return content.split(" ").joinToString(" ") { word ->
+            if (bannedWords.contains(word.lowercase())) "***" else word
+        }
     }
 
     private fun loadBannedWords(): List<String> {
         return try {
-            // Open the Blacklist.txt file
-            val inputStream = requireContext().assets.open("Blacklist.txt")
-            val words = inputStream.bufferedReader().useLines { lines ->
-                lines.map { it.trim().lowercase() } // Clean each word (trim spaces and lowercase)
-                    .filter { it.isNotEmpty() }     // Ignore empty lines
-                    .toList()
+            requireContext().assets.open("Blacklist.txt").bufferedReader().useLines { lines ->
+                lines.map { it.trim().lowercase() }.filter { it.isNotEmpty() }.toList()
             }
-            Log.d("Blacklist", "Loaded banned words: $words") // Log the loaded words
-            words
         } catch (e: Exception) {
             Log.e("Blacklist", "Error loading banned words: ${e.message}")
             emptyList()
@@ -207,78 +152,30 @@ class SocialFragment : Fragment() {
                 return@addSnapshotListener
             }
 
-            if (snapshot != null) {
-                chatMessages.clear()
-                snapshot.documents.forEach { document ->
-                    val message = document.toObject(ChatMessage::class.java)
-                    message?.documentId = document.id // Assign Firestore Document ID
-                    if (message != null) chatMessages.add(message)
-                }
-                adapter.notifyDataSetChanged()
-                chatRecyclerView.scrollToPosition(chatMessages.size - 1)
-                Log.d("SocialFragment", "Messages updated: ${chatMessages.size}")
-            }
+            chatMessages.clear()
+            snapshot?.documents?.mapNotNullTo(chatMessages) { it.toObject(ChatMessage::class.java)?.apply { documentId = it.id } }
+            adapter.notifyDataSetChanged()
+            chatRecyclerView.scrollToPosition(chatMessages.size - 1)
+            Log.d("SocialFragment", "Messages updated: ${chatMessages.size}")
         }
     }
 
-    // ----- Notification methods -----
-    /**
-     * Sends a notification to the user if the global and tournament-specific settings allow it.
-     */
-    private fun sendNotification(
-        tournamentId: String,
-        userId: String,
-        type: String,
-        title: String,
-        body: String
-    ) {
-        db.collection("users").document(userId).get()
-            .addOnSuccessListener { userSnapshot ->
-                val fcmToken = userSnapshot.getString("fcmToken") ?: return@addOnSuccessListener
-
-                // Send notification using FCM API
-                val notificationData = mapOf(
-                    "to" to fcmToken,
-                    "notification" to mapOf(
-                        "title" to title,
-                        "body" to body
-                    ),
-                    "data" to mapOf(
-                        "type" to type,
-                        "tournamentId" to tournamentId
-                    )
-                )
-
-                // Example: Use Retrofit or any HTTP client to send this to FCM
-                Log.d("FCM Notification", "Sending notification: $notificationData")
-            }
-            .addOnFailureListener { e ->
-                Log.e("Notification", "Failed to fetch FCM token: ${e.message}")
-            }
-    }
-
     private fun notifyAllTournamentUsers(senderId: String, senderName: String, message: String) {
-        db.collection("tournaments").document(tournamentId!!).get()
-            .addOnSuccessListener { tournamentSnapshot ->
-                val tournamentName = tournamentSnapshot.getString("name") ?: "Tournament"
-                val title = tournamentName // Set the tournament name as the title
+        db.collection("tournaments").document(tournamentId.orEmpty()).get()
+            .addOnSuccessListener { snapshot ->
+                val tournamentName = snapshot.getString("name") ?: "Tournament"
+                val title = tournamentName
                 val body = "$senderName: $message"
 
-                db.collection("tournaments").document(tournamentId!!)
+                db.collection("tournaments").document(tournamentId.orEmpty())
                     .collection("viewers").get()
-                    .addOnSuccessListener { snapshot ->
-                        snapshot.documents.forEach { document ->
-                            val userId = document.id
-                            if (userId != senderId) { // Exclude the sender
-                                sendNotification(
-                                    tournamentId = tournamentId!!,
-                                    userId = userId,
-                                    type = "ChatMessages",
-                                    title = title,
-                                    body = body
-                                )
+                    .addOnSuccessListener { viewersSnapshot ->
+                        viewersSnapshot.documents
+                            .mapNotNull { it.id }
+                            .filter { it != senderId }
+                            .forEach { userId ->
+                                sendNotification(userId, "ChatMessages", title, body)
                             }
-                        }
                     }
                     .addOnFailureListener { e ->
                         Log.e("SocialFragment", "Failed to fetch viewers: ${e.message}")
@@ -287,5 +184,21 @@ class SocialFragment : Fragment() {
             .addOnFailureListener { e ->
                 Log.e("SocialFragment", "Failed to fetch tournament details: ${e.message}")
             }
+    }
+
+    private fun sendNotification(userId: String, type: String, title: String, body: String) {
+        db.collection("users").document(userId).get()
+            .addOnSuccessListener { snapshot ->
+                val fcmToken = snapshot.getString("fcmToken") ?: return@addOnSuccessListener
+                Log.d("FCM Notification", "Sending notification to $fcmToken: $title - $body")
+                // Implement FCM notification logic here (e.g., Retrofit or HTTP client)
+            }
+            .addOnFailureListener { e ->
+                Log.e("SocialFragment", "Failed to fetch FCM token: ${e.message}")
+            }
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
     }
 }

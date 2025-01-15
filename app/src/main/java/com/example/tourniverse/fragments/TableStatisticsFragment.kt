@@ -25,22 +25,11 @@ class TableStatisticsFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        Log.d("TableStatisticsFragment", "onCreateView called")
+    ): View {
         val view = inflater.inflate(R.layout.fragment_table_statistics, container, false)
+        Log.d("TableStatisticsFragment", "onCreateView called")
 
-        // Initialize RecyclerView
-        statisticsRecyclerView = view.findViewById(R.id.recyclerViewTableStatistics)
-        statisticsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
-
-        // Initialize the adapter
-        statisticsAdapter = TableStatisticsAdapter(teamStandings)
-        statisticsRecyclerView.adapter = statisticsAdapter
-
-        // Fetch arguments
-        tournamentId = arguments?.getString("tournamentId") ?: ""
-
-        Log.d("TableStatisticsFragment", "tournamentId: $tournamentId")
+        tournamentId = arguments?.getString("tournamentId").orEmpty()
 
         if (tournamentId.isNullOrEmpty()) {
             Log.e("TableStatisticsFragment", "Tournament ID is missing.")
@@ -48,48 +37,40 @@ class TableStatisticsFragment : Fragment() {
             return view
         }
 
-        // Fetch data
+        initializeRecyclerView(view)
         fetchTeamStandings()
 
         return view
     }
 
-    /**
-     * Fetches team standings from Firestore and updates the adapter.
-     */
-    private fun fetchTeamStandings() {
-        Log.d("TableStatisticsFragment", "fetchTeamStandings called")
+    private fun initializeRecyclerView(view: View) {
+        statisticsRecyclerView = view.findViewById(R.id.recyclerViewTableStatistics)
+        statisticsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+        statisticsAdapter = TableStatisticsAdapter(teamStandings)
+        statisticsRecyclerView.adapter = statisticsAdapter
+    }
 
-        // Ensure tournamentId is not null
+    private fun fetchTeamStandings() {
         tournamentId?.let { id ->
+            Log.d("TableStatisticsFragment", "Fetching standings for tournament ID: $id")
+
             db.collection("tournaments").document(id)
-                .collection("standings") // Fetch individual documents in the 'standings' collection
+                .collection("standings")
                 .get()
                 .addOnSuccessListener { documents ->
-                    Log.d("TableStatisticsFragment", "fetchTeamStandings success")
                     val standingsList = mutableListOf<TeamStanding>()
 
-                    // Process each document
                     for (document in documents) {
-                        Log.d("TableStatisticsFragment", "Document ID: ${document.id}")
-
-                        // Extract data based on correct keys
-                        val teamName = document.id // Use the document ID as the team name
+                        val teamName = document.id
                         val wins = document.getLong("wins")?.toInt() ?: 0
                         val draws = document.getLong("draws")?.toInt() ?: 0
                         val losses = document.getLong("losses")?.toInt() ?: 0
                         val goals = document.getLong("goals")?.toInt() ?: 0
                         val points = document.getLong("points")?.toInt() ?: 0
 
-                        Log.d(
-                            "TableStatisticsFragment",
-                            "Team: $teamName, Wins: $wins, Draws: $draws, Losses: $losses, Goals: $goals, Points: $points"
-                        )
-
-                        // Add team standing to the list
                         standingsList.add(
                             TeamStanding(
-                                teamName = teamName, // Use document ID directly as team name
+                                teamName = teamName,
                                 wins = wins,
                                 draws = draws,
                                 losses = losses,
@@ -99,47 +80,33 @@ class TableStatisticsFragment : Fragment() {
                         )
                     }
 
-                    // Sort standings by points, then goal difference, then team name
                     standingsList.sortWith(
                         compareByDescending<TeamStanding> { it.points }
                             .thenByDescending { it.goals }
-                            .thenBy { it.teamName } // Final fallback sort by team name
+                            .thenBy { it.teamName }
                     )
 
-                    // Update the adapter with the sorted data
-                    Log.d("TableStatisticsFragment", "Updating adapter with standings data")
-                    teamStandings.clear()
-                    teamStandings.addAll(standingsList)
-                    statisticsAdapter.notifyDataSetChanged()
+                    updateStandings(standingsList)
                 }
                 .addOnFailureListener { e ->
-                    Log.e("TableStatisticsFragment", "Failed to fetch team standings: ${e.message}")
+                    Log.e("TableStatisticsFragment", "Failed to fetch standings: ${e.message}")
                     Toast.makeText(context, "Failed to load standings.", Toast.LENGTH_SHORT).show()
                 }
-        } ?: Log.e("TableStatisticsFragment", "Tournament ID is null!")
+        } ?: run {
+            Log.e("TableStatisticsFragment", "Tournament ID is null!")
+        }
     }
 
-
-    /**
-     * Updates table data and refreshes the view.
-     */
-    fun updateTableStatistics(newData: List<TeamStanding>) {
-        Log.d("TableStatisticsFragment", "updateTableStatistics called")
-
-        // Clear and update data
+    fun updateStandings(newStandings: List<TeamStanding>) {
         teamStandings.clear()
-        teamStandings.addAll(newData.sortedWith(
-            compareByDescending<TeamStanding> { it.points }
-                .thenByDescending { it.goals }
-                .thenBy { it.teamName } // Sort by team name as fallback
-        ))
+        teamStandings.addAll(newStandings)
         statisticsAdapter.notifyDataSetChanged()
+        Log.d("TableStatisticsFragment", "Standings updated. Total teams: ${teamStandings.size}")
     }
 
     override fun onResume() {
         super.onResume()
         Log.d("TableStatisticsFragment", "onResume called - refreshing standings")
-        fetchTeamStandings() // Refresh standings when the user re-enters the page
+        fetchTeamStandings()
     }
-
 }

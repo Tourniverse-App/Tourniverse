@@ -175,6 +175,12 @@ class StandingsFragment : Fragment() {
                     return@forEach
                 }
 
+                if (scoreA != null && (scoreA < 0 || scoreA > 99)) {
+                    Log.d("SaveButton", "Invalid score detected for team A: $scoreA")
+                    hasInvalidScores = true
+                    return@forEach
+                }
+
                 // Prepare data for update
                 val matchData = mapOf(
                     "scoreA" to if (isResetToDefault) "-" else (scoreA ?: 0), // Reset to "-"
@@ -223,7 +229,7 @@ class StandingsFragment : Fragment() {
     }
 
     /**
-     * Updates standings for Table Statistics Fragment.
+     * Updates standings for Table and Knockout Statistics Fragments.
      */
     private fun notifyStatisticsFragments() {
         Log.d("StandingsFragment", "notifyStatisticsFragments called")
@@ -231,29 +237,39 @@ class StandingsFragment : Fragment() {
         // Notify Table Statistics Fragment
         val tableFragment =
             parentFragmentManager.findFragmentByTag("tableStatisticsFragment") as? TableStatisticsFragment
-        tableFragment?.updateTableStatistics(fixtures.map { match ->
-            TeamStanding(
-                match.teamA,
-                0, // Wins
-                0, // Draws
-                0, // Losses
-                match.scoreA ?: 0, // Replace null with 0 for calculations
-                (match.scoreA ?: 0) * 3 // Example point logic
-            )
-        })
+        if (tableFragment != null) {
+            Log.d("StandingsFragment", "Updating Table Statistics Fragment")
+            val tableStandings = fixtures.map { match ->
+                TeamStanding(
+                    teamName = match.teamA,
+                    wins = 0, // Placeholder logic for wins
+                    draws = 0, // Placeholder logic for draws
+                    losses = 0, // Placeholder logic for losses
+                    goals = match.scoreA ?: 0, // Replace null with 0 for goals
+                    points = (match.scoreA ?: 0) * 3 // Example point logic
+                )
+            }
+            tableFragment.updateStandings(tableStandings) // Updated function name
+        } else {
+            Log.e("StandingsFragment", "TableStatisticsFragment not found or not initialized")
+        }
 
         // Notify Knockout Statistics Fragment
         val knockoutFragment =
             parentFragmentManager.findFragmentByTag("knockoutStatisticsFragment") as? KnockoutStatisticsFragment
-        knockoutFragment?.updateKnockoutMatches(fixtures.map { match ->
-            // Replace null scores with 0 for knockout rounds
-            match.copy(
-                scoreA = match.scoreA ?: 0,
-                scoreB = match.scoreB ?: 0
-            )
-        })
+        if (knockoutFragment != null) {
+            Log.d("StandingsFragment", "Updating Knockout Statistics Fragment")
+            val knockoutMatches = fixtures.map { match ->
+                match.copy(
+                    scoreA = match.scoreA ?: 0,
+                    scoreB = match.scoreB ?: 0
+                )
+            }
+            knockoutFragment.updateKnockoutMatches(knockoutMatches)
+        } else {
+            Log.e("StandingsFragment", "KnockoutStatisticsFragment not found or not initialized")
+        }
     }
-
 
     /**
      * Updates specific match scores in Firestore.

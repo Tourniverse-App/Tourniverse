@@ -109,8 +109,4 @@ class StandingsAdapter(
         Log.d(TAG, "Total items: ${items.size}")
         return items.size
     }
-
-    // ---- Notifications ----
-
-
 }

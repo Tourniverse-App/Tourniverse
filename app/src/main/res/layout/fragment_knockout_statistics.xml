@@ -10,5 +10,13 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
-        android:padding="16dp" />
+        android:padding="16dp">
+
+        <!-- RecyclerView for knockout statistics -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewKnockoutStatistics"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" />
+    </LinearLayout>
 </ScrollView>

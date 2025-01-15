@@ -5,7 +5,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -19,8 +18,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 
 /**
  * A fragment that displays the details of a tournament.
- * It fetches the tournament details from Firestore and updates the UI.
- * It also sets up a ViewPager2 with a TabLayout for different sections of the tournament.
  */
 class TournamentDetailsFragment : Fragment() {
 
@@ -29,14 +26,13 @@ class TournamentDetailsFragment : Fragment() {
     private lateinit var tvTournamentType: TextView
     private lateinit var tvTournamentFormat: TextView
     private lateinit var tvTournamentDescription: TextView
-    private lateinit var btnViewStatistics: Button
 
     private val db = FirebaseFirestore.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Get tournamentId from arguments
+        // Retrieve tournamentId from arguments
         tournamentId = arguments?.getString("tournamentId")
         if (tournamentId.isNullOrEmpty()) {
             Log.e("TournamentDetails", "Tournament ID is null or empty.")
@@ -47,26 +43,31 @@ class TournamentDetailsFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         val view = inflater.inflate(R.layout.fragment_tournament_details, container, false)
 
-        // Initialize Views
+        // Initialize views
         tvTournamentName = view.findViewById(R.id.tvTournamentName)
         tvTournamentType = view.findViewById(R.id.tvTournamentType)
         tvTournamentFormat = view.findViewById(R.id.tvTournamentFormat)
         tvTournamentDescription = view.findViewById(R.id.tvTournamentDescription)
-        btnViewStatistics = view.findViewById(R.id.btnViewStatistics)
 
-        // Fetch tournament details if tournamentId is valid
+        // Fetch tournament details
         if (!tournamentId.isNullOrEmpty()) {
             fetchTournamentDetails()
         }
 
         // Setup TabLayout and ViewPager2
+        setupViewPager(view)
+
+        return view
+    }
+
+    private fun setupViewPager(view: View) {
         val tabLayout = view.findViewById<TabLayout>(R.id.tabLayout)
         val viewPager = view.findViewById<ViewPager2>(R.id.viewPager)
-        val adapter = TournamentPagerAdapter(requireActivity(), tournamentId ?: "", "Tables") // Pass the tournamentFormat
 
+        val adapter = TournamentPagerAdapter(requireActivity(), tournamentId ?: "", "Tables") // Example format
         viewPager.adapter = adapter
 
         TabLayoutMediator(tabLayout, viewPager) { tab, position ->
@@ -78,8 +79,6 @@ class TournamentDetailsFragment : Fragment() {
                 else -> "Tab $position"
             }
         }.attach()
-
-        return view
     }
 
     private fun fetchTournamentDetails() {
@@ -93,14 +92,16 @@ class TournamentDetailsFragment : Fragment() {
                         val description = document.getString("description") ?: ""
                         val format = document.getString("format") ?: "Unknown"
 
-                        // Set details in UI
+                        // Update UI
                         tvTournamentName.text = name
                         tvTournamentType.text = "Type: $privacy"
                         tvTournamentFormat.text = "Format: $format"
                         tvTournamentDescription.text = description
 
-                        // Setup statistics button - i dont like this button, should be like that
-                        //setupViewStatisticsButton(format)
+                        // Automatically initialize knockout bracket if needed
+                        if (format == "Knockout") {
+                            initializeKnockoutBracket(id)
+                        }
                     } else {
                         Log.e("TournamentDetails", "Tournament not found.")
                         Toast.makeText(requireContext(), "Tournament not available.", Toast.LENGTH_SHORT).show()
