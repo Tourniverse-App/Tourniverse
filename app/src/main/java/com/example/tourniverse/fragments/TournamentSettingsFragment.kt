@@ -450,6 +450,7 @@ class TournamentSettingsFragment : Fragment() {
             }
     }
 
+
     /**
      * Show a short toast message.
      */
