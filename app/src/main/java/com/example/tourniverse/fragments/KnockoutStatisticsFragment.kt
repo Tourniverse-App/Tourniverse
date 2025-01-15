@@ -5,21 +5,18 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.LinearLayoutManager
-import android.widget.LinearLayout
+import androidx.lifecycle.ViewModelProvider
 import com.example.tourniverse.R
-import com.example.tourniverse.adapters.KnockoutStatisticsAdapter
 import com.example.tourniverse.models.Match
-import com.google.firebase.firestore.FirebaseFirestore
+import com.example.tourniverse.viewmodels.KnockoutStatisticsViewModel
 
 class KnockoutStatisticsFragment : Fragment() {
 
-    private lateinit var knockoutAdapter: KnockoutStatisticsAdapter
+    private lateinit var viewModel: KnockoutStatisticsViewModel
     private lateinit var bracketContainer: LinearLayout
-    private val knockoutMatches = mutableListOf<Match>()
-    private val db = FirebaseFirestore.getInstance()
     private var tournamentId: String? = null
 
     override fun onCreateView(
@@ -28,6 +25,8 @@ class KnockoutStatisticsFragment : Fragment() {
     ): View? {
         Log.d("KnockoutStatisticsFragment", "onCreateView called")
         val view = inflater.inflate(R.layout.fragment_knockout_statistics, container, false)
+
+        viewModel = ViewModelProvider(this).get(KnockoutStatisticsViewModel::class.java)
 
         // Initialize container for brackets
         bracketContainer = view.findViewById(R.id.bracketContainer)
@@ -44,51 +43,21 @@ class KnockoutStatisticsFragment : Fragment() {
         }
 
         // Fetch data
-        fetchKnockoutMatches()
+        tournamentId?.let {
+            viewModel.fetchKnockoutMatches(
+                it,
+                onSuccess = { matches ->
+                    updateKnockoutMatches(matches)
+                },
+                onError = { error ->
+                    Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                }
+            )
+        }
 
         return view
     }
 
-    /**
-     * Fetches knockout matches from Firestore and updates the brackets.
-     */
-    private fun fetchKnockoutMatches() {
-        Log.d("KnockoutStatisticsFragment", "fetchKnockoutMatches called")
-        tournamentId?.let { id ->
-            db.collection("tournaments").document(id).collection("matches")
-                .get()
-                .addOnSuccessListener { snapshot ->
-                    Log.d("KnockoutStatisticsFragment", "fetchKnockoutMatches success")
-                    knockoutMatches.clear()
-                    for (document in snapshot.documents) {
-                        val matchesArray = document.get("matches") as? List<Map<String, Any>> ?: continue
-                        matchesArray.forEach { match ->
-                            val teamA = match["teamA"] as? String ?: ""
-                            val teamB = match["teamB"] as? String ?: ""
-                            val scoreA = (match["scoreA"] as? Long)?.toInt() ?: 0
-                            val scoreB = (match["scoreB"] as? Long)?.toInt() ?: 0
-
-                            // Only add matches that have scores updated
-                            if (!(scoreA == 0 && scoreB == 0)) {
-                                knockoutMatches.add(Match(teamA, teamB, scoreA, scoreB))
-                            }
-                        }
-                    }
-                    displayKnockoutBrackets()
-                }
-                .addOnFailureListener { e ->
-                    Log.e("KnockoutStatisticsFragment", "Failed to fetch knockout matches: ${e.message}")
-                    Toast.makeText(context, "Failed to load matches.", Toast.LENGTH_SHORT).show()
-                }
-        }
-    }
-
-    /**
-     * Dynamically creates knockout brackets and updates the view.
-     */
-    /**
-     * Dynamically creates knockout brackets and updates the view.
-     */
     private fun displayKnockoutBrackets() {
         Log.d("KnockoutStatisticsFragment", "displayKnockoutBrackets called")
 
@@ -97,7 +66,7 @@ class KnockoutStatisticsFragment : Fragment() {
         val inflater = LayoutInflater.from(context)
 
         // Start with the first round of matches
-        var currentRound = knockoutMatches
+        var currentRound = viewModel.knockoutMatches
 
         // Loop through each round until there are no more matches
         while (currentRound.isNotEmpty()) {
@@ -151,15 +120,8 @@ class KnockoutStatisticsFragment : Fragment() {
         Log.d("KnockoutStatisticsFragment", "Knockout brackets displayed successfully.")
     }
 
-
-    /**
-     * Updates knockout data and refreshes the view.
-     */
-    fun updateKnockoutMatches(newMatches: List<Match>) {
+    private fun updateKnockoutMatches(newMatches: List<Match>) {
         Log.d("KnockoutStatisticsFragment", "updateKnockoutMatches called")
-
-        knockoutMatches.clear()
-        knockoutMatches.addAll(newMatches)
         displayKnockoutBrackets()
     }
 }

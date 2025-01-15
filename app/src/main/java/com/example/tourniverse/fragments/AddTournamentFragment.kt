@@ -7,11 +7,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.example.tourniverse.R
-import com.example.tourniverse.utils.FirebaseHelper
+import com.example.tourniverse.viewmodels.AddTournamentViewModel
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 
 class AddTournamentFragment : Fragment() {
 
@@ -25,13 +25,14 @@ class AddTournamentFragment : Fragment() {
     private lateinit var btnSubmitTournament: Button
 
     private var currentType: String = "Tables"
-    private val db = FirebaseFirestore.getInstance()
+    private lateinit var viewModel: AddTournamentViewModel
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         val view = inflater.inflate(R.layout.fragment_add_tournament, container, false)
+        viewModel = ViewModelProvider(this).get(AddTournamentViewModel::class.java)
 
         // Initialize Views
         etTournamentName = view.findViewById(R.id.etTournamentName)
@@ -113,7 +114,6 @@ class AddTournamentFragment : Fragment() {
 
         if (tournamentName.isEmpty() || description.isEmpty()) {
             showToast("Please fill all fields")
-            Log.e("AddTournamentFragment", "Empty fields: Tournament name or description")
             return
         }
 
@@ -121,7 +121,6 @@ class AddTournamentFragment : Fragment() {
             val teamField = layoutTeamNames.getChildAt(index) as? EditText
             teamField?.text?.toString()?.trim().takeIf { !it.isNullOrEmpty() } ?: run {
                 showToast("Please fill all the team names")
-                Log.e("AddTournamentFragment", "Empty team name at position $index")
                 return
             }
         }
@@ -129,14 +128,12 @@ class AddTournamentFragment : Fragment() {
         val ownerId = FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
         if (ownerId.isEmpty()) {
             showToast("User not authenticated")
-            Log.e("AddTournamentFragment", "User not authenticated")
             return
         }
 
         btnSubmitTournament.isEnabled = false
-        Log.d("AddTournamentFragment", "Submitting tournament: $tournamentName")
 
-        FirebaseHelper.addTournament(
+        viewModel.addTournament(
             name = tournamentName,
             teamCount = teamNames.size,
             description = description,
@@ -147,7 +144,6 @@ class AddTournamentFragment : Fragment() {
             if (success) {
                 navigateToTournamentDetails(tournamentName, description, privacy)
             } else {
-                Log.e("AddTournamentFragment", "Error creating tournament: $error")
                 showToast("Failed to create tournament: $error")
                 btnSubmitTournament.isEnabled = true
             }
@@ -159,25 +155,26 @@ class AddTournamentFragment : Fragment() {
         description: String,
         privacy: String
     ) {
-        db.collection("tournaments").whereEqualTo("name", tournamentName).limit(1).get()
-            .addOnSuccessListener { documents ->
-                documents.firstOrNull()?.let { document ->
-                    val bundle = Bundle().apply {
-                        putString("tournamentId", document.id)
-                        putString("tournamentName", tournamentName)
-                        putString("tournamentType", privacy)
-                        putString("tournamentFormat", currentType)
-                        putString("tournamentDescription", description)
-                    }
-                    findNavController().navigate(
-                        R.id.action_addTournamentFragment_to_tournamentDetailsFragment,
-                        bundle
-                    )
+        viewModel.fetchTournamentId(
+            tournamentName,
+            onSuccess = { tournamentId ->
+                val bundle = Bundle().apply {
+                    putString("tournamentId", tournamentId)
+                    putString("tournamentName", tournamentName)
+                    putString("tournamentType", privacy)
+                    putString("tournamentFormat", currentType)
+                    putString("tournamentDescription", description)
                 }
+                findNavController().navigate(
+                    R.id.action_addTournamentFragment_to_tournamentDetailsFragment,
+                    bundle
+                )
+            },
+            onFailure = {
+                showToast(it)
+                btnSubmitTournament.isEnabled = true
             }
-            .addOnFailureListener {
-                Log.e("AddTournamentFragment", "Failed to fetch newly created tournament ID")
-            }
+        )
     }
 
     private fun showToast(message: String) {
