@@ -392,8 +392,8 @@ class TournamentSettingsFragment : Fragment() {
                 .addOnSuccessListener { document ->
                     if (document.exists()) {
                         switchPushNotifications.isChecked =
-                            (globalSettings["push"] == true) && (document.getBoolean("push") ?: true)
-                        switchPushNotifications.isEnabled = globalSettings["push"] == true
+                            (globalSettings["Push"] == true) && (document.getBoolean("Push") ?: true)
+                        switchPushNotifications.isEnabled = globalSettings["Push"] == true
 
                         switchScoresNotifications.isChecked =
                             (globalSettings["Scores"] == true) && (document.getBoolean("Scores") ?: true)
