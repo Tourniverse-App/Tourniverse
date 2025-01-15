@@ -8,13 +8,13 @@ import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.findNavController
+import androidx.lifecycle.ViewModelProvider
 import androidx.viewpager2.widget.ViewPager2
 import com.example.tourniverse.R
 import com.example.tourniverse.adapters.TournamentPagerAdapter
+import com.example.tourniverse.viewmodels.TournamentDetailsViewModel
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
-import com.google.firebase.firestore.FirebaseFirestore
 
 /**
  * A fragment that displays the details of a tournament.
@@ -27,7 +27,7 @@ class TournamentDetailsFragment : Fragment() {
     private lateinit var tvTournamentFormat: TextView
     private lateinit var tvTournamentDescription: TextView
 
-    private val db = FirebaseFirestore.getInstance()
+    private lateinit var viewModel: TournamentDetailsViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,6 +45,8 @@ class TournamentDetailsFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         val view = inflater.inflate(R.layout.fragment_tournament_details, container, false)
+
+        viewModel = ViewModelProvider(this).get(TournamentDetailsViewModel::class.java)
 
         // Initialize views
         tvTournamentName = view.findViewById(R.id.tvTournamentName)
@@ -83,87 +85,23 @@ class TournamentDetailsFragment : Fragment() {
 
     private fun fetchTournamentDetails() {
         tournamentId?.let { id ->
-            db.collection("tournaments").document(id)
-                .get()
-                .addOnSuccessListener { document ->
-                    if (document.exists()) {
-                        val name = document.getString("name") ?: "Unknown Tournament"
-                        val privacy = document.getString("privacy") ?: "Unknown"
-                        val description = document.getString("description") ?: ""
-                        val format = document.getString("format") ?: "Unknown"
+            viewModel.fetchTournamentDetails(
+                id,
+                onSuccess = { name, privacy, description, format ->
+                    tvTournamentName.text = name
+                    tvTournamentType.text = "Type: $privacy"
+                    tvTournamentFormat.text = "Format: $format"
+                    tvTournamentDescription.text = description
 
-                        // Update UI
-                        tvTournamentName.text = name
-                        tvTournamentType.text = "Type: $privacy"
-                        tvTournamentFormat.text = "Format: $format"
-                        tvTournamentDescription.text = description
-
-                        // Automatically initialize knockout bracket if needed
-                        if (format == "Knockout") {
-                            initializeKnockoutBracket(id)
-                        }
-                    } else {
-                        Log.e("TournamentDetails", "Tournament not found.")
-                        Toast.makeText(requireContext(), "Tournament not available.", Toast.LENGTH_SHORT).show()
+                    if (format == "Knockout") {
+                        viewModel.initializeKnockoutBracket(id)
                     }
+                },
+                onError = { errorMessage ->
+                    Log.e("TournamentDetailsFragment", errorMessage)
+                    Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_SHORT).show()
                 }
-                .addOnFailureListener { e ->
-                    Log.e("TournamentDetailsFragment", "Error fetching details: ${e.message}")
-                    Toast.makeText(requireContext(), "Error loading details.", Toast.LENGTH_SHORT).show()
-                }
+            )
         }
-    }
-
-    private fun initializeKnockoutBracket(tournamentId: String) {
-        db.collection("tournaments").document(tournamentId).collection("knockout_bracket").get()
-            .addOnSuccessListener { snapshot ->
-                if (snapshot.isEmpty) {
-                    val batch = db.batch()
-                    val matchRef = db.collection("tournaments").document(tournamentId).collection("knockout_bracket")
-
-                    val matches = listOf(
-                        Pair("Team A", "Team B"),
-                        Pair("Team C", "Team D")
-                    ) // Replace with actual match pairs
-
-                    matches.forEach { (teamA, teamB) ->
-                        val matchDoc = matchRef.document()
-                        val match = hashMapOf(
-                            "teamA" to teamA,
-                            "teamB" to teamB,
-                            "scoreA" to 0,
-                            "scoreB" to 0,
-                        )
-                        batch.set(matchDoc, match)
-                    }
-
-                    batch.commit()
-                        .addOnSuccessListener {
-                            Log.d("TournamentDetails", "Knockout bracket initialized successfully.")
-                        }
-                        .addOnFailureListener { e ->
-                            Log.e("TournamentDetails", "Error initializing knockout bracket: ${e.message}")
-                        }
-                }
-            }
-            .addOnFailureListener { e ->
-                Log.e("TournamentDetails", "Error checking knockout bracket: ${e.message}")
-            }
-    }
-
-    private fun displayKnockoutBrackets(tournamentId: String) {
-        db.collection("tournaments").document(tournamentId).collection("matches")
-            .get()
-            .addOnSuccessListener { snapshot ->
-                val matches = snapshot.documents.flatMap { doc ->
-                    (doc.get("matches") as? List<Map<String, Any>>)?.map { match ->
-                        "${match["teamA"]} vs ${match["teamB"]}"
-                    } ?: emptyList()
-                }
-                // Display knockout brackets in your UI
-            }
-            .addOnFailureListener { e ->
-                Log.e("TournamentDetailsFragment", "Error fetching matches: ${e.message}")
-            }
     }
 }

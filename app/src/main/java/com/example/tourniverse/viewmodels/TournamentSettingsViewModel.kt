@@ -1,4 +1,4 @@
-package com.example.tourniverse.viewmodel
+package com.example.tourniverse.viewmodels
 
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth

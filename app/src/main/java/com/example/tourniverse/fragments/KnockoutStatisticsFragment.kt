@@ -120,7 +120,7 @@ class KnockoutStatisticsFragment : Fragment() {
         Log.d("KnockoutStatisticsFragment", "Knockout brackets displayed successfully.")
     }
 
-    private fun updateKnockoutMatches(newMatches: List<Match>) {
+    fun updateKnockoutMatches(newMatches: List<Match>) {
         Log.d("KnockoutStatisticsFragment", "updateKnockoutMatches called")
         displayKnockoutBrackets()
     }

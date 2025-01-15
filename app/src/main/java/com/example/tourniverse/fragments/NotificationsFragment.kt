@@ -1,15 +1,15 @@
 package com.example.tourniverse.fragments
 
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Switch
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import com.example.tourniverse.R
+import com.example.tourniverse.viewmodels.NotificationsViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -20,9 +20,8 @@ class NotificationsFragment : Fragment() {
     private lateinit var chatSwitch: Switch
     private lateinit var commentsSwitch: Switch
     private lateinit var likesSwitch: Switch
-    private lateinit var dndSwitch: Switch
 
-    private val db = FirebaseFirestore.getInstance()
+    private lateinit var viewModel: NotificationsViewModel
     private lateinit var userId: String
 
     override fun onCreateView(
@@ -30,6 +29,9 @@ class NotificationsFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_notifications, container, false)
+
+        // Initialize ViewModel
+        viewModel = ViewModelProvider(this).get(NotificationsViewModel::class.java)
 
         // Initialize switches
         pushSwitch = view.findViewById(R.id.switchPushNotifications)
@@ -42,7 +44,7 @@ class NotificationsFragment : Fragment() {
         val currentUser = FirebaseAuth.getInstance().currentUser
         if (currentUser != null) {
             userId = currentUser.uid
-            // Load preferences from Firebase
+            // Load preferences using ViewModel
             loadPreferences()
         } else {
             showToast("User not authenticated")
@@ -78,26 +80,22 @@ class NotificationsFragment : Fragment() {
     }
 
     /**
-     * Load user preferences from the Firebase Firestore subcollection.
+     * Load user preferences using the ViewModel.
      */
     private fun loadPreferences() {
-        db.collection("users")
-            .document(userId)
-            .collection("notifications")
-            .document("settings")
-            .get()
-            .addOnSuccessListener { document ->
-                if (document.exists()) {
-                    pushSwitch.isChecked = document.getBoolean("Push") ?: true
-                    scoresSwitch.isChecked = document.getBoolean("Scores") ?: true
-                    chatSwitch.isChecked = document.getBoolean("ChatMessages") ?: true
-                    commentsSwitch.isChecked = document.getBoolean("Comments") ?: true
-                    likesSwitch.isChecked = document.getBoolean("Likes") ?: true
-                }
+        viewModel.loadPreferences(
+            userId,
+            onSuccess = { preferences ->
+                pushSwitch.isChecked = preferences["Push"] ?: true
+                scoresSwitch.isChecked = preferences["Scores"] ?: true
+                chatSwitch.isChecked = preferences["ChatMessages"] ?: true
+                commentsSwitch.isChecked = preferences["Comments"] ?: true
+                likesSwitch.isChecked = preferences["Likes"] ?: true
+            },
+            onError = { error ->
+                showToast(error)
             }
-            .addOnFailureListener {
-                showToast("Failed to load preferences")
-            }
+        )
     }
 
     /**
@@ -106,7 +104,8 @@ class NotificationsFragment : Fragment() {
     private fun updatePreference(key: String, value: Boolean) {
         val updates = mapOf(key to value)
 
-        db.collection("users")
+        FirebaseFirestore.getInstance()
+            .collection("users")
             .document(userId)
             .collection("notifications")
             .document("settings")

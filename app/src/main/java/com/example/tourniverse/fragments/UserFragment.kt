@@ -1,7 +1,6 @@
 package com.example.tourniverse.fragments
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,17 +9,14 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-//import com.bumptech.glide.Glide
 import com.example.tourniverse.R
 import com.example.tourniverse.adapters.TournamentAdapter
 import com.example.tourniverse.models.Tournament
-import com.example.tourniverse.utils.FirebaseHelper
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldPath
-import com.google.firebase.firestore.FirebaseFirestore
+import com.example.tourniverse.viewmodels.UserViewModel
 
 class UserFragment : Fragment() {
 
@@ -30,6 +26,8 @@ class UserFragment : Fragment() {
     private lateinit var userNameTextView: TextView
     private lateinit var userBioTextView: TextView
     private lateinit var profileImageView: ImageView
+    private lateinit var viewModel: UserViewModel
+
     private val ownedTournaments = mutableListOf<Tournament>()
 
     override fun onCreateView(
@@ -37,6 +35,9 @@ class UserFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_user, container, false)
+
+        // Initialize ViewModel
+        viewModel = ViewModelProvider(this).get(UserViewModel::class.java)
 
         // Initialize views
         userNameTextView = view.findViewById(R.id.tvUserName)
@@ -55,99 +56,50 @@ class UserFragment : Fragment() {
         // Attach search functionality
         searchBar.addTextChangedListener(adapter.getSearchTextWatcher())
 
-        // Fetch user details and owned tournaments
+        // Observe data from ViewModel
+        observeViewModel()
+
+        // Fetch user profile and tournaments
         fetchUserProfile()
         fetchOwnedTournaments()
 
         return view
     }
 
-    /**
-     * Fetches and displays user profile data (name, bio, and profile picture).
-     */
     private fun fetchUserProfile() {
-        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-
-        FirebaseHelper.getUserDocument(currentUserId) { userData ->
-            userData?.let { data ->
-                val userName = data["username"] as? String ?: "User"
-                val userBio = data["bio"] as? String ?: "No bio available"
-
-                userNameTextView.text = userName
-                userBioTextView.text = userBio
-
-            }
+        viewModel.fetchUserProfile { errorMessage ->
+            Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_SHORT).show()
         }
     }
 
-    /**
-     * Fetches tournaments owned by the user and updates the adapter.
-     */
     private fun fetchOwnedTournaments() {
-        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        viewModel.fetchOwnedTournaments { errorMessage ->
+            Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_SHORT).show()
+        }
+    }
 
-        FirebaseFirestore.getInstance().collection("users").document(currentUserId)
-            .collection("tournaments").whereEqualTo("isOwner", true).get()
-            .addOnSuccessListener { querySnapshot ->
-                ownedTournaments.clear()
+    private fun observeViewModel() {
+        viewModel.userProfile.observe(viewLifecycleOwner) { profile ->
+            userNameTextView.text = profile["username"]
+            userBioTextView.text = profile["bio"]
+        }
 
-                if (querySnapshot.isEmpty) {
-                    Log.d("UserFragment", "No owned tournaments found.")
-                    Toast.makeText(requireContext(), "No Owned Tournaments Yet", Toast.LENGTH_SHORT).show()
-                    return@addOnSuccessListener
-                }
-
-                for (document in querySnapshot.documents) {
-                    val tournamentId = document.id
-
-                    // Fetch tournament details from the main tournaments collection
-                    FirebaseFirestore.getInstance().collection("tournaments").document(tournamentId).get()
-                        .addOnSuccessListener { tournamentDocument ->
-                            if (tournamentDocument.exists()) {
-                                val name = tournamentDocument.getString("name") ?: "Unknown"
-                                val privacy = tournamentDocument.getString("privacy") ?: "Private"
-                                val description = tournamentDocument.getString("description") ?: ""
-                                val teamNames = tournamentDocument.get("teamNames") as? List<String> ?: emptyList()
-                                val viewers = tournamentDocument.get("viewers") as? List<String> ?: emptyList()
-                                val format = tournamentDocument.getString("type") ?: ""
-
-                                ownedTournaments.add(
-                                    Tournament(
-                                        id = tournamentId,
-                                        name = name,
-                                        type = privacy,
-                                        description = description,
-                                        teamNames = teamNames,
-                                        owner = currentUserId,
-                                        viewers = viewers,
-                                        format = format
-                                    )
-                                )
-
-                                adapter.filter("") // Show all tournaments initially
-                                adapter.notifyDataSetChanged()
-                            }
-                        }
-                        .addOnFailureListener { e ->
-                            Log.e("UserFragment", "Error fetching tournament details: ${e.message}")
-                        }
-                }
-            }
-            .addOnFailureListener { e ->
-                Log.e("UserFragment", "Error fetching owned tournaments: ${e.message}")
-                Toast.makeText(requireContext(), "Failed to load owned tournaments.", Toast.LENGTH_SHORT).show()
-            }
+        viewModel.ownedTournaments.observe(viewLifecycleOwner) { tournaments ->
+            ownedTournaments.clear()
+            ownedTournaments.addAll(tournaments)
+            adapter.filter("")
+            adapter.notifyDataSetChanged()
+        }
     }
 
     private fun navigateToTournamentDetails(tournament: Tournament) {
         val bundle = Bundle().apply {
-            putString("tournamentId", tournament.id) // Pass the tournament ID
-            putString("tournamentName", tournament.name) // Pass the tournament name
-            putString("tournamentType", tournament.type) // Pass the tournament type
-            putString("tournamentFormat", tournament.format) // Pass the tournament format
-            putString("tournamentDescription", tournament.description) // Pass the description
+            putString("tournamentId", tournament.id)
+            putString("tournamentName", tournament.name)
+            putString("tournamentType", tournament.type)
+            putString("tournamentFormat", tournament.format)
+            putString("tournamentDescription", tournament.description)
         }
         findNavController().navigate(R.id.action_userFragment_to_tournamentDetailsFragment, bundle)
     }
-
 }
