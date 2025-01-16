@@ -96,7 +96,6 @@ class StandingsFragment : Fragment() {
         return currentUser?.uid ?: "" // Returns the user's UID or an empty string if not logged in
     }
 
-
     /**
      * Fetches the fixtures (matches) from Firestore for the given tournament.
      */
@@ -147,7 +146,6 @@ class StandingsFragment : Fragment() {
                 }
         }
     }
-
 
     /**
      * Saves the updated match scores to Firestore.
