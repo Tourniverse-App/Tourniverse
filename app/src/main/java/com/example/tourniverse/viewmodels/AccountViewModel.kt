@@ -23,15 +23,16 @@ class AccountViewModel : ViewModel() {
     private val auth = Firebase.auth
     private val db = FirebaseFirestore.getInstance()
 
-    fun fetchUserDetails(userId: String, onSuccess: (String, String) -> Unit) {
+    fun fetchUserDetails(userId: String, onSuccess: (String, String, String) -> Unit) {
         Log.d("AccountViewModel", "Fetching user details for userId: $userId")
         db.collection("users").document(userId).get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
                     val username = document.getString("username").orEmpty()
+                    val email = document.getString("email").orEmpty()
                     val bio = document.getString("bio").orEmpty()
                     Log.d("AccountViewModel", "Fetched user details: username=$username, bio=$bio")
-                    onSuccess(username, bio)
+                    onSuccess(username, email, bio)
                 } else {
                     Log.w("AccountViewModel", "User document does not exist for userId: $userId")
                 }

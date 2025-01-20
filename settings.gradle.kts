@@ -5,9 +5,9 @@ pluginManagement {
         mavenCentral()
     }
     plugins {
-        id("com.android.application") version "8.8.0" // Adjust to your Android Gradle plugin version
-        id("androidx.navigation.safeargs.kotlin") version "2.8.4" // Adjust the version to match your needs
-        kotlin("android") version "1.9.0" // Ensure Kotlin version matches the project's requirements
+        id("com.android.application") version "8.8.0"
+        id("androidx.navigation.safeargs.kotlin") version "2.8.4"
+        kotlin("android") version "1.9.0"
     }
 }
 

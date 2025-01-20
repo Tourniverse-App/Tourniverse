@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
+import android.text.InputType
 import android.util.Base64
 import android.util.Log
 import android.view.LayoutInflater
@@ -25,10 +26,16 @@ import com.google.firebase.ktx.Firebase
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
+
+private const val CROP_IMAGE_REQUEST_CODE = 1001
 
 class AccountFragment : Fragment() {
 
     private lateinit var viewModel: AccountViewModel
+    private var onPermissionsGranted: (() -> Unit)? = null
     private val pickPhotoLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
             Log.d(TAG, "Photo selected: $uri")
@@ -36,14 +43,22 @@ class AccountFragment : Fragment() {
         } ?: Log.d(TAG, "No photo selected").also { showToast("No photo selected") }
     }
 
-    // Permissions handling
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-            if (permissions[android.Manifest.permission.CAMERA] == true &&
-                permissions[android.Manifest.permission.WRITE_EXTERNAL_STORAGE] == true) {
+            val cameraGranted = permissions[Manifest.permission.CAMERA] ?: false
+            val readMediaGranted = permissions[Manifest.permission.READ_MEDIA_IMAGES] ?: false
+
+            Log.d(TAG, "Permission Results:")
+            Log.d(TAG, "Camera Granted: $cameraGranted")
+            Log.d(TAG, "Read Media Images Granted: $readMediaGranted")
+
+            if (cameraGranted && readMediaGranted) {
                 Log.d(TAG, "All permissions granted.")
+                onPermissionsGranted?.invoke() // Execute the action (e.g., camera/gallery)
             } else {
-                showToast("Permissions required for camera and gallery access.")
+                Log.d(TAG, "Permissions denied.")
+                showToast("Camera and storage permissions are required for this feature.")
+                navigateToAppSettings()
             }
         }
 
@@ -51,8 +66,13 @@ class AccountFragment : Fragment() {
     private val cameraPhotoLauncher = registerForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap: Bitmap? ->
         bitmap?.let {
             Log.d(TAG, "Photo captured with camera.")
-            val uri = saveBitmapToCache(it) // Save bitmap to cache for cropping
-            launchCropActivity(uri)
+            try {
+                val uri = saveBitmapToCache(it) // Save bitmap to cache
+                uploadPhotoToViewModel(uri) // Upload directly without cropping
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to save photo for upload: ${e.message}", e)
+                showToast("Error saving photo for upload.")
+            }
         } ?: Log.d(TAG, "No photo captured.")
     }
 
@@ -60,12 +80,16 @@ class AccountFragment : Fragment() {
     private val cropPhotoLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == AppCompatActivity.RESULT_OK) {
             val croppedUri = result.data?.data
-            croppedUri?.let {
-                Log.d(TAG, "Photo cropped: $it")
-                uploadPhotoToViewModel(it)
-            } ?: Log.d(TAG, "Crop result returned no URI.")
+            if (croppedUri != null) {
+                Log.d(TAG, "Photo cropped: $croppedUri")
+                uploadPhotoToViewModel(croppedUri)
+            } else {
+                Log.e(TAG, "Crop result returned no URI. Uploading original photo.")
+                showToast("Cropping failed. Uploading original photo.")
+            }
         } else {
-            Log.d(TAG, "Photo cropping canceled.")
+            Log.e(TAG, "Crop operation was canceled or failed. Uploading original photo.")
+            showToast("Cropping canceled. Uploading original photo.")
         }
     }
 
@@ -93,16 +117,21 @@ class AccountFragment : Fragment() {
 
         Log.d(TAG, "Fetching user details for UID: ${currentUser.uid}")
 
+        // Make email EditText read-only
+        emailEditText.inputType = InputType.TYPE_NULL
+        emailEditText.isFocusable = false
+
         // Fetch user details
-        viewModel.fetchUserDetails(currentUser.uid) { username, bio ->
+        viewModel.fetchUserDetails(currentUser.uid) { username,email, bio  ->
             Log.d(TAG, "Fetched user details: username=$username, bio=$bio")
             usernameEditText.setText(username)
+            emailEditText.setText(email)
             bioEditText.setText(bio)
         }
 
         // Fetch and display profile photo
         viewModel.fetchUserPhoto(currentUser.uid) { base64String ->
-            if (base64String != null) {
+            if (!base64String.isNullOrEmpty()) {
                 Log.d(TAG, "Fetched profile photo.")
                 try {
                     val decodedBytes = Base64.decode(base64String, Base64.DEFAULT)
@@ -173,37 +202,63 @@ class AccountFragment : Fragment() {
         Log.d(TAG, "Setting up photo picker.")
         val uploadPhotoButton: TextView = view.findViewById(R.id.edit_photo)
         uploadPhotoButton.setOnClickListener {
-            val options = arrayOf("Take Photo", "Choose from Gallery")
-            AlertDialog.Builder(requireContext())
-                .setTitle("Select Photo")
-                .setItems(options) { _, which ->
-                    when (which) {
-                        0 -> {
-                            checkAndRequestPermissions()
-                            cameraPhotoLauncher.launch(null)
+            Log.d(TAG, "Checking permissions before showing picker.")
+            checkAndRequestPermissions {
+                val options = arrayOf("Take Photo", "Choose from Gallery")
+                AlertDialog.Builder(requireContext())
+                    .setTitle("Select Photo")
+                    .setItems(options) { _, which ->
+                        when (which) {
+                            0 -> cameraPhotoLauncher.launch(null)
+                            1 -> pickPhotoLauncher.launch("image/*")
                         }
-                        1 -> pickPhotoLauncher.launch("image/*")
                     }
-                }
-                .setNegativeButton("Cancel", null)
-                .show()
+                    .setNegativeButton("Cancel", null)
+                    .show()
+            }
         }
     }
 
+    private fun showRationale(action: () -> Unit) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Permissions Required")
+            .setMessage("We need camera and storage permissions to allow you to take or upload photos.")
+            .setPositiveButton("Grant Permissions") { _, _ ->
+                requestPermissionLauncher.launch(
+                    arrayOf(
+                        Manifest.permission.CAMERA,
+                        Manifest.permission.READ_EXTERNAL_STORAGE,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    )
+                )
+            }
+            .setNegativeButton("Cancel") { dialog, _ ->
+                dialog.dismiss()
+                Log.d(TAG, "Permissions denied by user.")
+            }
+            .show()
+    }
+
     private fun launchCropActivity(uri: Uri) {
-        Log.d(TAG, "Launching crop activity for URI: $uri")
-        val cropIntent = Intent("com.android.camera.action.CROP").apply {
-            setDataAndType(uri, "image/*")
-            putExtra("crop", "true")
-            putExtra("aspectX", 1)
-            putExtra("aspectY", 1)
-            putExtra("outputX", 500) // Optional: Define the output size
-            putExtra("outputY", 500)
-            putExtra("scale", true)
-            putExtra("return-data", false)
-            putExtra("output", uri)
+        try {
+            Log.d(TAG, "Launching crop activity for URI: $uri")
+            val cropIntent = Intent("com.android.camera.action.CROP").apply {
+                setDataAndType(uri, "image/*")
+                putExtra("crop", "true")
+                putExtra("aspectX", 1)
+                putExtra("aspectY", 1)
+                putExtra("outputX", 500)
+                putExtra("outputY", 500)
+                putExtra("scale", true)
+                putExtra("return-data", false)
+                val destinationUri = Uri.fromFile(File(requireContext().cacheDir, "cropped_image.jpg"))
+                putExtra("output", destinationUri)
+            }
+            cropPhotoLauncher.launch(cropIntent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error launching crop activity: ${e.message}", e)
+            showToast("This device does not support cropping.")
         }
-        cropPhotoLauncher.launch(cropIntent)
     }
 
     private fun saveBitmapToCache(bitmap: Bitmap): Uri {
@@ -220,13 +275,41 @@ class AccountFragment : Fragment() {
         )
     }
 
-    private fun checkAndRequestPermissions() {
-        requestPermissionLauncher.launch(
-            arrayOf(
-                android.Manifest.permission.CAMERA,
-                android.Manifest.permission.WRITE_EXTERNAL_STORAGE
-            )
-        )
+    private fun checkAndRequestPermissions(action: () -> Unit) {
+        onPermissionsGranted = action // Save the action to perform later
+
+        val cameraPermission = ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
+        val readMediaPermission = ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_MEDIA_IMAGES)
+
+        Log.d(TAG, "Checking permissions:")
+        Log.d(TAG, "Camera Permission: ${if (cameraPermission == PackageManager.PERMISSION_GRANTED) "Granted" else "Denied"}")
+        Log.d(TAG, "Read Media Images Permission: ${if (readMediaPermission == PackageManager.PERMISSION_GRANTED) "Granted" else "Denied"}")
+
+        when {
+            // All permissions are granted
+            cameraPermission == PackageManager.PERMISSION_GRANTED &&
+                    readMediaPermission == PackageManager.PERMISSION_GRANTED -> {
+                Log.d(TAG, "All permissions granted.")
+                action()
+            }
+
+            // Show rationale if needed
+            shouldShowRequestPermissionRationale(Manifest.permission.CAMERA) ||
+                    shouldShowRequestPermissionRationale(Manifest.permission.READ_MEDIA_IMAGES) -> {
+                showRationale(action)
+            }
+
+            // Request permissions
+            else -> {
+                Log.d(TAG, "Requesting permissions.")
+                requestPermissionLauncher.launch(
+                    arrayOf(
+                        Manifest.permission.CAMERA,
+                        Manifest.permission.READ_MEDIA_IMAGES
+                    )
+                )
+            }
+        }
     }
 
     private fun uploadPhotoToViewModel(photoUri: Uri) {
@@ -271,11 +354,45 @@ class AccountFragment : Fragment() {
         profileImageView.setImageBitmap(bitmap)
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == CROP_IMAGE_REQUEST_CODE) {
+            if (resultCode == AppCompatActivity.RESULT_OK) {
+                val croppedUri = data?.data
+                if (croppedUri != null) {
+                    Log.d(TAG, "Cropped image URI: $croppedUri")
+                    uploadPhotoToViewModel(croppedUri)
+                } else {
+                    Log.e(TAG, "No cropped URI returned, uploading original photo.")
+                    showToast("Cropping failed. Uploading the original photo.")
+                }
+            } else {
+                Log.e(TAG, "Crop operation was canceled or failed. Uploading original photo.")
+                showToast("Cropping canceled. Uploading original photo.")
+            }
+        }
+    }
+
     private fun navigateToLogin() {
         Log.d(TAG, "Navigating to login screen.")
         startActivity(Intent(context, LoginActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         })
+    }
+
+    private fun navigateToAppSettings() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Permissions Required")
+            .setMessage("You need to grant camera and storage permissions for this feature. Open app settings to enable them.")
+            .setPositiveButton("Open Settings") { _, _ ->
+                val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.fromParts("package", requireContext().packageName, null)
+                }
+                startActivity(intent)
+            }
+            .setNegativeButton("Cancel") { dialog, _ -> dialog.dismiss() }
+            .show()
     }
 
     private fun showToast(message: String) {
@@ -286,4 +403,16 @@ class AccountFragment : Fragment() {
     companion object {
         private const val TAG = "AccountFragment"
     }
+
+    private fun logCurrentPermissions() {
+        val cameraGranted = ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+        val readStorageGranted = ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+        val writeStorageGranted = ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+
+        Log.d(TAG, "Current Permissions Status:")
+        Log.d(TAG, "Camera Permission: ${if (cameraGranted) "Granted" else "Denied"}")
+        Log.d(TAG, "Read Storage Permission: ${if (readStorageGranted) "Granted" else "Denied"}")
+        Log.d(TAG, "Write Storage Permission: ${if (writeStorageGranted) "Granted" else "Denied"}")
+    }
+
 }

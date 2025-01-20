@@ -35,11 +35,24 @@ class CommentViewModel : ViewModel() {
                     val userId = commentMap["userId"] as? String ?: ""
                     val text = commentMap["text"] as? String ?: ""
                     val createdAt = (commentMap["createdAt"] as? Long) ?: 0L
-                    fetchUsername(userId) { username ->
-                        commentsList.add(Comment(userId, username, text, createdAt))
+                    fetchUserProfile(userId) { username, profilePhoto ->
+                        commentsList.add(Comment(userId, username, text, createdAt, profilePhoto))
                         _comments.value = commentsList
                     }
                 }
+            }
+    }
+
+    private fun fetchUserProfile(userId: String, callback: (String, String?) -> Unit) {
+        db.collection("users").document(userId).get()
+            .addOnSuccessListener { snapshot ->
+                val username = snapshot.getString("username") ?: "Anonymous"
+                val profilePhoto = snapshot.getString("profilePhoto") // Can be null or empty
+                callback(username, profilePhoto)
+            }
+            .addOnFailureListener { e ->
+                Log.e("CommentViewModel", "Failed to fetch user profile: ${e.message}")
+                callback("Anonymous", null)
             }
     }
 
@@ -67,10 +80,13 @@ class CommentViewModel : ViewModel() {
         }
 
         val filteredContent = applyProfanityFilter(context, commentText)
-        fetchUsername(userId) { username ->
-            val newComment = mapOf(
+
+        // Fetch both username and profile photo
+        fetchUserProfile(userId) { username, profilePhoto ->
+            val newComment = mapOf<String, Any>(
                 "userId" to userId,
                 "username" to username,
+                "profilePhoto" to (profilePhoto ?: ""),
                 "text" to filteredContent,
                 "createdAt" to System.currentTimeMillis()
             )

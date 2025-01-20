@@ -95,10 +95,11 @@ class SocialFragment : Fragment() {
         }
 
         val filteredContent = filterProfanity(content)
-        fetchUsername(userId) { username ->
+        fetchUserProfile(userId) { username, profilePhoto ->
             val message = ChatMessage(
                 senderId = userId,
                 senderName = username,
+                profilePhoto = profilePhoto,
                 message = filteredContent,
                 createdAt = System.currentTimeMillis(),
                 likesCount = 0,
@@ -117,13 +118,17 @@ class SocialFragment : Fragment() {
         }
     }
 
-    private fun fetchUsername(userId: String, callback: (String) -> Unit) {
+    private fun fetchUserProfile(userId: String, callback: (String, String?) -> Unit) {
         db.collection("users").document(userId).get()
             .addOnSuccessListener { snapshot ->
-                callback(snapshot.getString("username") ?: "Anonymous")
+                val username = snapshot.getString("username") ?: "Anonymous"
+                val profilePhoto = snapshot.getString("profilePhoto") // Expecting Base64 string
+                Log.d("SocialFragment", "Fetched username: $username, profilePhoto length: ${profilePhoto?.length}")
+                callback(username, profilePhoto)
             }
             .addOnFailureListener { e ->
-                Log.e("SocialFragment", "Error fetching username: ${e.message}")
+                Log.e("SocialFragment", "Error fetching user profile: ${e.message}")
+                callback("Anonymous", null)
             }
     }
 

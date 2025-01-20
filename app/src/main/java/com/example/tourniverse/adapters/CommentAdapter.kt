@@ -1,10 +1,13 @@
 package com.example.tourniverse.adapters
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.tourniverse.R
 import com.example.tourniverse.models.Comment
 
@@ -15,6 +18,7 @@ class CommentAdapter(private val comments: List<Comment>) :
         val userNameTextView: TextView = itemView.findViewById(R.id.commentUserNameTextView)
         val commentTextView: TextView = itemView.findViewById(R.id.commentTextView)
         val timestampTextView: TextView = itemView.findViewById(R.id.commentTimestampTextView)
+        val userImageView: ImageView = itemView.findViewById(R.id.userImageView)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CommentViewHolder {
@@ -33,6 +37,27 @@ class CommentAdapter(private val comments: List<Comment>) :
 
         // Format and set timestamp
         holder.timestampTextView.text = formatTimestamp(comment.createdAt)
+
+        // Load profile image
+        val profilePhoto = comment.profilePhoto
+        if (!profilePhoto.isNullOrEmpty()) {
+            try {
+                // Decode Base64-encoded photo
+                val decodedBytes = android.util.Base64.decode(profilePhoto, android.util.Base64.DEFAULT)
+                val bitmap = android.graphics.BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+
+                // Set decoded bitmap to ImageView
+                holder.userImageView.setImageBitmap(bitmap)
+            } catch (e: Exception) {
+                Log.e("CommentAdapter", "Error decoding profile photo: ${e.message}")
+                // Fallback to default placeholder if decoding fails
+                holder.userImageView.setImageResource(R.drawable.ic_user)
+            }
+        } else {
+            // Set default image if profilePhoto is null or empty
+            holder.userImageView.setImageResource(R.drawable.ic_user)
+        }
+
     }
 
     override fun getItemCount(): Int {

@@ -12,6 +12,7 @@ import android.widget.Toast
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.tourniverse.R
 import com.example.tourniverse.fragments.CommentFragment
 import com.example.tourniverse.models.ChatMessage
@@ -28,12 +29,14 @@ class ChatAdapter(
 
     // ViewHolder class
     inner class ChatViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val profileImageView: ImageView = itemView.findViewById(R.id.userImageView)
         val userNameTextView: TextView = itemView.findViewById(R.id.userNameTextView)
         val contentTextView: TextView = itemView.findViewById(R.id.contentTextView)
         val likeButton: ImageView = itemView.findViewById(R.id.likeButton)
         val likeCountTextView: TextView = itemView.findViewById(R.id.likeCountTextView)
         val commentButton: ImageView = itemView.findViewById(R.id.commentButton)
         val timestampTextView: TextView = itemView.findViewById(R.id.timestampTextView)
+
     }
 
     // Create ViewHolder
@@ -52,11 +55,31 @@ class ChatAdapter(
         holder.contentTextView.text = message.message
 
         // Format and set timestamp
-        val time = android.text.format.DateFormat.format("hh:mm a", message.createdAt)
+        val time = android.text.format.DateFormat.format("dd MMM yyyy, HH:mm", message.createdAt)
         holder.timestampTextView.text = time.toString()
 
         // Get current user ID
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        // Load profile image
+        val profilePhoto = message.profilePhoto
+        if (!profilePhoto.isNullOrEmpty()) {
+            try {
+                // Decode Base64-encoded photo
+                val decodedBytes = android.util.Base64.decode(profilePhoto, android.util.Base64.DEFAULT)
+                val bitmap = android.graphics.BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+
+                // Set decoded bitmap to ImageView
+                holder.profileImageView.setImageBitmap(bitmap)
+            } catch (e: Exception) {
+                Log.e("ChatAdapter", "Error decoding profile photo: ${e.message}")
+                // Fallback to default placeholder if decoding fails
+                holder.profileImageView.setImageResource(R.drawable.ic_user)
+            }
+        } else {
+            // Set default image if profilePhoto is null or empty
+            holder.profileImageView.setImageResource(R.drawable.ic_user)
+        }
 
         // Use documentId if available, otherwise query Firestore
         val documentId = message.documentId ?: run {

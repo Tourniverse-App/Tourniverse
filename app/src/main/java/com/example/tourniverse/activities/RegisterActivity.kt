@@ -3,16 +3,19 @@ package com.example.tourniverse.activities
 import android.content.Intent
 import android.os.Bundle
 import android.text.TextUtils
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.tourniverse.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.FirebaseFirestore
+import android.Manifest
 
 class RegisterActivity : AppCompatActivity() {
 
@@ -27,6 +30,22 @@ class RegisterActivity : AppCompatActivity() {
     private val databaseReference = FirebaseDatabase.getInstance().reference
 
     private lateinit var progressDialog: AlertDialog
+
+    private val requestPermissionsLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            val cameraGranted = permissions[Manifest.permission.CAMERA] ?: false
+            val storageGranted = permissions[Manifest.permission.READ_EXTERNAL_STORAGE] ?: false
+            val notificationsGranted = permissions[Manifest.permission.POST_NOTIFICATIONS] ?: false
+
+            if (cameraGranted && storageGranted && notificationsGranted) {
+                Log.d(TAG, "All permissions granted.")
+                Toast.makeText(this, "All permissions granted. You're all set!", Toast.LENGTH_SHORT).show()
+            } else {
+                Log.d(TAG, "Some permissions were denied.")
+                Toast.makeText(this, "Some permissions were denied. Some features may not work properly.", Toast.LENGTH_SHORT).show()
+            }
+        }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,7 +102,8 @@ class RegisterActivity : AppCompatActivity() {
                     val userMap = hashMapOf(
                         "username" to username,
                         "bio" to "This is ${username}'s bio!",
-                        "email" to email
+                        "email" to email,
+                        "profilePhoto" to ""
                     )
 
                     val db = FirebaseFirestore.getInstance()
@@ -105,6 +125,9 @@ class RegisterActivity : AppCompatActivity() {
 
                                 progressDialog.dismiss()
                                 Toast.makeText(this, "Registration successful!", Toast.LENGTH_SHORT).show()
+
+                                // Show permissions dialog
+                                requestPermissions()
 
                                 // Navigate to MainActivity
                                 val intent = Intent(this, MainActivity::class.java)
@@ -129,4 +152,32 @@ class RegisterActivity : AppCompatActivity() {
         builder.setCancelable(false) // Prevent dismissal by tapping outside
         return builder.create()
     }
+
+    private fun requestPermissions() {
+        val permissions = mutableListOf(
+            Manifest.permission.CAMERA,
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        )
+
+        // Add POST_NOTIFICATIONS only if running on Android 13 or higher
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+
+        Log.d(TAG, "Requesting permissions.")
+        requestPermissionsLauncher.launch(permissions.toTypedArray())
+    }
+
+    private fun showPermissionDeniedToast() {
+        Toast.makeText(
+            this,
+            "You can enable permissions in the app settings to use all features.",
+            Toast.LENGTH_LONG
+        ).show()
+    }
+
+    companion object {
+        private const val TAG = "RegisterActivity"
+    }
+
 }
