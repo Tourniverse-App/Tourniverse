@@ -109,7 +109,6 @@ class SocialFragment : Fragment() {
             db.collection("tournaments").document(tournamentId!!)
                 .collection("chat").add(message)
                 .addOnSuccessListener {
-                    Log.d("SocialFragment", "Message sent successfully: $message")
                     notifyAllTournamentUsers(userId, username, filteredContent)
                 }
                 .addOnFailureListener { e ->
