@@ -6,7 +6,8 @@
     android:padding="8dp"
     android:background="@drawable/rounded_background"
     android:gravity="center"
-    android:layout_margin="8dp">
+    android:layout_margin="8dp"
+    android:elevation="4dp">
 
     <!-- Tournament Image -->
     <ImageView

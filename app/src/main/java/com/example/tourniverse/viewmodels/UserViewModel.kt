@@ -28,11 +28,13 @@ class UserViewModel : ViewModel() {
             userData?.let { data ->
                 val userName = data["username"] as? String ?: "User"
                 val userBio = data["bio"] as? String ?: "No bio available"
+                val profilePhoto = data["profilePhoto"] as? String ?: ""
 
                 _userProfile.postValue(
                     mapOf(
                         "username" to userName,
-                        "bio" to userBio
+                        "bio" to userBio,
+                        "profilePhoto" to profilePhoto // Added to include profile photo
                     )
                 )
             } ?: run {

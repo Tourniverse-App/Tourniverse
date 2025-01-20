@@ -1,6 +1,7 @@
 package com.example.tourniverse.fragments
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -82,6 +83,26 @@ class UserFragment : Fragment() {
         viewModel.userProfile.observe(viewLifecycleOwner) { profile ->
             userNameTextView.text = profile["username"]
             userBioTextView.text = profile["bio"]
+
+            // Decode Base64 profile photo or fallback to placeholder
+            val profilePhoto = profile["profilePhoto"]
+            if (!profilePhoto.isNullOrEmpty()) {
+                try {
+                    // Decode Base64 string into a Bitmap
+                    val decodedBytes = android.util.Base64.decode(profilePhoto, android.util.Base64.DEFAULT)
+                    val bitmap = android.graphics.BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+
+                    // Set the decoded Bitmap to the ImageView
+                    profileImageView.setImageBitmap(bitmap)
+                } catch (e: Exception) {
+                    // If decoding fails, log the error and set a default placeholder
+                    profileImageView.setImageResource(R.drawable.ic_user)
+                    Log.e("UserFragment", "Error decoding profile photo: ${e.message}")
+                }
+            } else {
+                // If profile photo is empty, use a default placeholder
+                profileImageView.setImageResource(R.drawable.ic_user)
+            }
         }
 
         viewModel.ownedTournaments.observe(viewLifecycleOwner) { tournaments ->
