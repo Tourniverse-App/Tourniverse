@@ -22,7 +22,6 @@ object FirebaseHelper {
      * @param description A brief description of the tournament.
      * @param privacy Privacy level of the tournament ("Public" or "Private").
      * @param teamNames List of team names participating in the tournament.
-     * @param imageResId Resource ID for the selected image.
      * @param callback Callback to indicate success (Boolean) and optional error message.
      */
     fun addTournament(
@@ -37,7 +36,8 @@ object FirebaseHelper {
         val currentUser = FirebaseAuth.getInstance().currentUser
         val ownerId = currentUser?.uid ?: return callback(false, "User not authenticated")
 
-        // Fetch all tournaments to log IDs or perform validation (optional)
+
+        // Fetch all tournaments to log IDs or perform validation
         db.collection(TOURNAMENTS_COLLECTION)
             .get()
             .addOnSuccessListener { documents ->
