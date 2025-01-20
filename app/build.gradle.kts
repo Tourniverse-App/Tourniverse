@@ -15,7 +15,6 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -83,4 +82,6 @@ dependencies {
     // WorkManager
     implementation("androidx.work:work-runtime-ktx:2.7.1") // WorkManager
 
+    // Material Components
+    implementation("com.google.android.material:material:1.9.0")
 }
