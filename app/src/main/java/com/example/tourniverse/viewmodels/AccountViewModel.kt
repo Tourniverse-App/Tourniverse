@@ -1,5 +1,6 @@
 package com.example.tourniverse.viewmodels
 
+import android.app.AlertDialog
 import android.content.Context
 import android.net.Uri
 import android.util.Log
@@ -103,7 +104,33 @@ class AccountViewModel : ViewModel() {
             }
     }
 
-    fun deleteAccount(user: FirebaseUser?, onSuccess: () -> Unit, onError: (String) -> Unit) {
+    fun confirmAndDeleteAccount(
+        context: Context,
+        user: FirebaseUser?,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        // Show a confirmation dialog to the user
+        AlertDialog.Builder(context)
+            .setTitle("Delete Account")
+            .setMessage("Are you sure you want to delete your account? This action cannot be undone.")
+            .setPositiveButton("Yes") { _, _ ->
+                // Proceed with account deletion
+                deleteAccount(user, onSuccess, onError)
+            }
+            .setNegativeButton("No") { dialog, _ ->
+                // Cancel the deletion
+                dialog.dismiss()
+                Log.d("AccountViewModel", "Account deletion canceled by the user.")
+            }
+            .show()
+    }
+
+    fun deleteAccount(
+        user: FirebaseUser?,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
         user?.let { currentUser ->
             Log.d("AccountViewModel", "Deleting account for userId: ${currentUser.uid}")
             db.collection("tournaments")
@@ -130,7 +157,8 @@ class AccountViewModel : ViewModel() {
                                     currentUser.delete().addOnCompleteListener { task ->
                                         if (task.isSuccessful) {
                                             Log.d("AccountViewModel", "Account deleted successfully for userId: ${currentUser.uid}")
-                                            onSuccess()
+                                            Firebase.auth.signOut() // Sign out the user
+                                            onSuccess() // Notify success
                                         } else {
                                             Log.e("AccountViewModel", "Error deleting account for userId: ${currentUser.uid}", task.exception)
                                             onError(task.exception?.message.orEmpty())
@@ -138,11 +166,23 @@ class AccountViewModel : ViewModel() {
                                     }
                                 }
                             }
+                            .addOnFailureListener { exception ->
+                                Log.e("AccountViewModel", "Error fetching user's tournaments: ${exception.message}", exception)
+                                onError(exception.message.orEmpty())
+                            }
                     }.addOnFailureListener { exception ->
                         Log.e("AccountViewModel", "Error removing user from tournaments: ${exception.message}", exception)
+                        onError(exception.message.orEmpty())
                     }
                 }
-        } ?: Log.e("AccountViewModel", "User is null, cannot delete account.")
+                .addOnFailureListener { exception ->
+                    Log.e("AccountViewModel", "Error fetching tournaments where user is a viewer: ${exception.message}", exception)
+                    onError(exception.message.orEmpty())
+                }
+        } ?: run {
+            Log.e("AccountViewModel", "User is null, cannot delete account.")
+            onError("User is not logged in.")
+        }
     }
 
     fun uploadProfilePhoto(userId: String, base64String: String, onSuccess: () -> Unit, onError: (String) -> Unit) {

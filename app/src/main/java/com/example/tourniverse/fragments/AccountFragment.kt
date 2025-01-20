@@ -181,17 +181,31 @@ class AccountFragment : Fragment() {
 
         deleteAccountButton.setOnClickListener {
             Log.d(TAG, "Delete account button clicked.")
-            viewModel.deleteAccount(
-                currentUser,
-                onSuccess = {
-                    Log.d(TAG, "Account deleted successfully.")
-                    navigateToLogin()
-                },
-                onError = {
-                    Log.e(TAG, "Error deleting account: $it")
-                    showToast(it)
+
+            // Show confirmation dialog before deleting the account
+            AlertDialog.Builder(requireContext())
+                .setTitle("Delete Account")
+                .setMessage("Are you sure you want to delete your account? This action cannot be undone.")
+                .setPositiveButton("Yes") { _, _ ->
+                    // Proceed with account deletion
+                    viewModel.deleteAccount(
+                        currentUser,
+                        onSuccess = {
+                            Log.d(TAG, "Account deleted successfully.")
+                            navigateToLogin()
+                        },
+                        onError = {
+                            Log.e(TAG, "Error deleting account: $it")
+                            showToast(it)
+                        }
+                    )
                 }
-            )
+                .setNegativeButton("No") { dialog, _ ->
+                    // Cancel the deletion process
+                    dialog.dismiss()
+                    Log.d(TAG, "Account deletion canceled by the user.")
+                }
+                .show()
         }
 
         setupPhotoPicker(view)
