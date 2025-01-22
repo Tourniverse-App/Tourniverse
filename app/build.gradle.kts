@@ -75,12 +75,14 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1") // Espresso Core
     androidTestImplementation("androidx.test:rules:1.5.0")
     androidTestImplementation("androidx.fragment:fragment-testing:1.5.7")
+    testImplementation("androidx.arch.core:core-testing:2.1.0") // AndroidX Core Testing
 
     // For Kotlin test assertions
     testImplementation("org.jetbrains.kotlin:kotlin-test:1.8.0") // Kotlin Test Assertions
 
     // For Mockito (mocking framework)
     testImplementation("org.mockito:mockito-core:4.11.0")
+    testImplementation("org.mockito:mockito-inline:4.0.0")
     testImplementation("org.mockito.kotlin:mockito-kotlin:4.1.0") // Kotlin-specific Mockito helpers
 
     // Core KTX

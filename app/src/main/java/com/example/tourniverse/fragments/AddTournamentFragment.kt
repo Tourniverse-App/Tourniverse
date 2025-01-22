@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.example.tourniverse.R
+import com.example.tourniverse.utils.FirebaseWrapper
 import com.example.tourniverse.viewmodels.AddTournamentViewModel
 import com.google.firebase.auth.FirebaseAuth
 
@@ -26,6 +27,7 @@ class AddTournamentFragment : Fragment() {
 
     private var currentType: String = "Tables"
     private lateinit var viewModel: AddTournamentViewModel
+    private lateinit var firebaseWrapper: FirebaseWrapper // Add this line
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -33,6 +35,7 @@ class AddTournamentFragment : Fragment() {
     ): View {
         val view = inflater.inflate(R.layout.fragment_add_tournament, container, false)
         viewModel = ViewModelProvider(this).get(AddTournamentViewModel::class.java)
+        firebaseWrapper = FirebaseWrapper(FirebaseAuth.getInstance()) // Add this line
 
         // Initialize Views
         etTournamentName = view.findViewById(R.id.etTournamentName)
@@ -125,7 +128,8 @@ class AddTournamentFragment : Fragment() {
             }
         }
 
-        val ownerId = FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
+//        val ownerId = FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
+        val ownerId = firebaseWrapper.currentUserId.orEmpty()
         if (ownerId.isEmpty()) {
             showToast("User not authenticated")
             return

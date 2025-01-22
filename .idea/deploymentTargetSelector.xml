@@ -13,19 +13,19 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="AddTournamentFragmentUITest">
+      <SelectionState runConfigName="testSuccessfulRegistrationNavigatesToMainActivity()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="testSuccessfulRegistrationFlow()">
+      <SelectionState runConfigName="RegisterUITest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="testCreatingTablesTournament()">
+      <SelectionState runConfigName="testAddTournamentAndNavigateToSocialTab()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="testHomeFragmentUIElements()">
+      <SelectionState runConfigName="TournamentUITest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="testSuccessfulRegistrationNavigatesToHome()">
+      <SelectionState runConfigName="testMissingTeamNameStaysOnAddTournamentPage()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>

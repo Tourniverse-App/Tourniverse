@@ -40,7 +40,6 @@ class TournamentSettingsFragment : Fragment() {
     private lateinit var buttonInvite: Button
     private lateinit var buttonDeleteTournament: Button
 
-
     private val db = FirebaseFirestore.getInstance()
     private val userId: String by lazy { FirebaseAuth.getInstance().currentUser?.uid.orEmpty() }
     private lateinit var tournamentId: String

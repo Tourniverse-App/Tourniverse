@@ -333,7 +333,7 @@ object FirebaseHelper {
         val userRef = db.collection(USERS_COLLECTION).document(userId)
         val tournamentData = hashMapOf(
             "isOwner" to true,
-            "push" to false,
+            "Push" to false,
             "ChatMessages" to false,
             "Comments" to false,
             "Likes" to false,

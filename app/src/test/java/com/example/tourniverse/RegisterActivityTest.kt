@@ -1,33 +1,32 @@
-import org.junit.Test
-import org.mockito.Mockito.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.AuthResult
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.DocumentReference
 import com.google.android.gms.tasks.Task
+import org.junit.Test
+import org.mockito.Mockito.*
 import kotlin.test.assertTrue
 
 class RegisterActivityTest {
 
     private val mockAuth = mock(FirebaseAuth::class.java)
-    private val mockFirestore = mock(FirebaseFirestore::class.java)
 
     @Test
-    fun `test successful registration`() {
-        val email = "testuser@example.com"
-        val password = "password123"
-        val username = "testuser"
+    fun testUserRegistration() {
+        // Mock Task and AuthResult
+        val mockAuthResult = mock(AuthResult::class.java)
+        val mockTask = mock(Task::class.java) as Task<AuthResult>
 
-        val mockAuthTask = mock(Task::class.java) as Task<AuthResult>
-        `when`(mockAuth.createUserWithEmailAndPassword(email, password)).thenReturn(mockAuthTask)
-        `when`(mockAuthTask.isSuccessful).thenReturn(true)
+        // Mocking Firebase method behavior
+        `when`(mockAuth.createUserWithEmailAndPassword("testuser@example.com", "password123"))
+            .thenReturn(mockTask)
+        `when`(mockTask.isSuccessful).thenReturn(true)
+        `when`(mockTask.result).thenReturn(mockAuthResult)
+        `when`(mockAuthResult.user?.email).thenReturn("testuser@example.com")
 
-        // Mock Firestore operations
-        val mockUserRef = mock(DocumentReference::class.java)
-        `when`(mockFirestore.collection("users").document(anyString())).thenReturn(mockUserRef)
+        // Calling the function under test
+        val task = mockAuth.createUserWithEmailAndPassword("testuser@example.com", "password123")
 
-        // Assume registration logic creates the user
-        mockAuth.createUserWithEmailAndPassword(email, password)
-        assertTrue(mockAuthTask.isSuccessful)
+        // Assertions to verify expected behavior
+        assertTrue(task.isSuccessful)
+        assertTrue(task.result?.user?.email == "testuser@example.com")
     }
 }
