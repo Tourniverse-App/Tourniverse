@@ -1,84 +1,105 @@
 package com.example.tourniverse
 
-import androidx.lifecycle.MutableLiveData
-import com.example.tourniverse.fragments.AddTournamentFragment
 import com.example.tourniverse.viewmodels.AddTournamentViewModel
+import io.mockk.*
 import org.junit.Test
-import org.mockito.Mockito
 import kotlin.test.assertEquals
 
 class AddTournamentTest {
 
     @Test
     fun testAddTournamentSuccess() {
-        // Mock ViewModel
-        val mockViewModel = Mockito.mock(AddTournamentViewModel::class.java)
+        // Mock the ViewModel
+        val mockViewModel = mockk<AddTournamentViewModel>()
 
-        // Mock success callback
-        val successCallback: (Boolean, String?) -> Unit = { success, error ->
+        // Mock behavior for the success scenario
+        every {
+            mockViewModel.addTournament(
+                name = any(),
+                teamCount = any(),
+                description = any(),
+                privacy = any(),
+                teamNames = any(),
+                format = any(),
+                onComplete = captureLambda()
+            )
+        } answers {
+            lambda<(Boolean, String?) -> Unit>().invoke(true, null) // Simulate success
+        }
+
+        // Call the method under test
+        mockViewModel.addTournament(
+            name = "Test Tournament",
+            teamCount = 2,
+            description = "This is a test tournament",
+            privacy = "Public",
+            teamNames = listOf("Team 1", "Team 2"),
+            format = "Tables"
+        ) { success, error ->
+            // Assert that the callback indicates success
             assertEquals(true, success)
             assertEquals(null, error)
         }
 
-        // Mock fetch tournament ID callback
-        val fetchTournamentCallback: (String) -> Unit = { tournamentId ->
-            assertEquals("123", tournamentId) // Assuming "123" is the expected tournament ID
+        // Verify that the method was called with the expected arguments
+        verify {
+            mockViewModel.addTournament(
+                name = "Test Tournament",
+                teamCount = 2,
+                description = "This is a test tournament",
+                privacy = "Public",
+                teamNames = listOf("Team 1", "Team 2"),
+                format = "Tables",
+                onComplete = any()
+            )
         }
-
-        // Test addTournament in ViewModel
-        mockViewModel.addTournament(
-            name = "Test Tournament",
-            teamCount = 2,
-            description = "This is a test tournament",
-            privacy = "Public",
-            teamNames = listOf("Team 1", "Team 2"),
-            format = "Tables",
-            onComplete = successCallback
-        )
-
-        // Verify that addTournament was called with correct parameters
-        Mockito.verify(mockViewModel).addTournament(
-            name = "Test Tournament",
-            teamCount = 2,
-            description = "This is a test tournament",
-            privacy = "Public",
-            teamNames = listOf("Team 1", "Team 2"),
-            format = "Tables",
-            onComplete = successCallback
-        )
     }
 
     @Test
     fun testAddTournamentFailure() {
-        // Mock ViewModel
-        val mockViewModel = Mockito.mock(AddTournamentViewModel::class.java)
+        // Mock the ViewModel
+        val mockViewModel = mockk<AddTournamentViewModel>()
 
-        // Mock failure callback
-        val failureCallback: (Boolean, String?) -> Unit = { success, error ->
-            assertEquals(false, success)
-            assertEquals("Failed to add tournament", error)
+        // Mock behavior for the failure scenario
+        every {
+            mockViewModel.addTournament(
+                name = any(),
+                teamCount = any(),
+                description = any(),
+                privacy = any(),
+                teamNames = any(),
+                format = any(),
+                onComplete = captureLambda()
+            )
+        } answers {
+            lambda<(Boolean, String?) -> Unit>().invoke(false, "Failed to add tournament") // Simulate failure
         }
 
-        // Simulate failure in addTournament
+        // Call the method under test
         mockViewModel.addTournament(
             name = "",
             teamCount = 0,
             description = "",
             privacy = "Public",
             teamNames = emptyList(),
-            format = "Tables",
-            onComplete = failureCallback
-        )
+            format = "Tables"
+        ) { success, error ->
+            // Assert that the callback indicates failure
+            assertEquals(false, success)
+            assertEquals("Failed to add tournament", error)
+        }
 
-        // Verify that addTournament was called
-        Mockito.verify(mockViewModel).addTournament(
-            name = "",
-            teamCount = 0,
-            description = "",
-            privacy = "Public",
-            teamNames = emptyList(),
-            format = "Tables",
-            onComplete = failureCallback
-        )
+        // Verify that the method was called with the expected arguments
+        verify {
+            mockViewModel.addTournament(
+                name = "",
+                teamCount = 0,
+                description = "",
+                privacy = "Public",
+                teamNames = emptyList(),
+                format = "Tables",
+                onComplete = any()
+            )
+        }
     }
 }

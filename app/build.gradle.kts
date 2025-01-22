@@ -82,9 +82,9 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test:1.8.0") // Kotlin Test Assertions
 
     // For Mockito (mocking framework)
-    testImplementation("org.mockito:mockito-core:4.11.0")
-    testImplementation("org.mockito:mockito-inline:4.0.0")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:4.1.0") // Kotlin-specific Mockito helpers
+    testImplementation("io.mockk:mockk:1.13.2")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.8.0") // Ensure JUnit compatibility
+    testImplementation("org.robolectric:robolectric:4.10")
 
     // Core KTX
     implementation("androidx.core:core-ktx:1.12.0") // Core KTX

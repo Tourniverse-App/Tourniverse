@@ -26,7 +26,7 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var registerButton: Button
     private lateinit var loginLink: TextView
 
-    private lateinit var auth: FirebaseAuth
+    lateinit var auth: FirebaseAuth
     private val databaseReference = FirebaseDatabase.getInstance().reference
 
     private lateinit var progressDialog: AlertDialog
@@ -89,7 +89,7 @@ class RegisterActivity : AppCompatActivity() {
      * @param email The user's email address.
      * @param password The user's password.
      */
-    private fun registerUser(username: String, email: String, password: String) {
+    fun registerUser(username: String, email: String, password: String) {
         progressDialog.show()
 
         // Register user in Firebase Auth
@@ -176,8 +176,11 @@ class RegisterActivity : AppCompatActivity() {
         ).show()
     }
 
+    fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+
     companion object {
         private const val TAG = "RegisterActivity"
     }
-
 }
