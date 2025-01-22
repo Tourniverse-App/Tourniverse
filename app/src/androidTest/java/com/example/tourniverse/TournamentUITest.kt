@@ -1,4 +1,3 @@
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
@@ -24,11 +23,9 @@ import androidx.test.espresso.util.TreeIterables
 import com.example.tourniverse.R
 import com.example.tourniverse.activities.LoginActivity
 import com.example.tourniverse.activities.MainActivity
-import com.example.tourniverse.activities.TournamentActivity
 import org.hamcrest.Description
 import org.hamcrest.Matcher
 import org.hamcrest.TypeSafeMatcher
-import org.junit.BeforeClass
 import java.util.concurrent.TimeoutException
 
 @RunWith(AndroidJUnit4::class)
