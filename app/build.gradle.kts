@@ -43,7 +43,7 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:33.7.0")) // Firebase Bill of Materials
 
     // Firebase Dependencies
-    implementation("com.google.firebase:firebase-auth") // Authentication
+    implementation(libs.google.firebase.auth) // Authentication
     implementation("com.google.firebase:firebase-database") // Realtime Database
     implementation("com.google.firebase:firebase-analytics") // Analytics
     implementation("com.google.firebase:firebase-firestore-ktx") // Firestore
@@ -77,14 +77,15 @@ dependencies {
     androidTestImplementation("androidx.test:rules:1.5.0")
     androidTestImplementation("androidx.fragment:fragment-testing:1.5.7")
     testImplementation("androidx.arch.core:core-testing:2.1.0") // AndroidX Core Testing
+    testImplementation("net.bytebuddy:byte-buddy:1.14.6")
 
     // For Kotlin test assertions
     testImplementation("org.jetbrains.kotlin:kotlin-test:1.8.0") // Kotlin Test Assertions
 
     // For Mockito (mocking framework)
-    testImplementation("io.mockk:mockk:1.13.2")
+    testImplementation("io.mockk:mockk:1.13.5")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.8.0") // Ensure JUnit compatibility
-    testImplementation("org.robolectric:robolectric:4.10")
+    testImplementation("org.robolectric:robolectric:4.10.3")
 
     // Core KTX
     implementation("androidx.core:core-ktx:1.12.0") // Core KTX

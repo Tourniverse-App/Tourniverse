@@ -55,7 +55,7 @@ class AddTournamentFragment : Fragment() {
     }
 
     private fun setupTournamentTypeSpinner() {
-        val typeOptions = listOf("Tables", "Knockout")
+        val typeOptions = listOf("Tables")
         spinnerTournamentType.adapter = ArrayAdapter(
             requireContext(),
             android.R.layout.simple_spinner_item,

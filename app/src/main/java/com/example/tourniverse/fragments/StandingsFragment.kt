@@ -252,21 +252,6 @@ class StandingsFragment : Fragment() {
             Log.e("StandingsFragment", "TableStatisticsFragment not found or not initialized")
         }
 
-        // Notify Knockout Statistics Fragment
-        val knockoutFragment =
-            parentFragmentManager.findFragmentByTag("knockoutStatisticsFragment") as? KnockoutStatisticsFragment
-        if (knockoutFragment != null) {
-            Log.d("StandingsFragment", "Updating Knockout Statistics Fragment")
-            val knockoutMatches = fixtures.map { match ->
-                match.copy(
-                    scoreA = match.scoreA ?: 0,
-                    scoreB = match.scoreB ?: 0
-                )
-            }
-            knockoutFragment.updateKnockoutMatches(knockoutMatches)
-        } else {
-            Log.e("StandingsFragment", "KnockoutStatisticsFragment not found or not initialized")
-        }
     }
 
     /**

@@ -3,7 +3,6 @@ package com.example.tourniverse.viewmodels
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.example.tourniverse.adapters.StandingsAdapter
-import com.example.tourniverse.fragments.KnockoutStatisticsFragment
 import com.example.tourniverse.fragments.TableStatisticsFragment
 import com.example.tourniverse.models.Match
 import com.example.tourniverse.models.TeamStanding
@@ -72,7 +71,6 @@ class StandingsViewModel : ViewModel() {
 
     fun notifyStatisticsFragments(
         tableFragment: TableStatisticsFragment?,
-        knockoutFragment: KnockoutStatisticsFragment?,
         format: String
     ) {
         Log.d("StandingsFragment", "notifyStatisticsFragments called")
@@ -94,20 +92,6 @@ class StandingsViewModel : ViewModel() {
                 tableFragment.updateStandings(tableStandings) // Updated function name
             } else {
                 Log.e("StandingsFragment", "TableStatisticsFragment not found or not initialized")
-            }
-        } else {
-            // Notify Knockout Statistics Fragment
-            if (knockoutFragment != null) {
-                Log.d("StandingsFragment", "Updating Knockout Statistics Fragment")
-                val knockoutMatches = fixtures.map { match ->
-                    match.copy(
-                        scoreA = match.scoreA ?: 0,
-                        scoreB = match.scoreB ?: 0
-                    )
-                }
-                knockoutFragment.updateKnockoutMatches(knockoutMatches)
-            } else {
-                Log.e("StandingsFragment", "KnockoutStatisticsFragment not found or not initialized")
             }
         }
     }

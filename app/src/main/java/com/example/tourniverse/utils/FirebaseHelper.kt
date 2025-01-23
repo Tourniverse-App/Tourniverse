@@ -30,7 +30,7 @@ object FirebaseHelper {
         description: String,
         privacy: String,
         teamNames: List<String>,
-        format: String, // Added parameter to handle tournament format (Knockout or Tables)
+        format: String, // Added parameter to handle tournament format (Tables)
         callback: (Boolean, String?) -> Unit
     ) {
         val currentUser = FirebaseAuth.getInstance().currentUser
@@ -123,7 +123,7 @@ object FirebaseHelper {
      *
      * @param tournamentId ID of the new tournament.
      * @param teamNames List of team names participating in the tournament.
-     * @param format The format of the tournament (Knockout or Tables).
+     * @param format The format of the tournament (Tables).
      * @param callback Callback to indicate success (Boolean) and optional error message.
      */
     private fun initializeSubcollections(
@@ -219,32 +219,6 @@ object FirebaseHelper {
                     batch.set(matchRef, matchData)
                 }
             }
-        } else if (format == "Knockout") {
-            // Generate initial knockout matches (first round only)
-            val firstRoundMatches = teamNames.chunked(2) // Pair teams into matches
-            firstRoundMatches.forEachIndexed { index, pair ->
-                if (pair.size == 2) {
-                    // Create match data with unique ID
-                    val matchId = "${pair[0]}_${pair[1]}"
-                    val matchData = hashMapOf(
-                        "id" to matchId,                  // Unique ID
-                        "teamA" to pair[0],
-                        "teamB" to pair[1],
-                        "scoreA" to null,                 // Null for initial scores
-                        "scoreB" to null,
-                        "round" to 1                      // First round
-                    )
-                    Log.d("generateMatches", "Adding knockout match: $matchData")
-
-                    // Prepare to save each match as a separate document
-                    val matchRef = db.collection(TOURNAMENTS_COLLECTION)
-                        .document(tournamentId)
-                        .collection("matches")
-                        .document(matchId) // Use unique ID as Firestore document ID
-
-                    batch.set(matchRef, matchData)
-                }
-            }
         }
 
         // Commit batch updates to Firestore
@@ -257,69 +231,6 @@ object FirebaseHelper {
                 Log.e("generateMatches", "Failed to generate matches: ${e.message}")
                 callback(false, e.message ?: "Failed to generate matches")
             }
-    }
-
-    fun progressKnockoutRound(
-        tournamentId: String,
-        callback: (Boolean, String?) -> Unit
-    ) {
-        val matchesRef = db.collection(TOURNAMENTS_COLLECTION).document(tournamentId).collection("matches")
-
-        // Fetch all matches in the current round
-        matchesRef.whereEqualTo("round", getCurrentRound(tournamentId)).get()
-            .addOnSuccessListener { snapshot ->
-                val nextRoundMatches = mutableListOf<HashMap<String, Any>>()
-                val winners = mutableListOf<String>()
-
-                snapshot.documents.forEach { doc ->
-                    val match = doc.data
-                    val teamA = match?.get("teamA") as? String
-                    val teamB = match?.get("teamB") as? String
-                    val scoreA = (match?.get("scoreA") as? Long)?.toInt() ?: 0
-                    val scoreB = (match?.get("scoreB") as? Long)?.toInt() ?: 0
-
-                    // Determine the winner
-                    if (scoreA > scoreB) {
-                        teamA?.let { winners.add(it) }
-                    } else if (scoreB > scoreA) {
-                        teamB?.let { winners.add(it) }
-                    }
-                }
-
-                // Pair winners for the next round
-                winners.chunked(2).forEach { pair ->
-                    if (pair.size == 2) {
-                        nextRoundMatches.add(
-                            hashMapOf(
-                                "teamA" to pair[0],
-                                "teamB" to pair[1],
-                                "scoreA" to 0,
-                                "scoreB" to 0,
-                                "round" to getCurrentRound(tournamentId) + 1 // Increment round
-                            )
-                        )
-                    }
-                }
-
-                // Save next round matches to Firestore
-                matchesRef.add(mapOf("matches" to nextRoundMatches))
-                    .addOnSuccessListener {
-                        callback(true, null)
-                    }
-                    .addOnFailureListener { e ->
-                        callback(false, e.message ?: "Failed to progress knockout round")
-                    }
-            }
-            .addOnFailureListener { e ->
-                callback(false, e.message ?: "Failed to fetch matches")
-            }
-    }
-
-    // Helper function to get the current round for the tournament
-    private fun getCurrentRound(tournamentId: String): Int {
-        // Fetch matches and determine the highest round
-        // This can be optimized with a Firestore field or a more efficient query
-        return 1 // Placeholder logic
     }
 
     /**

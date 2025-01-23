@@ -29,7 +29,7 @@ class TournamentPagerAdapter(
         val fragment = when (position) {
             0 -> SocialFragment()
             1 -> StandingsFragment()
-            2 -> if (tournamentFormat == "Tables") TableStatisticsFragment() else KnockoutStatisticsFragment()
+            2 -> TableStatisticsFragment()
             3 -> TournamentSettingsFragment()
             else -> throw IllegalArgumentException("Invalid tab position: $position")
         }
