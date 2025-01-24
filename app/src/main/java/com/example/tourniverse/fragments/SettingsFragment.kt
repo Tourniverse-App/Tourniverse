@@ -3,6 +3,7 @@ package com.example.tourniverse.fragments
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
@@ -41,13 +42,34 @@ class SettingsFragment : Fragment() {
             findNavController().navigate(R.id.action_settingsFragment_to_aboutFragment)
         }
 
-        // Sign Out Click Listener
-        view.findViewById<TextView>(R.id.signOut).setOnClickListener {
+        // Custom Sign Out Button
+        val signOutBtn = view.findViewById<View>(R.id.signOutBtn)
+        val signOutIcon = view.findViewById<View>(R.id.signOutIcon)
+        val signOutText = view.findViewById<TextView>(R.id.signOutText)
+
+        signOutBtn.setOnClickListener {
             FirebaseAuth.getInstance().signOut()
             val intent = Intent(context, LoginActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(intent)
             Toast.makeText(context, "Signed Out Successfully", Toast.LENGTH_SHORT).show()
+        }
+
+        // Handle hover and animation effects for the sign-out button
+        signOutBtn.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    // Expand the button to reveal text
+                    signOutBtn.animate().scaleX(2.8f).setDuration(300).start()
+                    signOutText.visibility = View.VISIBLE
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    // Shrink the button back to circle and hide text
+                    signOutBtn.animate().scaleX(1f).setDuration(300).start()
+                    signOutText.visibility = View.GONE
+                }
+            }
+            false
         }
 
         return view

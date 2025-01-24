@@ -1,9 +1,12 @@
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <!-- Content Layout -->
+
+    <!-- Sign Out -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -14,23 +17,23 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Settings"
-            android:textSize="20sp"
+            android:layout_marginBottom="16dp"
             android:fontFamily="@font/exo2_bold"
-            android:layout_marginBottom="16dp" />
+            android:text="Settings"
+            android:textSize="20sp" />
 
         <!-- Account Settings -->
         <TextView
             android:id="@+id/accountSettings"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Account"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/list_item_background"
             android:drawableStart="@drawable/ic_account"
             android:drawablePadding="8dp"
-            android:padding="8dp"
-            android:background="@drawable/list_item_background"
-            android:layout_marginBottom="8dp"
             android:gravity="center_vertical"
+            android:padding="8dp"
+            android:text="Account"
             android:textSize="16sp" />
 
         <!-- Notification Settings -->
@@ -38,26 +41,26 @@
             android:id="@+id/notificationSettings"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Notifications"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/list_item_background"
             android:drawableStart="@drawable/ic_notifications"
             android:drawablePadding="8dp"
-            android:padding="8dp"
-            android:background="@drawable/list_item_background"
-            android:layout_marginBottom="8dp"
             android:gravity="center_vertical"
+            android:padding="8dp"
+            android:text="Notifications"
             android:textSize="16sp" />
         <!-- Help & Support -->
         <TextView
             android:id="@+id/helpSupport"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Help &amp; Support"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/list_item_background"
             android:drawableStart="@drawable/ic_help"
             android:drawablePadding="8dp"
-            android:padding="8dp"
-            android:background="@drawable/list_item_background"
-            android:layout_marginBottom="8dp"
             android:gravity="center_vertical"
+            android:padding="8dp"
+            android:text="Help &amp; Support"
             android:textSize="16sp" />
 
         <!-- About -->
@@ -65,28 +68,63 @@
             android:id="@+id/aboutSettings"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="About"
+            android:background="@drawable/list_item_background"
             android:drawableStart="@drawable/ic_info"
             android:drawablePadding="8dp"
-            android:padding="8dp"
-            android:background="@drawable/list_item_background"
             android:gravity="center_vertical"
+            android:padding="8dp"
+            android:text="About"
             android:textSize="16sp" />
     </LinearLayout>
 
-    <!-- Sign Out -->
-    <TextView
-        android:id="@+id/signOut"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Sign Out"
-        android:drawableStart="@drawable/ic_logout"
-        android:drawablePadding="8dp"
-        android:padding="8dp"
-        android:background="@drawable/list_item_background"
-        android:gravity="center"
+    <FrameLayout
+        android:id="@+id/signOutBtn"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
         android:layout_gravity="bottom|center_horizontal"
         android:layout_marginBottom="16dp"
-        android:textSize="16sp"
-        android:textColor="@android:color/holo_red_dark" />
+        android:background="@drawable/sign_out_button_background"
+        android:elevation="4dp"
+        android:clipChildren="true"
+        android:clipToPadding="true"
+        android:clickable="true"
+        android:focusable="true">
+
+        <!-- Icon -->
+        <ImageView
+            android:id="@+id/signOutIcon"
+            android:layout_width="17dp"
+            android:layout_height="17dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_logout"
+            android:tint="@android:color/white" />
+
+        <!-- Text -->
+        <TextView
+            android:id="@+id/signOutText"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_vertical"
+            android:gravity="center"
+            android:text="Sign Out"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:fontFamily="@font/exo2_bold"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <!--    <TextView-->
+<!--        android:id="@+id/signOut"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="Sign Out"-->
+<!--        android:drawableStart="@drawable/ic_logout"-->
+<!--        android:drawablePadding="8dp"-->
+<!--        android:padding="8dp"-->
+<!--        android:background="@drawable/list_item_background"-->
+<!--        android:gravity="center"-->
+<!--        android:layout_gravity="bottom|center_horizontal"-->
+<!--        android:layout_marginBottom="16dp"-->
+<!--        android:textSize="16sp"-->
+<!--        android:textColor="@android:color/holo_red_dark" />-->
 </FrameLayout>

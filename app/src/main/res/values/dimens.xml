@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Define the toggle slider translation distance - default 28-->
+    <dimen name="custom_switch_toggle">24dp</dimen>
+
+    <dimen name="corner_radius">45dp</dimen>
+</resources>
