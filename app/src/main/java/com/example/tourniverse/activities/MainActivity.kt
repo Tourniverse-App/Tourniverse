@@ -14,6 +14,9 @@ import com.google.firebase.auth.ActionCodeSettings
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
+import android.Manifest
+import android.os.Build
+import androidx.activity.result.contract.ActivityResultContracts
 
 class MainActivity : AppCompatActivity() {
 

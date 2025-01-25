@@ -37,22 +37,6 @@ class RegisterActivity : AppCompatActivity() {
 
     private lateinit var progressDialog: AlertDialog
 
-    private val requestPermissionsLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-            val cameraGranted = permissions[Manifest.permission.CAMERA] ?: false
-            val storageGranted = permissions[Manifest.permission.READ_EXTERNAL_STORAGE] ?: false
-            val notificationsGranted = permissions[Manifest.permission.POST_NOTIFICATIONS] ?: false
-
-            if (cameraGranted && storageGranted && notificationsGranted) {
-                Log.d(TAG, "All permissions granted.")
-                Toast.makeText(this, "All permissions granted. You're all set!", Toast.LENGTH_SHORT).show()
-            } else {
-                Log.d(TAG, "Some permissions were denied.")
-                Toast.makeText(this, "Some permissions were denied. Some features may not work properly.", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register)
@@ -145,8 +129,8 @@ class RegisterActivity : AppCompatActivity() {
                                 progressDialog.dismiss()
                                 Toast.makeText(this, "Registration successful!", Toast.LENGTH_SHORT).show()
 
-                                // Show permissions dialog
-                                requestPermissions()
+                                val sharedPreferences = getSharedPreferences("app_preferences", MODE_PRIVATE)
+                                sharedPreferences.edit().putBoolean("permissions_requested", false).apply()
 
                                 // Navigate to MainActivity
                                 val intent = Intent(this, MainActivity::class.java)
@@ -193,21 +177,6 @@ class RegisterActivity : AppCompatActivity() {
         builder.setView(layoutInflater.inflate(R.layout.dialog_loading, null)) // Use your existing layout
         builder.setCancelable(false) // Prevent dismissal by tapping outside
         return builder.create()
-    }
-
-    private fun requestPermissions() {
-        val permissions = mutableListOf(
-            Manifest.permission.CAMERA,
-            Manifest.permission.READ_EXTERNAL_STORAGE
-        )
-
-        // Add POST_NOTIFICATIONS only if running on Android 13 or higher
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            permissions.add(Manifest.permission.POST_NOTIFICATIONS)
-        }
-
-        Log.d(TAG, "Requesting permissions.")
-        requestPermissionsLauncher.launch(permissions.toTypedArray())
     }
 
     companion object {

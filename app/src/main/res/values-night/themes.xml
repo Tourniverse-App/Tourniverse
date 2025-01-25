@@ -1,5 +1,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Theme.Tourniverse" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+
+    <!-- Theme for the app -->
+    <style name="Theme.Tourniverse" parent="Theme.MaterialComponents.Light.NoActionBar">
         <!-- Primary brand color -->
         <item name="colorPrimary">@color/black</item>
         <item name="colorPrimaryVariant">@color/dark_gray</item>
@@ -7,14 +9,14 @@
 
         <!-- Secondary brand color -->
         <item name="colorSecondary">@color/gray</item>
-        <item name="colorSecondaryVariant">@color/dark_gray</item>
-        <item name="colorOnSecondary">@color/white</item>
+        <item name="colorSecondaryVariant">@color/light_gray</item>
+        <item name="colorOnSecondary">@color/black</item>
 
         <!-- Background and surface colors -->
-<!--        <item name="colorBackground">@color/black</item>-->
-        <item name="colorSurface">@color/dark_gray</item>
-        <item name="colorOnBackground">@color/white</item>
-        <item name="colorOnSurface">@color/white</item>
+        <!-- <item name="colorBackground">@color/white</item> -->
+        <item name="colorSurface">@color/light_gray</item>
+        <item name="colorOnBackground">@color/black</item>
+        <item name="colorOnSurface">@color/black</item>
 
         <!-- Button styling -->
         <item name="colorButtonNormal">@color/black</item>
@@ -22,5 +24,28 @@
 
         <!-- Status bar color -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+
+        <!-- Set default font -->
+        <item name="android:fontFamily">@font/exo2_regular</item>
+
+        <!-- Apply font globally to buttons -->
+        <item name="buttonStyle">@style/CustomButtonStyle</item>
+
+        <!-- Apply font globally to text input fields -->
+        <item name="editTextStyle">@style/CustomEditTextStyle</item>
+
+        <!-- Apply font globally to toolbars -->
+        <item name="toolbarStyle">@style/CustomToolbarStyle</item>
     </style>
+
+    <!-- Custom style for "Join Tournament" button -->
+    <style name="JoinTournamentButtonStyle" parent="Widget.MaterialComponents.Button">
+        <item name="android:background">@drawable/custom_button</item> <!-- Use the selector -->
+        <item name="android:textColor">@android:color/white</item> <!-- White text -->
+        <item name="android:elevation">8dp</item> <!-- Default shadow -->
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:textSize">18sp</item>
+    </style>
+
 </resources>

@@ -1,251 +1,256 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:fillViewport="true">
 
-
-    <Button
-        android:id="@+id/button_members"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:text="1 Members"
-        android:background="@android:color/transparent"
-        android:textSize="16sp"
-        android:textColor="@color/black"
-        android:layout_marginBottom="16dp" />
-
-
-    <!-- Push Notifications -->
-    <LinearLayout
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingVertical="8dp">
+        android:orientation="vertical"
+        android:padding="16dp">
 
-        <TextView
-            android:layout_width="0dp"
+        <Button
+            android:id="@+id/button_members"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Push Notifications"
-            android:textSize="16sp" />
+            android:layout_gravity="center"
+            android:text="1 Members"
+            android:background="@android:color/transparent"
+            android:textSize="16sp"
+            android:textColor="@color/black"
+            android:layout_marginBottom="16dp" />
 
-        <FrameLayout
-            android:id="@+id/customPushSwitch"
-            android:layout_width="56dp"
-            android:layout_height="32dp"
-            android:background="@drawable/custom_switch_background"
-            android:clipChildren="false"
-            android:clipToPadding="false"
-            android:layout_gravity="center_vertical">
 
-            <View
-                android:id="@+id/customPushSliderCard"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:layout_margin="5dp"
-                android:background="@drawable/custom_slider_card"
-                android:translationX="0dp" />
-        </FrameLayout>
+        <!-- Push Notifications -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingVertical="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Push Notifications"
+                android:textSize="16sp" />
+
+            <FrameLayout
+                android:id="@+id/customPushSwitch"
+                android:layout_width="56dp"
+                android:layout_height="32dp"
+                android:background="@drawable/custom_switch_background"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:layout_gravity="center_vertical">
+
+                <View
+                    android:id="@+id/customPushSliderCard"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_margin="5dp"
+                    android:background="@drawable/custom_slider_card"
+                    android:translationX="0dp" />
+            </FrameLayout>
+
+        </LinearLayout>
+
+        <!-- Game Notifications -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Game Notifications"
+            android:textSize="18sp"
+            android:fontFamily="@font/exo2_bold"
+            android:paddingTop="8dp" />
+
+        <!-- Scores Notifications -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingVertical="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Scores Update"
+                android:textSize="16sp" />
+
+            <FrameLayout
+                android:id="@+id/customScoresSwitch"
+                android:layout_width="56dp"
+                android:layout_height="32dp"
+                android:background="@drawable/custom_switch_background"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:layout_gravity="center_vertical">
+
+                <View
+                    android:id="@+id/customScoresSliderCard"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_margin="5dp"
+                    android:background="@drawable/custom_slider_card"
+                    android:translationX="0dp" />
+            </FrameLayout>
+
+        </LinearLayout>
+
+        <!-- Social Notifications -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Social Notifications"
+            android:textSize="18sp"
+            android:fontFamily="@font/exo2_bold"
+            android:paddingTop="16dp" />
+
+        <!-- Chat Notifications -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingVertical="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Chat Messages"
+                android:textSize="16sp" />
+
+            <FrameLayout
+                android:id="@+id/customChatSwitch"
+                android:layout_width="56dp"
+                android:layout_height="32dp"
+                android:background="@drawable/custom_switch_background"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:layout_gravity="center_vertical">
+
+                <View
+                    android:id="@+id/customChatSliderCard"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_margin="5dp"
+                    android:background="@drawable/custom_slider_card"
+                    android:translationX="0dp" />
+            </FrameLayout>
+
+        </LinearLayout>
+
+        <!-- Comments Notifications -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingVertical="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Comments"
+                android:textSize="16sp" />
+
+            <FrameLayout
+                android:id="@+id/customCommentsSwitch"
+                android:layout_width="56dp"
+                android:layout_height="32dp"
+                android:background="@drawable/custom_switch_background"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:layout_gravity="center_vertical">
+
+                <View
+                    android:id="@+id/customCommentsSliderCard"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_margin="5dp"
+                    android:background="@drawable/custom_slider_card"
+                    android:translationX="0dp" />
+            </FrameLayout>
+
+        </LinearLayout>
+
+        <!-- Likes Notifications -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingVertical="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Likes"
+                android:textSize="16sp" />
+
+            <FrameLayout
+                android:id="@+id/customLikesSwitch"
+                android:layout_width="56dp"
+                android:layout_height="32dp"
+                android:background="@drawable/custom_switch_background"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:layout_gravity="center_vertical">
+
+                <View
+                    android:id="@+id/customLikesSliderCard"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_margin="5dp"
+                    android:background="@drawable/custom_slider_card"
+                    android:translationX="0dp" />
+            </FrameLayout>
+
+        </LinearLayout>
+
+
+
+        <!-- Invite Button -->
+        <Button
+            android:id="@+id/button_invite"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Invite"
+            android:backgroundTint="@android:color/black"
+            android:textColor="@android:color/white"
+            android:layout_marginTop="12dp"
+            android:visibility="gone"/>
+
+        <!-- Spacer -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <!-- Buttons (Stacked) -->
+        <Button
+            android:id="@+id/button_delete_tournament"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Delete Tournament"
+            android:backgroundTint="@android:color/holo_red_dark"
+            android:textColor="@android:color/white"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/button_leave_tournament"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Leave Tournament"
+            android:backgroundTint="@android:color/holo_red_light"
+            android:textColor="@android:color/white"
+            android:visibility="gone" />
 
     </LinearLayout>
-
-    <!-- Game Notifications -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Game Notifications"
-        android:textSize="18sp"
-        android:fontFamily="@font/exo2_bold"
-        android:paddingTop="8dp" />
-
-    <!-- Scores Notifications -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingVertical="8dp">
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Scores Update"
-            android:textSize="16sp" />
-
-        <FrameLayout
-            android:id="@+id/customScoresSwitch"
-            android:layout_width="56dp"
-            android:layout_height="32dp"
-            android:background="@drawable/custom_switch_background"
-            android:clipChildren="false"
-            android:clipToPadding="false"
-            android:layout_gravity="center_vertical">
-
-            <View
-                android:id="@+id/customScoresSliderCard"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:layout_margin="5dp"
-                android:background="@drawable/custom_slider_card"
-                android:translationX="0dp" />
-        </FrameLayout>
-
-    </LinearLayout>
-
-    <!-- Social Notifications -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Social Notifications"
-        android:textSize="18sp"
-        android:fontFamily="@font/exo2_bold"
-        android:paddingTop="16dp" />
-
-    <!-- Chat Notifications -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingVertical="8dp">
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Chat Messages"
-            android:textSize="16sp" />
-
-        <FrameLayout
-            android:id="@+id/customChatSwitch"
-            android:layout_width="56dp"
-            android:layout_height="32dp"
-            android:background="@drawable/custom_switch_background"
-            android:clipChildren="false"
-            android:clipToPadding="false"
-            android:layout_gravity="center_vertical">
-
-            <View
-                android:id="@+id/customChatSliderCard"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:layout_margin="5dp"
-                android:background="@drawable/custom_slider_card"
-                android:translationX="0dp" />
-        </FrameLayout>
-
-    </LinearLayout>
-
-    <!-- Comments Notifications -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingVertical="8dp">
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Comments"
-            android:textSize="16sp" />
-
-        <FrameLayout
-            android:id="@+id/customCommentsSwitch"
-            android:layout_width="56dp"
-            android:layout_height="32dp"
-            android:background="@drawable/custom_switch_background"
-            android:clipChildren="false"
-            android:clipToPadding="false"
-            android:layout_gravity="center_vertical">
-
-            <View
-                android:id="@+id/customCommentsSliderCard"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:layout_margin="5dp"
-                android:background="@drawable/custom_slider_card"
-                android:translationX="0dp" />
-        </FrameLayout>
-
-    </LinearLayout>
-
-    <!-- Likes Notifications -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingVertical="8dp">
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Likes"
-            android:textSize="16sp" />
-
-        <FrameLayout
-            android:id="@+id/customLikesSwitch"
-            android:layout_width="56dp"
-            android:layout_height="32dp"
-            android:background="@drawable/custom_switch_background"
-            android:clipChildren="false"
-            android:clipToPadding="false"
-            android:layout_gravity="center_vertical">
-
-            <View
-                android:id="@+id/customLikesSliderCard"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:layout_margin="5dp"
-                android:background="@drawable/custom_slider_card"
-                android:translationX="0dp" />
-        </FrameLayout>
-
-    </LinearLayout>
-
-
-
-    <!-- Invite Button -->
-    <Button
-        android:id="@+id/button_invite"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Invite"
-        android:backgroundTint="@android:color/black"
-        android:textColor="@android:color/white"
-        android:layout_marginTop="24dp"
-        android:visibility="gone"/>
-
-    <!-- Spacer -->
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
-
-    <!-- Buttons (Stacked) -->
-    <Button
-        android:id="@+id/button_delete_tournament"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Delete Tournament"
-        android:backgroundTint="@android:color/holo_red_dark"
-        android:textColor="@android:color/white"
-        android:visibility="gone" />
-
-    <Button
-        android:id="@+id/button_leave_tournament"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Leave Tournament"
-        android:backgroundTint="@android:color/holo_red_light"
-        android:textColor="@android:color/white"
-        android:visibility="gone" />
-
-</LinearLayout>
+</ScrollView>

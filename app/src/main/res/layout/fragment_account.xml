@@ -73,10 +73,12 @@
 
         <Button
             android:id="@+id/delete_account"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Delete Account"
-            android:textColor="@android:color/holo_red_dark"
+            android:backgroundTint="@android:color/holo_red_light"
+            android:textColor="@android:color/white"
+            android:fontFamily="@font/exo2_black"
             android:layout_marginBottom="16dp" />
 
         <!-- Spacer to push Save Button to the bottom -->
@@ -90,7 +92,7 @@
             android:id="@+id/save_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Save"
+            android:text="Save Changes"
             android:fontFamily="@font/exo2_bold"
             android:layout_gravity="center_horizontal"
             android:paddingHorizontal="24dp"
