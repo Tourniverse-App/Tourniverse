@@ -16,6 +16,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.FirebaseFirestore
 import android.Manifest
+import android.text.method.PasswordTransformationMethod
+import android.view.MotionEvent
+import androidx.core.content.ContextCompat
 
 class RegisterActivity : AppCompatActivity() {
 
@@ -25,6 +28,9 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var passwordField: EditText
     private lateinit var registerButton: Button
     private lateinit var loginLink: TextView
+    private var isPasswordVisible = false
+
+    private val TAG = "RegisterActivity"
 
     lateinit var auth: FirebaseAuth
     private val databaseReference = FirebaseDatabase.getInstance().reference
@@ -60,6 +66,19 @@ class RegisterActivity : AppCompatActivity() {
 
         auth = FirebaseAuth.getInstance()
         progressDialog = createProgressDialog()
+
+        // Add toggle visibility logic for password
+        passwordField.setOnTouchListener { _, event ->
+            if (event.action == MotionEvent.ACTION_UP) {
+                // Check if the click occurred within the drawable bounds
+                val drawableEnd = passwordField.compoundDrawablesRelative[2] // End drawable
+                if (drawableEnd != null && event.rawX >= (passwordField.right - passwordField.compoundPaddingEnd)) {
+                    togglePasswordVisibility()
+                    return@setOnTouchListener true
+                }
+            }
+            false
+        }
 
         // Handle register button click
         registerButton.setOnClickListener {
@@ -146,6 +165,29 @@ class RegisterActivity : AppCompatActivity() {
             }
     }
 
+    /**
+     * Toggles the visibility of the password field.
+     */
+    private fun togglePasswordVisibility() {
+        if (isPasswordVisible) {
+            // Hide the password
+            passwordField.transformationMethod = PasswordTransformationMethod.getInstance()
+            passwordField.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                null, null, ContextCompat.getDrawable(this, R.drawable.ic_eye_closed), null
+            )
+        } else {
+            // Show the password
+            passwordField.transformationMethod = null
+            passwordField.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                null, null, ContextCompat.getDrawable(this, R.drawable.ic_eye_open), null
+            )
+        }
+        // Toggle the state
+        isPasswordVisible = !isPasswordVisible
+        // Move the cursor to the end of the text
+        passwordField.setSelection(passwordField.text.length)
+    }
+
     private fun createProgressDialog(): AlertDialog {
         val builder = AlertDialog.Builder(this)
         builder.setView(layoutInflater.inflate(R.layout.dialog_loading, null)) // Use your existing layout
@@ -168,6 +210,54 @@ class RegisterActivity : AppCompatActivity() {
         requestPermissionsLauncher.launch(permissions.toTypedArray())
     }
 
+    companion object {
+        fun setupNewUser(
+            userId: String,
+            username: String,
+            email: String,
+            db: FirebaseFirestore,
+            onSuccess: () -> Unit,
+            onFailure: (String) -> Unit
+        ) {
+            // Initialize user data for Firestore "users" collection
+            val userMap = hashMapOf(
+                "username" to username,
+                "bio" to "This is $username's bio!",
+                "email" to email,
+                "profilePhoto" to ""
+            )
+
+            val userRef = db.collection("users").document(userId)
+
+            // Use set() to create or overwrite the user document
+            userRef.set(userMap)
+                .addOnSuccessListener {
+                    Log.d("RegisterActivity", "User document created in Firestore.")
+                    // Initialize notifications document
+                    val notificationsData = hashMapOf(
+                        "Push" to false,
+                        "Scores" to false,
+                        "ChatMessages" to false,
+                        "Comments" to false,
+                        "Likes" to false
+                    )
+                    userRef.collection("notifications").document("settings").set(notificationsData)
+                        .addOnSuccessListener {
+                            Log.d("RegisterActivity", "Notifications initialized in Firestore.")
+                            onSuccess()
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("RegisterActivity", "Failed to initialize notifications: ${e.message}")
+                            onFailure("Failed to initialize notifications: ${e.message}")
+                        }
+                }
+                .addOnFailureListener { e ->
+                    Log.e("RegisterActivity", "Failed to save user data: ${e.message}")
+                    onFailure("Failed to save user data: ${e.message}")
+                }
+        }
+    }
+
     private fun showPermissionDeniedToast() {
         Toast.makeText(
             this,
@@ -180,7 +270,4 @@ class RegisterActivity : AppCompatActivity() {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
-    companion object {
-        private const val TAG = "RegisterActivity"
-    }
 }

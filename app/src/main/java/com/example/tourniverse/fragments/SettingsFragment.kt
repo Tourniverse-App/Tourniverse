@@ -59,19 +59,24 @@ class SettingsFragment : Fragment() {
         signOutBtn.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    // Expand the button to reveal text
-                    signOutBtn.animate().scaleX(2.8f).setDuration(300).start()
+                    // Expand the button smoothly to show the text
+                    signOutBtn.animate().scaleX(1.5f).scaleY(1.1f).setDuration(300).start()
                     signOutText.visibility = View.VISIBLE
                 }
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    // Shrink the button back to circle and hide text
-                    signOutBtn.animate().scaleX(1f).setDuration(300).start()
+                MotionEvent.ACTION_UP -> {
+                    // Shrink the button back to its original size and call performClick()
+                    signOutBtn.animate().scaleX(1f).scaleY(1f).setDuration(300).start()
+                    signOutText.visibility = View.GONE
+                    signOutBtn.performClick() // Important for accessibility
+                }
+                MotionEvent.ACTION_CANCEL -> {
+                    // Handle cancel case
+                    signOutBtn.animate().scaleX(1f).scaleY(1f).setDuration(300).start()
                     signOutText.visibility = View.GONE
                 }
             }
-            false
+            true
         }
-
         return view
     }
 }

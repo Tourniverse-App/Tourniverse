@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -33,11 +34,15 @@ class LoginActivity : AppCompatActivity() {
         val emailField = findViewById<EditText>(R.id.etEmail)
         val passwordField = findViewById<EditText>(R.id.etPassword)
         val loginButton = findViewById<Button>(R.id.btnLogin)
-        val googleSignInButton = findViewById<Button>(R.id.btnGoogleSignIn)
+        val googleSignInButton = findViewById<LinearLayout>(R.id.btnGoogleSignIn)
         val forgotPassword = findViewById<TextView>(R.id.tvForgotPassword)
         val registerLink = findViewById<TextView>(R.id.tvRegister)
 
         configureGoogleSignIn()
+
+        googleSignInButton.setOnClickListener {
+            signIn()
+        }
 
         loginButton.setOnClickListener {
             val email = emailField.text.toString()
@@ -82,9 +87,6 @@ class LoginActivity : AppCompatActivity() {
             }
         }
 
-        googleSignInButton.setOnClickListener {
-            signIn()
-        }
     }
 
     override fun onStart() {
@@ -109,12 +111,13 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        Log.d(TAG, "onActivityResult called with requestCode: $requestCode")
 
         if (requestCode == RC_SIGN_IN) {
             val task = GoogleSignIn.getSignedInAccountFromIntent(data)
             try {
                 val account = task.getResult(ApiException::class.java)!!
-                Log.d(TAG, "firebaseAuthWithGoogle:" + account.id)
+                Log.d(TAG, "firebaseAuthWithGoogle: ${account.id}")
                 firebaseAuthWithGoogle(account.idToken!!)
             } catch (e: ApiException) {
                 Log.w(TAG, "Google sign in failed", e)
@@ -132,27 +135,24 @@ class LoginActivity : AppCompatActivity() {
 
                     user?.let {
                         val userRef = FirebaseFirestore.getInstance().collection("users").document(it.uid)
-
+                        Log.d(TAG, "User authenticated: ${user.uid}")
                         userRef.get().addOnCompleteListener { snapshotTask ->
                             if (snapshotTask.isSuccessful && !snapshotTask.result.exists()) {
-                                // User does not exist, create new user document
-                                val userMap = hashMapOf(
-                                    "username" to (it.displayName ?: "Unknown"),
-                                    "bio" to "",
-                                    "image" to it.photoUrl?.toString(),
-                                    "ownedTournaments" to mutableListOf<String>(),
-                                    "viewedTournaments" to mutableListOf<String>()
-                                )
-
-                                userRef.set(userMap)
-                                    .addOnSuccessListener {
-                                        Log.d(TAG, "New Google user added to Firestore.")
+                                // User does not exist, call setupNewUser
+                                RegisterActivity.setupNewUser(
+                                    userId = it.uid,
+                                    username = it.displayName ?: "Unknown",
+                                    email = it.email ?: "",
+                                    db = FirebaseFirestore.getInstance(),
+                                    onSuccess = {
+                                        Log.d(TAG, "Google user setup completed.")
                                         updateUI(user)
+                                    },
+                                    onFailure = { error ->
+                                        Log.e(TAG, error)
+                                        Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
                                     }
-                                    .addOnFailureListener { e ->
-                                        Log.e(TAG, "Failed to add Google user: ${e.message}")
-                                        Toast.makeText(this, "Failed to save user data", Toast.LENGTH_SHORT).show()
-                                    }
+                                )
                             } else {
                                 // User already exists, proceed
                                 updateUI(user)
@@ -166,11 +166,13 @@ class LoginActivity : AppCompatActivity() {
             }
     }
 
-
     private fun updateUI(user: FirebaseUser?) {
         if (user != null) {
+            Log.d(TAG, "Navigating to MainActivity for user: ${user.uid}")
             startActivity(Intent(this, MainActivity::class.java))
             finish()
+        } else {
+            Log.d(TAG, "User is null, staying on LoginActivity.")
         }
     }
 

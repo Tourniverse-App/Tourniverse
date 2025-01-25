@@ -26,7 +26,7 @@
     <string name="what_s_on_your_mind">What\'s on your mind?</string>
     <string name="upcoming_matches">Upcoming Matches</string>
     <string name="team_statistics">Team Statistics</string>
-    <string name="sign_in_with_google">Sign in with Google</string>
+    <string name="sign_in_with_google">SIGN IN WITH GOOGLE</string>
     <string name="forgot_password">Forgot password?</string>
     <string name="don_t_have_an_account_sign_up">Don\'t have an account? Sign up</string>
     <string name="email">Email</string>
@@ -34,7 +34,7 @@
     <string name="tourniverse">Tourniverse</string>
     <string name="log_in">Log in</string>
     <string name="or">OR</string>
-    <string name="default_web_client_id">YOUR_WEB_CLIENT_ID</string>
+    <string name="default_web_client_id">397923447169-rrrbjde1a9tmdpu7e2jme9jdq5v1s91d.apps.googleusercontent.com</string>
     <string name="leave_tournament_title">Leave Tournament</string>
     <string name="leave_tournament_message">Are you sure you want to leave this tournament?</string>
     <string name="leave">Leave</string>
