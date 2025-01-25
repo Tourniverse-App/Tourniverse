@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "397923447169",
+    "firebase_url": "https://tourniverse-d3668-default-rtdb.firebaseio.com",
     "project_id": "tourniverse-d3668",
     "storage_bucket": "tourniverse-d3668.firebasestorage.app"
   },
@@ -12,7 +13,12 @@
           "package_name": "com.example.tourniverse"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "397923447169-rrrbjde1a9tmdpu7e2jme9jdq5v1s91d.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBUeAISfMWS8RFc7Yot42tuO7pBMHRloMw"
@@ -20,7 +26,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "397923447169-rrrbjde1a9tmdpu7e2jme9jdq5v1s91d.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
