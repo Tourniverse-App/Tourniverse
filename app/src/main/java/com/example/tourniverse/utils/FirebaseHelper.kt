@@ -247,8 +247,7 @@ object FirebaseHelper {
             "Push" to false,
             "ChatMessages" to false,
             "Comments" to false,
-            "Likes" to false,
-            "Dnd" to false
+            "Likes" to false
         )
 
         userRef.collection("tournaments").document(tournamentId).set(tournamentData)

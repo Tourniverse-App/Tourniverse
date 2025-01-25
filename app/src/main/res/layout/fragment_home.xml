@@ -57,12 +57,17 @@
         android:id="@+id/buttonJoinTournament"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="0dp"
         android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="16dp"
         android:text="Join\nTournament"
         android:textSize="18sp"
-        android:backgroundTint="@color/black"
-        android:padding="8dp"
+        android:textStyle="bold"
+        android:paddingStart="40dp"
+        android:paddingEnd="40dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="17dp"
+        android:background="@drawable/custom_button"
         android:textColor="@android:color/white"
-        android:gravity="center" />
+        android:elevation="8dp"
+        android:stateListAnimator="@null" />
 </FrameLayout>

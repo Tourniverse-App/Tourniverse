@@ -96,71 +96,89 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun configureGoogleSignIn() {
+        Log.d(TAG, "Configuring Google Sign-In")
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(getString(R.string.default_web_client_id))
             .requestEmail()
             .build()
 
         googleSignInClient = GoogleSignIn.getClient(this, gso)
+        Log.d(TAG, "GoogleSignInClient initialized")
     }
 
     private fun signIn() {
+        Log.d(TAG, "Starting Google sign-in process")
         val signInIntent = googleSignInClient.signInIntent
         startActivityForResult(signInIntent, RC_SIGN_IN)
+        Log.d(TAG, "Sign-in intent launched")
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        Log.d(TAG, "onActivityResult called with requestCode: $requestCode")
+        Log.d(TAG, "onActivityResult called with requestCode: $requestCode, resultCode: $resultCode")
 
         if (requestCode == RC_SIGN_IN) {
+            Log.d(TAG, "Processing Google Sign-In result")
             val task = GoogleSignIn.getSignedInAccountFromIntent(data)
             try {
                 val account = task.getResult(ApiException::class.java)!!
-                Log.d(TAG, "firebaseAuthWithGoogle: ${account.id}")
+                Log.d(TAG, "Google Sign-In successful, account ID: ${account.id}")
                 firebaseAuthWithGoogle(account.idToken!!)
             } catch (e: ApiException) {
-                Log.w(TAG, "Google sign in failed", e)
+                Log.w(TAG, "Google Sign-In failed, error code: ${e.statusCode}", e)
             }
         }
     }
 
     private fun firebaseAuthWithGoogle(idToken: String) {
+        Log.d(TAG, "Authenticating with Firebase using Google token: $idToken")
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         auth.signInWithCredential(credential)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
-                    Log.d(TAG, "signInWithCredential:success")
+                    Log.d(TAG, "Firebase authentication with Google succeeded")
                     val user = auth.currentUser
 
                     user?.let {
-                        val userRef = FirebaseFirestore.getInstance().collection("users").document(it.uid)
-                        Log.d(TAG, "User authenticated: ${user.uid}")
+                        val email = it.email ?: "" // Extract email from the FirebaseUser
+                        val username = email.substringBefore("@") // Extract part before "@"
+
+                        Log.d(
+                            TAG,
+                            "Authenticated user UID: ${it.uid}, email: $email, username: $username"
+                        )
+
+                        val userRef =
+                            FirebaseFirestore.getInstance().collection("users").document(it.uid)
+
                         userRef.get().addOnCompleteListener { snapshotTask ->
                             if (snapshotTask.isSuccessful && !snapshotTask.result.exists()) {
-                                // User does not exist, call setupNewUser
+                                Log.d(TAG, "New Google user detected, setting up...")
                                 RegisterActivity.setupNewUser(
                                     userId = it.uid,
-                                    username = it.displayName ?: "Unknown",
-                                    email = it.email ?: "",
+                                    username = username,
+                                    email = email,
                                     db = FirebaseFirestore.getInstance(),
                                     onSuccess = {
-                                        Log.d(TAG, "Google user setup completed.")
+                                        Log.d(TAG, "Google user setup completed successfully")
                                         updateUI(user)
                                     },
                                     onFailure = { error ->
-                                        Log.e(TAG, error)
+                                        Log.e(TAG, "Failed to setup new user: $error")
                                         Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
                                     }
                                 )
                             } else {
-                                // User already exists, proceed
+                                Log.d(
+                                    TAG,
+                                    "User already exists in Firestore, proceeding to MainActivity"
+                                )
                                 updateUI(user)
                             }
                         }
                     }
                 } else {
-                    Log.w(TAG, "signInWithCredential:failure", task.exception)
+                    Log.w(TAG, "Firebase authentication failed", task.exception)
                     updateUI(null)
                 }
             }

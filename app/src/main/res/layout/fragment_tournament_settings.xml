@@ -32,10 +32,24 @@
             android:text="Push Notifications"
             android:textSize="16sp" />
 
-        <Switch
-            android:id="@+id/switchPushNotifications"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+        <FrameLayout
+            android:id="@+id/customPushSwitch"
+            android:layout_width="56dp"
+            android:layout_height="32dp"
+            android:background="@drawable/custom_switch_background"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:layout_gravity="center_vertical">
+
+            <View
+                android:id="@+id/customPushSliderCard"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_margin="5dp"
+                android:background="@drawable/custom_slider_card"
+                android:translationX="0dp" />
+        </FrameLayout>
+
     </LinearLayout>
 
     <!-- Game Notifications -->
@@ -62,10 +76,24 @@
             android:text="Scores Update"
             android:textSize="16sp" />
 
-        <Switch
-            android:id="@+id/switchScoresNotifications"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+        <FrameLayout
+            android:id="@+id/customScoresSwitch"
+            android:layout_width="56dp"
+            android:layout_height="32dp"
+            android:background="@drawable/custom_switch_background"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:layout_gravity="center_vertical">
+
+            <View
+                android:id="@+id/customScoresSliderCard"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_margin="5dp"
+                android:background="@drawable/custom_slider_card"
+                android:translationX="0dp" />
+        </FrameLayout>
+
     </LinearLayout>
 
     <!-- Social Notifications -->
@@ -92,10 +120,24 @@
             android:text="Chat Messages"
             android:textSize="16sp" />
 
-        <Switch
-            android:id="@+id/switchChatNotifications"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+        <FrameLayout
+            android:id="@+id/customChatSwitch"
+            android:layout_width="56dp"
+            android:layout_height="32dp"
+            android:background="@drawable/custom_switch_background"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:layout_gravity="center_vertical">
+
+            <View
+                android:id="@+id/customChatSliderCard"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_margin="5dp"
+                android:background="@drawable/custom_slider_card"
+                android:translationX="0dp" />
+        </FrameLayout>
+
     </LinearLayout>
 
     <!-- Comments Notifications -->
@@ -113,10 +155,24 @@
             android:text="Comments"
             android:textSize="16sp" />
 
-        <Switch
-            android:id="@+id/switchCommentsNotifications"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+        <FrameLayout
+            android:id="@+id/customCommentsSwitch"
+            android:layout_width="56dp"
+            android:layout_height="32dp"
+            android:background="@drawable/custom_switch_background"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:layout_gravity="center_vertical">
+
+            <View
+                android:id="@+id/customCommentsSliderCard"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_margin="5dp"
+                android:background="@drawable/custom_slider_card"
+                android:translationX="0dp" />
+        </FrameLayout>
+
     </LinearLayout>
 
     <!-- Likes Notifications -->
@@ -134,10 +190,24 @@
             android:text="Likes"
             android:textSize="16sp" />
 
-        <Switch
-            android:id="@+id/switchLikesNotifications"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+        <FrameLayout
+            android:id="@+id/customLikesSwitch"
+            android:layout_width="56dp"
+            android:layout_height="32dp"
+            android:background="@drawable/custom_switch_background"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:layout_gravity="center_vertical">
+
+            <View
+                android:id="@+id/customLikesSliderCard"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_margin="5dp"
+                android:background="@drawable/custom_slider_card"
+                android:translationX="0dp" />
+        </FrameLayout>
+
     </LinearLayout>
 
 

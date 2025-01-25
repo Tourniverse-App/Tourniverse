@@ -122,15 +122,26 @@ class NotificationsFragment : Fragment() {
         preferenceKey: String,
         stateUpdater: (Boolean) -> Unit
     ) {
-        var isChecked = false
+        // Sync initial state with the slider's current position
+        var isChecked = sliderCard.translationX != 0f // Assume 0f means unchecked
+
+        // Apply the initial state to the slider visuals
+        applySwitchState(sliderCard, switch, isChecked)
 
         switch.setOnClickListener {
             try {
+                // Toggle state
                 isChecked = !isChecked
-                stateUpdater(isChecked)
+
+                // Start the animation
                 animateSlider(sliderCard, switch, isChecked)
-                updatePreference(preferenceKey, isChecked)
-                Log.d("NotificationsFragment", "$preferenceKey toggled to: $isChecked")
+
+                // Delay state update until animation completes
+                switch.postDelayed({
+                    stateUpdater(isChecked)
+                    updatePreference(preferenceKey, isChecked) // Use updatePreference here
+                    Log.d("NotificationsFragment", "$preferenceKey toggled to: $isChecked")
+                }, 400) // Match animation duration
             } catch (e: Exception) {
                 Log.e("NotificationsFragment", "Error toggling $preferenceKey: ${e.message}")
             }

@@ -1,7 +1,10 @@
 package com.example.tourniverse.fragments
 
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
 import android.app.AlertDialog
 import android.content.Intent
+import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -31,11 +34,6 @@ import com.example.tourniverse.utils.FirebaseHelper
 class TournamentSettingsFragment : Fragment() {
 
     private lateinit var buttonMembers: Button
-    private lateinit var switchPushNotifications: Switch
-    private lateinit var switchScoresNotifications: Switch
-    private lateinit var switchChatNotifications: Switch
-    private lateinit var switchCommentsNotifications: Switch
-    private lateinit var switchLikesNotifications: Switch
     private lateinit var buttonLeaveTournament: Button
     private lateinit var buttonInvite: Button
     private lateinit var buttonDeleteTournament: Button
@@ -63,12 +61,36 @@ class TournamentSettingsFragment : Fragment() {
             return
         }
 
-        // Initialize views
-        switchPushNotifications = view.findViewById(R.id.switchPushNotifications)
-        switchScoresNotifications = view.findViewById(R.id.switchScoresNotifications)
-        switchChatNotifications = view.findViewById(R.id.switchChatNotifications)
-        switchCommentsNotifications = view.findViewById(R.id.switchCommentsNotifications)
-        switchLikesNotifications = view.findViewById(R.id.switchLikesNotifications)
+        // Initialize custom switch views
+        val customPushSwitch = view.findViewById<View>(R.id.customPushSwitch)
+        val pushSliderCard = view.findViewById<View>(R.id.customPushSliderCard)
+
+        val customScoresSwitch = view.findViewById<View>(R.id.customScoresSwitch)
+        val scoresSliderCard = view.findViewById<View>(R.id.customScoresSliderCard)
+
+        val customChatSwitch = view.findViewById<View>(R.id.customChatSwitch)
+        val chatSliderCard = view.findViewById<View>(R.id.customChatSliderCard)
+
+        val customCommentsSwitch = view.findViewById<View>(R.id.customCommentsSwitch)
+        val commentsSliderCard = view.findViewById<View>(R.id.customCommentsSliderCard)
+
+        val customLikesSwitch = view.findViewById<View>(R.id.customLikesSwitch)
+        val likesSliderCard = view.findViewById<View>(R.id.customLikesSliderCard)
+
+        // Pass these variables to the loadTournamentNotificationSettings method
+        loadTournamentNotificationSettings(
+            pushSliderCard,
+            customPushSwitch,
+            scoresSliderCard,
+            customScoresSwitch,
+            chatSliderCard,
+            customChatSwitch,
+            commentsSliderCard,
+            customCommentsSwitch,
+            likesSliderCard,
+            customLikesSwitch
+        )
+
         buttonLeaveTournament = view.findViewById(R.id.button_leave_tournament)
         buttonInvite = view.findViewById(R.id.button_invite)
         buttonDeleteTournament = view.findViewById(R.id.button_delete_tournament)
@@ -77,9 +99,6 @@ class TournamentSettingsFragment : Fragment() {
         buttonDeleteTournament.visibility = View.GONE
         buttonLeaveTournament.visibility = View.GONE
         buttonInvite.visibility = View.GONE
-
-        // Load user settings
-        loadTournamentNotificationSettings(userId, tournamentId)
 
         buttonMembers = view.findViewById(R.id.button_members)
         db.collection("tournaments").document(tournamentId).get()
@@ -92,64 +111,25 @@ class TournamentSettingsFragment : Fragment() {
                 }
             }
 
-        // Load settings
-        loadTournamentNotificationSettings(userId, tournamentId)
-
-        // Set listeners for notification switches
-        switchPushNotifications.setOnCheckedChangeListener { _, isChecked ->
-            updateNotificationSetting("Push", isChecked)
-            showToast("Push Notifications ${if (isChecked) "Enabled" else "Disabled"}")
+        // Set up switch listeners with animations
+        setupSwitchListener(customPushSwitch, pushSliderCard, "Push") { isChecked ->
+            updatePreference("Push", isChecked)
         }
 
-        // Set listeners for notification switches
-        switchPushNotifications.setOnCheckedChangeListener { _, isChecked ->
-            if (switchPushNotifications.isEnabled) {
-                updateNotificationSetting("push", isChecked)
-                showToast("Push Notifications ${if (isChecked) "Enabled" else "Disabled"}")
-            } else {
-                showToast("Push Notifications are disabled in the global settings.")
-                switchPushNotifications.isChecked = false
-            }
+        setupSwitchListener(customScoresSwitch, scoresSliderCard, "Scores") { isChecked ->
+            updatePreference("Scores", isChecked)
         }
 
-        switchScoresNotifications.setOnCheckedChangeListener { _, isChecked ->
-            if (switchScoresNotifications.isEnabled) {
-                updateNotificationSetting("Scores", isChecked)
-                showToast("Scores Notifications ${if (isChecked) "Enabled" else "Disabled"}")
-            } else {
-                showToast("Scores Notifications are disabled in the global settings.")
-                switchScoresNotifications.isChecked = false
-            }
+        setupSwitchListener(customChatSwitch, chatSliderCard, "ChatMessages") { isChecked ->
+            updatePreference("ChatMessages", isChecked)
         }
 
-        switchChatNotifications.setOnCheckedChangeListener { _, isChecked ->
-            if (switchChatNotifications.isEnabled) {
-                updateNotificationSetting("ChatMessages", isChecked)
-                showToast("Chat Notifications ${if (isChecked) "Enabled" else "Disabled"}")
-            } else {
-                showToast("Chat Notifications are disabled in the global settings.")
-                switchChatNotifications.isChecked = false
-            }
+        setupSwitchListener(customCommentsSwitch, commentsSliderCard, "Comments") { isChecked ->
+            updatePreference("Comments", isChecked)
         }
 
-        switchCommentsNotifications.setOnCheckedChangeListener { _, isChecked ->
-            if (switchCommentsNotifications.isEnabled) {
-                updateNotificationSetting("Comments", isChecked)
-                showToast("Comments Notifications ${if (isChecked) "Enabled" else "Disabled"}")
-            } else {
-                showToast("Comments Notifications are disabled in the global settings.")
-                switchCommentsNotifications.isChecked = false
-            }
-        }
-
-        switchLikesNotifications.setOnCheckedChangeListener { _, isChecked ->
-            if (switchLikesNotifications.isEnabled) {
-                updateNotificationSetting("Likes", isChecked)
-                showToast("Likes Notifications ${if (isChecked) "Enabled" else "Disabled"}")
-            } else {
-                showToast("Likes Notifications are disabled in the global settings.")
-                switchLikesNotifications.isChecked = false
-            }
+        setupSwitchListener(customLikesSwitch, likesSliderCard, "Likes") { isChecked ->
+            updatePreference("Likes", isChecked)
         }
 
         // Leave Tournament button with confirmation dialog
@@ -268,6 +248,53 @@ class TournamentSettingsFragment : Fragment() {
             }
     }
 
+    /**
+     * Sets up a switch listener with animations and state updates.
+     */
+    private fun setupSwitchListener(
+        switch: View,
+        sliderCard: View,
+        preferenceKey: String,
+        stateUpdater: (Boolean) -> Unit
+    ) {
+        var isChecked = false
+
+        switch.setOnClickListener {
+            try {
+                isChecked = !isChecked
+
+                // Animate first
+                animateSlider(sliderCard, switch, isChecked)
+
+                // Delay state change to synchronize with animation
+                switch.postDelayed({
+                    stateUpdater(isChecked)
+                    updateTournamentPreference(preferenceKey, isChecked) // Update preference after delay
+                    Log.d("TournamentSettings", "$preferenceKey toggled to: $isChecked")
+                }, 400) // Match the animation duration
+            } catch (e: Exception) {
+                Log.e("TournamentSettings", "Error toggling $preferenceKey: ${e.message}")
+            }
+        }
+    }
+
+
+    /**
+     * Update a specific tournament notification setting in Firestore.
+     */
+    private fun updateTournamentPreference(field: String, value: Boolean) {
+        db.collection("users").document(userId)
+            .collection("tournaments").document(tournamentId)
+            .update(field, value)
+            .addOnSuccessListener {
+                Log.d("TournamentSettings", "Preference updated: $field = $value")
+            }
+            .addOnFailureListener { e ->
+                Log.e("TournamentSettings", "Failed to update $field: ${e.message}")
+                showToast("Failed to update $field setting.")
+            }
+    }
+
     private fun showConfirmationDialog(action: String, callback: () -> Unit) {
         AlertDialog.Builder(requireContext())
             .setTitle("$action Confirmation")
@@ -366,6 +393,20 @@ class TournamentSettingsFragment : Fragment() {
             }
     }
 
+    private fun updatePreference(key: String, value: Boolean, isGlobal: Boolean = false) {
+        val collection = if (isGlobal) "notifications" else "tournaments"
+        db.collection("users").document(userId)
+            .collection(collection).document(tournamentId)
+            .update(key, value)
+            .addOnSuccessListener {
+                Log.d("TournamentSettings", "Preference updated: $key = $value")
+            }
+            .addOnFailureListener { e ->
+                Log.e("TournamentSettings", "Failed to update $key: ${e.message}")
+                showToast("Failed to update $key setting.")
+            }
+    }
+
     fun refreshMembersPopup() {
         showMembersPopup() // Reopen the popup with updated members list
     }
@@ -384,40 +425,102 @@ class TournamentSettingsFragment : Fragment() {
     /**
      * Load tournament-specific notification settings, respecting global restrictions.
      */
-    private fun loadTournamentNotificationSettings(userId: String, tournamentId: String) {
-        loadGlobalSettings { globalSettings ->
-            db.collection("users").document(userId)
-                .collection("tournaments").document(tournamentId).get()
-                .addOnSuccessListener { document ->
-                    if (document.exists()) {
-                        switchPushNotifications.isChecked =
-                            (globalSettings["Push"] == true) && (document.getBoolean("Push") ?: true)
-                        switchPushNotifications.isEnabled = globalSettings["Push"] == true
+    private fun loadTournamentNotificationSettings(
+        pushSliderCard: View,
+        customPushSwitch: View,
+        scoresSliderCard: View,
+        customScoresSwitch: View,
+        chatSliderCard: View,
+        customChatSwitch: View,
+        commentsSliderCard: View,
+        customCommentsSwitch: View,
+        likesSliderCard: View,
+        customLikesSwitch: View
+    ) {
+        db.collection("users").document(userId)
+            .collection("tournaments").document(tournamentId).get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val isPushEnabled = document.getBoolean("Push") ?: false
+                    val isScoresEnabled = document.getBoolean("Scores") ?: false
+                    val isChatEnabled = document.getBoolean("ChatMessages") ?: false
+                    val isCommentsEnabled = document.getBoolean("Comments") ?: false
+                    val isLikesEnabled = document.getBoolean("Likes") ?: false
 
-                        switchScoresNotifications.isChecked =
-                            (globalSettings["Scores"] == true) && (document.getBoolean("Scores") ?: true)
-                        switchScoresNotifications.isEnabled = globalSettings["Scores"] == true
-
-                        switchChatNotifications.isChecked =
-                            (globalSettings["ChatMessages"] == true) && (document.getBoolean("ChatMessages") ?: false)
-                        switchChatNotifications.isEnabled = globalSettings["ChatMessages"] == true
-
-                        switchCommentsNotifications.isChecked =
-                            (globalSettings["Comments"] == true) && (document.getBoolean("Comments") ?: false)
-                        switchCommentsNotifications.isEnabled = globalSettings["Comments"] == true
-
-                        switchLikesNotifications.isChecked =
-                            (globalSettings["Likes"] == true) && (document.getBoolean("Likes") ?: false)
-                        switchLikesNotifications.isEnabled = globalSettings["Likes"] == true
-                    } else {
-                        Log.e("TournamentSettings", "No notification settings document found")
-                        Toast.makeText(context, "Settings not available for this tournament", Toast.LENGTH_SHORT).show()
-                    }
+                    // Apply switch states
+                    applySwitchState(pushSliderCard, customPushSwitch, isPushEnabled)
+                    applySwitchState(scoresSliderCard, customScoresSwitch, isScoresEnabled)
+                    applySwitchState(chatSliderCard, customChatSwitch, isChatEnabled)
+                    applySwitchState(commentsSliderCard, customCommentsSwitch, isCommentsEnabled)
+                    applySwitchState(likesSliderCard, customLikesSwitch, isLikesEnabled)
+                } else {
+                    Log.e("TournamentSettings", "No notification settings document found")
+                    Toast.makeText(context, "Settings not available for this tournament", Toast.LENGTH_SHORT).show()
                 }
-                .addOnFailureListener { e ->
-                    Log.e("TournamentSettings", "Error loading notification settings: ${e.message}")
-                    Toast.makeText(context, "Failed to load notification settings", Toast.LENGTH_SHORT).show()
-                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("TournamentSettings", "Error loading notification settings: ${e.message}")
+                Toast.makeText(context, "Failed to load notification settings", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+
+    private fun applySwitchState(sliderCard: View, slider: View, isChecked: Boolean) {
+        // Set slider card translation
+        val translationX = if (isChecked) resources.getDimension(R.dimen.custom_switch_toggle) else 0f
+        sliderCard.translationX = translationX
+
+        // Set slider card color
+        val sliderCardBackground = sliderCard.background
+        if (sliderCardBackground is GradientDrawable) {
+            sliderCardBackground.setColor(
+                android.graphics.Color.parseColor(if (isChecked) "#379237" else "#DC3535")
+            )
+        }
+
+        // Set switch background color
+        val sliderBackground = slider.background
+        if (sliderBackground is GradientDrawable) {
+            sliderBackground.setColor(
+                android.graphics.Color.parseColor(if (isChecked) "#9ed99c" else "#f5aeae")
+            )
+        }
+    }
+
+    private fun animateSlider(sliderCard: View, slider: View, isChecked: Boolean) {
+        try {
+            val translationX = if (isChecked) resources.getDimension(R.dimen.custom_switch_toggle) else 0f
+            val rotationAngle = if (isChecked) 0f else 180f
+
+            // Move the slider
+            val moveAnimator = ObjectAnimator.ofFloat(sliderCard, "translationX", translationX)
+
+            // Rotate the slider-card faces
+            val rotateAnimator = ObjectAnimator.ofFloat(sliderCard, "rotationY", sliderCard.rotationY, rotationAngle)
+
+            // Update the slider card background color
+            val sliderCardBackground = sliderCard.background
+            if (sliderCardBackground is GradientDrawable) {
+                sliderCardBackground.setColor(
+                    android.graphics.Color.parseColor(if (isChecked) "#379237" else "#DC3535") // Green when on
+                )
+            }
+
+            // Update the switch background color
+            val sliderBackground = slider.background
+            if (sliderBackground is GradientDrawable) {
+                sliderBackground.setColor(
+                    android.graphics.Color.parseColor(if (isChecked) "#9ed99c" else "#f5aeae")
+                )
+            }
+
+            // Animator set for smooth animations
+            val animatorSet = AnimatorSet()
+            animatorSet.playTogether(moveAnimator, rotateAnimator)
+            animatorSet.duration = 400
+            animatorSet.start()
+        } catch (e: Exception) {
+            Log.e("NotificationsFragment", "Error during animation: ${e.message}")
         }
     }
 

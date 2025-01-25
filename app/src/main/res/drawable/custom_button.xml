@@ -1,0 +1,19 @@
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- When button is pressed -->
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <corners android:radius="50dp"/>
+            <solid android:color="#6b46c1" /> <!-- Purple color when pressed -->
+            <padding android:left="10dp" android:right="10dp" android:top="10dp" android:bottom="10dp"/>
+        </shape>
+    </item>
+
+    <!-- Default state -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="50dp"/>
+            <solid android:color="@android:color/white"/> <!-- White color when not pressed -->
+            <padding android:left="10dp" android:right="10dp" android:top="10dp" android:bottom="10dp"/>
+        </shape>
+    </item>
+</selector>

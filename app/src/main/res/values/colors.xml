@@ -12,4 +12,8 @@
     <color name="primaryDark">@color/dark_gray</color>
     <color name="accent">@color/gray</color>
     <color name="background">@color/white</color>
+
+    <color name="button_pressed_color">@color/dark_gray</color> <!-- hsl(261, 80%, 48%) -->
+    <color name="shadow_color">#0D000000</color> <!-- rgb(0 0 0 / 5%) -->
+
 </resources>

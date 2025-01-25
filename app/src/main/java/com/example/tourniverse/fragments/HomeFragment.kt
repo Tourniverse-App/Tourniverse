@@ -1,8 +1,13 @@
 package com.example.tourniverse.fragments
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
@@ -10,6 +15,7 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
@@ -58,7 +64,60 @@ class HomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val joinTournamentButton = view.findViewById<Button>(R.id.buttonJoinTournament)
-        joinTournamentButton.setOnClickListener { showJoinTournamentDialog() }
+
+        // Ensure button click opens the dialog
+        joinTournamentButton.setOnClickListener {
+            animateButton(joinTournamentButton)  // Trigger animation
+            showJoinTournamentDialog()
+        }
+    }
+
+    // Function to animate the button (like press animation)
+    private fun animateButton(button: Button) {
+        // Create the initial animation (scale down on press)
+        val scaleX = ObjectAnimator.ofFloat(button, "scaleX", 0.95f)
+        val scaleY = ObjectAnimator.ofFloat(button, "scaleY", 0.95f)
+
+        // Add translation for shadow effect
+        val translationZ = ObjectAnimator.ofFloat(button, "translationZ", 8f) // Elevation for shadow
+
+        // Set the duration for the "pressed" animation
+        val animatorSet = AnimatorSet()
+        animatorSet.playTogether(scaleX, scaleY, translationZ)
+        animatorSet.duration = 100 // Press animation duration
+        animatorSet.start()
+
+        // After animation completes, return to the original size and remove shadow
+        animatorSet.addListener(object : Animator.AnimatorListener {
+            override fun onAnimationStart(p0: Animator) {
+                // Animation start: You can add code here if needed, for example:
+                // Log.d("Animation", "Animation started")
+            }
+
+            override fun onAnimationEnd(p0: Animator) {
+                // Animation end: Animate back to original size and remove shadow
+                val scaleXBack = ObjectAnimator.ofFloat(button, "scaleX", 1f)
+                val scaleYBack = ObjectAnimator.ofFloat(button, "scaleY", 1f)
+                val translationZBack = ObjectAnimator.ofFloat(button, "translationZ", 0f) // Reset shadow
+
+                val reverseAnimatorSet = AnimatorSet()
+                reverseAnimatorSet.playTogether(scaleXBack, scaleYBack, translationZBack)
+                reverseAnimatorSet.duration = 100 // Duration to return to normal size
+                reverseAnimatorSet.start()
+            }
+
+            override fun onAnimationCancel(p0: Animator) {
+                // Animation was canceled: You can handle cancellation here if needed
+                // For example, logging
+                // Log.d("Animation", "Animation was canceled")
+            }
+
+            override fun onAnimationRepeat(p0: Animator) {
+                // Animation is repeating: You can handle this if needed
+                // For example, logging
+                // Log.d("Animation", "Animation is repeating")
+            }
+        })
     }
 
     private fun fetchUserTournaments() {
