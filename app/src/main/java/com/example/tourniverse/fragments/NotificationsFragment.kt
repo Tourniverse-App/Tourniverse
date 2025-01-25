@@ -42,6 +42,7 @@ class NotificationsFragment : Fragment() {
     private lateinit var userId: String
     private lateinit var viewModel: NotificationsViewModel
 
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -83,12 +84,16 @@ class NotificationsFragment : Fragment() {
             Log.e("NotificationsFragment", "User not authenticated")
         }
 
-        setupSwitchListener(customPushSwitch, pushSliderCard, "Push") { isPushEnabled = it }
+
         setupSwitchListener(customScoresSwitch, scoresSliderCard, "Scores") { isScoresEnabled = it }
         setupSwitchListener(customChatSwitch, chatSliderCard, "ChatMessages") { isChatEnabled = it }
         setupSwitchListener(customCommentsSwitch, commentsSliderCard, "Comments") { isCommentsEnabled = it }
         setupSwitchListener(customLikesSwitch, likesSliderCard, "Likes") { isLikesEnabled = it }
+        setupSwitchListener(customPushSwitch, pushSliderCard, "Push") { isEnabled ->
+            isPushEnabled = isEnabled
 
+            setDependentSwitchesEnabledUI(isEnabled)
+        }
         return view
     }
 
@@ -109,6 +114,9 @@ class NotificationsFragment : Fragment() {
                 applySwitchState(chatSliderCard, customChatSwitch, isChatEnabled)
                 applySwitchState(commentsSliderCard, customCommentsSwitch, isCommentsEnabled)
                 applySwitchState(likesSliderCard, customLikesSwitch, isLikesEnabled)
+
+                // Gray out other switches if Push is off
+                setDependentSwitchesEnabledUI(isPushEnabled)
             },
             onError = { error ->
                 showToast(error)
@@ -148,25 +156,73 @@ class NotificationsFragment : Fragment() {
         }
     }
 
+    private fun setDependentSwitchesEnabledUI(isPushEnabled: Boolean) {
+        val switches = listOf(
+            Pair(customScoresSwitch, scoresSliderCard),
+            Pair(customChatSwitch, chatSliderCard),
+            Pair(customCommentsSwitch, commentsSliderCard),
+            Pair(customLikesSwitch, likesSliderCard)
+        )
+
+        for ((switch, sliderCard) in switches) {
+            // Disable or enable clickability based on Push state
+            switch.isClickable = isPushEnabled
+            sliderCard.isClickable = isPushEnabled
+
+            // Apply gray-out effect if Push is disabled
+            val sliderCardColor = if (isPushEnabled) {
+                if (sliderCard.translationX != 0f) "#379237" else "#DC3535" // Green or red based on state
+            } else {
+                "#D3D3D3" // Gray for disabled switches
+            }
+
+            val sliderBackgroundColor = if (isPushEnabled) {
+                if (sliderCard.translationX != 0f) "#9ed99c" else "#f5aeae" // Light green/red based on state
+            } else {
+                "#E0E0E0" // Light gray for disabled switches
+            }
+
+            // Update slider card background
+            val sliderCardBackground = sliderCard.background
+            if (sliderCardBackground is GradientDrawable) {
+                sliderCardBackground.setColor(android.graphics.Color.parseColor(sliderCardColor))
+            }
+
+            // Update switch background
+            val sliderBackground = switch.background
+            if (sliderBackground is GradientDrawable) {
+                sliderBackground.setColor(android.graphics.Color.parseColor(sliderBackgroundColor))
+            }
+        }
+    }
+
     private fun applySwitchState(sliderCard: View, slider: View, isChecked: Boolean) {
-        // Set slider card translation
         val translationX = if (isChecked) resources.getDimension(R.dimen.custom_switch_toggle) else 0f
         sliderCard.translationX = translationX
 
-        // Set slider card color
-        val sliderCardBackground = sliderCard.background
-        if (sliderCardBackground is GradientDrawable) {
-            sliderCardBackground.setColor(
-                android.graphics.Color.parseColor(if (isChecked) "#379237" else "#DC3535")
-            )
+        // Set colors for enabled or disabled states
+        val sliderCardColor = if (slider.isClickable) {
+            if (isChecked) "#379237" else "#DC3535" // Green when enabled, red when off
+        } else {
+            "#D3D3D3" // Gray for disabled switches
         }
 
-        // Set switch background color
+        val sliderBackgroundColor = if (slider.isClickable) {
+            if (isChecked) "#9ed99c" else "#f5aeae" // Light green/red when enabled
+        } else {
+            "#E0E0E0" // Light gray for disabled switches
+        }
+
+        // Update slider card background
+        val sliderCardBackground = sliderCard.background
+        if (sliderCardBackground is GradientDrawable) {
+            sliderCardBackground.setColor(android.graphics.Color.parseColor(sliderCardColor))
+        }
+
+        // Update switch background
         val sliderBackground = slider.background
         if (sliderBackground is GradientDrawable) {
-            sliderBackground.setColor(
-                android.graphics.Color.parseColor(if (isChecked) "#9ed99c" else "#f5aeae")
-            )
+            sliderBackground.setColor(android.graphics.Color.parseColor(sliderBackgroundColor))
         }
     }
 

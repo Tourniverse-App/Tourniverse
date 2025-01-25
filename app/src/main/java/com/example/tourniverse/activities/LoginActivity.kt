@@ -3,12 +3,14 @@ package com.example.tourniverse.activities
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.MotionEvent
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.example.tourniverse.R
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
@@ -24,6 +26,8 @@ class LoginActivity : AppCompatActivity() {
     lateinit var auth: FirebaseAuth
     private lateinit var googleSignInClient: GoogleSignInClient
     private val RC_SIGN_IN = 9001
+    private var isPasswordVisible = false
+    private lateinit var passwordField: EditText
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,7 +36,7 @@ class LoginActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
 
         val emailField = findViewById<EditText>(R.id.etEmail)
-        val passwordField = findViewById<EditText>(R.id.etPassword)
+        passwordField = findViewById(R.id.etPassword)
         val loginButton = findViewById<Button>(R.id.btnLogin)
         val googleSignInButton = findViewById<LinearLayout>(R.id.btnGoogleSignIn)
         val forgotPassword = findViewById<TextView>(R.id.tvForgotPassword)
@@ -42,6 +46,18 @@ class LoginActivity : AppCompatActivity() {
 
         googleSignInButton.setOnClickListener {
             signIn()
+        }
+
+        passwordField.setOnTouchListener { _, event ->
+            if (event.action == MotionEvent.ACTION_UP) {
+                // Check if the click occurred within the drawable bounds
+                val drawableEnd = passwordField.compoundDrawablesRelative[2] // End drawable (eye icon)
+                if (drawableEnd != null && event.rawX >= (passwordField.right - passwordField.compoundPaddingEnd)) {
+                    togglePasswordVisibility()
+                    return@setOnTouchListener true
+                }
+            }
+            false
         }
 
         loginButton.setOnClickListener {
@@ -93,6 +109,26 @@ class LoginActivity : AppCompatActivity() {
         super.onStart()
         val currentUser = auth.currentUser
         updateUI(currentUser)
+    }
+
+    private fun togglePasswordVisibility() {
+        if (isPasswordVisible) {
+            // Hide the password
+            passwordField.transformationMethod = android.text.method.PasswordTransformationMethod.getInstance()
+            passwordField.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                null, null, ContextCompat.getDrawable(this, R.drawable.ic_eye_closed), null
+            )
+        } else {
+            // Show the password
+            passwordField.transformationMethod = null
+            passwordField.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                null, null, ContextCompat.getDrawable(this, R.drawable.ic_eye_open), null
+            )
+        }
+        // Toggle the state
+        isPasswordVisible = !isPasswordVisible
+        // Move the cursor to the end of the text
+        passwordField.setSelection(passwordField.text.length)
     }
 
     private fun configureGoogleSignIn() {

@@ -42,28 +42,6 @@ class HomeFragment : Fragment() {
     private lateinit var viewModel: HomeViewModel
     private val tournaments = mutableListOf<Tournament>()
 
-    // Permissions request launcher
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    private val requestPermissionsLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-            permissions.forEach { (permission, granted) ->
-                Log.d(TAG, "Permission: $permission, Granted: $granted")
-            }
-
-            val allGranted = permissions.all { it.value }
-            if (allGranted) {
-                Log.d(TAG, "All permissions granted.")
-                Toast.makeText(requireContext(), "All permissions granted!", Toast.LENGTH_SHORT).show()
-            } else {
-                Log.d(TAG, "Some permissions were denied.")
-                Toast.makeText(
-                    requireContext(),
-                    "Some permissions were denied. Some features may not work properly.",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -101,57 +79,6 @@ class HomeFragment : Fragment() {
             animateButton(joinTournamentButton)  // Trigger animation
             showJoinTournamentDialog()
         }
-
-        // Request permissions when the HomeFragment is displayed
-        requestPermissionsIfNeeded()
-    }
-
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    private fun requestPermissionsIfNeeded() {
-        val sharedPreferences = requireContext().getSharedPreferences("app_preferences", android.content.Context.MODE_PRIVATE)
-        val permissionsRequested = sharedPreferences.getBoolean("permissions_requested", false)
-
-        if (!permissionsRequested) {
-            val permissions = listOf(
-                Manifest.permission.CAMERA,
-                Manifest.permission.READ_EXTERNAL_STORAGE,
-                Manifest.permission.POST_NOTIFICATIONS
-            )
-
-            // Check for permissions that are permanently denied
-            val permanentlyDenied = permissions.any { permission ->
-                !shouldShowRequestPermissionRationale(permission) &&
-                        ContextCompat.checkSelfPermission(requireContext(), permission) != android.content.pm.PackageManager.PERMISSION_GRANTED
-            }
-
-            if (permanentlyDenied) {
-                Log.d(TAG, "Some permissions were permanently denied. Guiding user to app settings.")
-                showSettingsDialog()
-            } else {
-                Log.d(TAG, "Requesting permissions in HomeFragment.")
-                requireView().postDelayed({
-                    requestPermissionsLauncher.launch(permissions.toTypedArray())
-                    sharedPreferences.edit().putBoolean("permissions_requested", true).apply()
-                }, 300)
-            }
-        } else {
-            Log.d(TAG, "Permissions have already been requested.")
-        }
-    }
-
-    private fun showSettingsDialog() {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Permissions Required")
-            .setMessage("Some permissions are required for the app to function properly. Please enable them in app settings.")
-            .setPositiveButton("Go to Settings") { _, _ ->
-                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                    data = android.net.Uri.fromParts("package", requireContext().packageName, null)
-                }
-                startActivity(intent)
-            }
-            .setNegativeButton("Cancel", null)
-            .create()
-            .show()
     }
 
     private fun animateButton(button: Button) {
