@@ -9,18 +9,21 @@
 
     <!-- Profile Picture -->
     <com.google.android.material.imageview.ShapeableImageView
-
         android:id="@+id/ivProfilePic"
         android:layout_width="80dp"
         android:layout_height="80dp"
         android:src="@drawable/ic_user"
         android:layout_marginTop="16dp"
-        android:background="@drawable/circle_image"
         android:contentDescription="@string/profile_picture"
         android:scaleType="centerCrop"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:strokeColor="@android:color/black"
+        app:strokeWidth="0.8dp"
+        android:padding="1dp"
+        app:shapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.SmallComponent" />
+
 
     <!-- Username -->
     <TextView

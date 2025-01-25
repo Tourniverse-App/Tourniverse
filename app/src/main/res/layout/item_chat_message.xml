@@ -1,20 +1,23 @@
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="horizontal"
     android:padding="8dp">
 
     <!-- User Image -->
-    <ImageView
+    <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/userImageView"
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:src="@drawable/ic_user"
         android:scaleType="centerCrop"
         android:contentDescription="User Image"
-        android:background="@drawable/rounded_background_black"
-        android:layout_marginEnd="8dp" />
+        android:layout_marginEnd="8dp"
+        android:padding="1dp"
+        app:shapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.SmallComponent"
+        app:strokeColor="@android:color/black"
+        app:strokeWidth="0.8dp" />
 
     <!-- Vertical Content -->
     <LinearLayout

@@ -48,6 +48,11 @@
         <item name="android:paddingBottom">12dp</item>
     </style>
 
+    <style name="ShapeAppearance.MaterialComponents.SmallComponent" parent="ShapeAppearance.MaterialComponents">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
     <style name="CircleImageView" parent="Widget.MaterialComponents.ShapeableImageView">
         <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.Circle</item>
     </style>

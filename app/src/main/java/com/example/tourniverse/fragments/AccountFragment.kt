@@ -233,22 +233,22 @@ class AccountFragment : Fragment() {
         }
     }
 
-    private fun showRationale(action: () -> Unit) {
+    private fun showRationale() {
         AlertDialog.Builder(requireContext())
             .setTitle("Permissions Required")
-            .setMessage("We need camera and storage permissions to allow you to take or upload photos.")
+            .setMessage("Camera and media permissions are required to upload or capture a photo. Please grant the permissions to proceed.")
             .setPositiveButton("Grant Permissions") { _, _ ->
                 requestPermissionLauncher.launch(
                     arrayOf(
                         Manifest.permission.CAMERA,
-                        Manifest.permission.READ_EXTERNAL_STORAGE,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE
+                        Manifest.permission.READ_MEDIA_IMAGES
                     )
                 )
             }
             .setNegativeButton("Cancel") { dialog, _ ->
                 dialog.dismiss()
                 Log.d(TAG, "Permissions denied by user.")
+                showToast("Permissions are required for this feature.")
             }
             .show()
     }
@@ -310,12 +310,12 @@ class AccountFragment : Fragment() {
             // Show rationale if needed
             shouldShowRequestPermissionRationale(Manifest.permission.CAMERA) ||
                     shouldShowRequestPermissionRationale(Manifest.permission.READ_MEDIA_IMAGES) -> {
-                showRationale(action)
+                showRationale() // Show a rationale dialog
             }
 
-            // Request permissions
+            // Request all permissions
             else -> {
-                Log.d(TAG, "Requesting permissions.")
+                Log.d(TAG, "Requesting all permissions.")
                 requestPermissionLauncher.launch(
                     arrayOf(
                         Manifest.permission.CAMERA,
