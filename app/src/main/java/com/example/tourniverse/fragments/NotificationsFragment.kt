@@ -15,8 +15,23 @@ import com.example.tourniverse.R
 import com.example.tourniverse.viewmodels.NotificationsViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 
 class NotificationsFragment : Fragment() {
+
+    private val requestNotificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                Log.d("NotificationsFragment", "POST_NOTIFICATIONS permission granted.")
+                enablePushSwitch() // Turn on Push Notifications
+            } else {
+                Log.d("NotificationsFragment", "POST_NOTIFICATIONS permission denied.")
+                disablePushSwitch() // Keep Push Notifications off
+            }
+        }
 
     private lateinit var customPushSwitch: View
     private lateinit var pushSliderCard: View
@@ -90,10 +105,27 @@ class NotificationsFragment : Fragment() {
         setupSwitchListener(customCommentsSwitch, commentsSliderCard, "Comments") { isCommentsEnabled = it }
         setupSwitchListener(customLikesSwitch, likesSliderCard, "Likes") { isLikesEnabled = it }
         setupSwitchListener(customPushSwitch, pushSliderCard, "Push") { isEnabled ->
-            isPushEnabled = isEnabled
-
-            setDependentSwitchesEnabledUI(isEnabled)
+            if (isEnabled) {
+                // User is trying to turn Push Notifications on
+                if (ContextCompat.checkSelfPermission(
+                        requireContext(),
+                        Manifest.permission.POST_NOTIFICATIONS
+                    ) == PackageManager.PERMISSION_GRANTED
+                ) {
+                    Log.d("NotificationsFragment", "POST_NOTIFICATIONS permission already granted.")
+                    isPushEnabled = true
+                    setDependentSwitchesEnabledUI(true) // Enable other switches
+                } else {
+                    // Request POST_NOTIFICATIONS permission
+                    requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            } else {
+                // Push is being turned off, no need for permissions
+                isPushEnabled = false
+                setDependentSwitchesEnabledUI(false) // Gray out other switches
+            }
         }
+
         return view
     }
 
@@ -154,6 +186,20 @@ class NotificationsFragment : Fragment() {
                 Log.e("NotificationsFragment", "Error toggling $preferenceKey: ${e.message}")
             }
         }
+    }
+
+    private fun enablePushSwitch() {
+        isPushEnabled = true
+        applySwitchState(pushSliderCard, customPushSwitch, true) // Visually turn on Push
+        setDependentSwitchesEnabledUI(true) // Enable other switches
+        updatePreference("Push", true) // Save preference to Firestore
+    }
+
+    private fun disablePushSwitch() {
+        isPushEnabled = false
+        applySwitchState(pushSliderCard, customPushSwitch, false) // Visually turn off Push
+        setDependentSwitchesEnabledUI(false) // Gray out other switches
+        updatePreference("Push", false) // Save preference to Firestore
     }
 
     private fun setDependentSwitchesEnabledUI(isPushEnabled: Boolean) {
