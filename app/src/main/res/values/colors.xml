@@ -15,5 +15,4 @@
 
     <color name="button_pressed_color">@color/dark_gray</color> <!-- hsl(261, 80%, 48%) -->
     <color name="shadow_color">#0D000000</color> <!-- rgb(0 0 0 / 5%) -->
-
 </resources>

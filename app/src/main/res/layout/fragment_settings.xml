@@ -30,6 +30,7 @@
             android:layout_marginBottom="8dp"
             android:background="@drawable/list_item_background"
             android:drawableStart="@drawable/ic_account"
+            android:drawableEnd="@drawable/ic_arrow_right"
             android:drawablePadding="8dp"
             android:gravity="center_vertical"
             android:padding="8dp"
@@ -44,11 +45,13 @@
             android:layout_marginBottom="8dp"
             android:background="@drawable/list_item_background"
             android:drawableStart="@drawable/ic_notifications"
+            android:drawableEnd="@drawable/ic_arrow_right"
             android:drawablePadding="8dp"
             android:gravity="center_vertical"
             android:padding="8dp"
             android:text="Notifications"
             android:textSize="16sp" />
+
         <!-- Help & Support -->
         <TextView
             android:id="@+id/helpSupport"
@@ -57,6 +60,7 @@
             android:layout_marginBottom="8dp"
             android:background="@drawable/list_item_background"
             android:drawableStart="@drawable/ic_help"
+            android:drawableEnd="@drawable/ic_arrow_right"
             android:drawablePadding="8dp"
             android:gravity="center_vertical"
             android:padding="8dp"
@@ -70,6 +74,7 @@
             android:layout_height="wrap_content"
             android:background="@drawable/list_item_background"
             android:drawableStart="@drawable/ic_info"
+            android:drawableEnd="@drawable/ic_arrow_right"
             android:drawablePadding="8dp"
             android:gravity="center_vertical"
             android:padding="8dp"
@@ -78,53 +83,213 @@
     </LinearLayout>
 
     <FrameLayout
-        android:id="@+id/signOutBtn"
-        android:layout_width="45dp"
-        android:layout_height="45dp"
-        android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="16dp"
-        android:background="@drawable/sign_out_button_background"
-        android:elevation="4dp"
-        android:clipChildren="true"
-        android:clipToPadding="true"
-        android:clickable="true"
-        android:focusable="true">
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
-        <!-- Icon -->
-        <ImageView
-            android:id="@+id/signOutIcon"
-            android:layout_width="17dp"
-            android:layout_height="17dp"
-            android:layout_gravity="center"
-            android:src="@drawable/ic_logout"
-            android:tint="@android:color/white" />
+        <!-- Content Layout -->
 
-        <!-- Text -->
-        <TextView
-            android:id="@+id/signOutText"
-            android:layout_width="0dp"
+        <!-- Sign Out -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_gravity="center_vertical"
-            android:gravity="center"
-            android:text="Sign Out"
-            android:textColor="@android:color/white"
-            android:textSize="14sp"
-            android:fontFamily="@font/exo2_bold"
-            android:visibility="gone" />
-    </FrameLayout>
+            android:orientation="vertical"
+            android:padding="16dp">
 
-    <!--    <TextView-->
-<!--        android:id="@+id/signOut"-->
-<!--        android:layout_width="wrap_content"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:text="Sign Out"-->
-<!--        android:drawableStart="@drawable/ic_logout"-->
-<!--        android:drawablePadding="8dp"-->
-<!--        android:padding="8dp"-->
-<!--        android:background="@drawable/list_item_background"-->
-<!--        android:gravity="center"-->
-<!--        android:layout_gravity="bottom|center_horizontal"-->
-<!--        android:layout_marginBottom="16dp"-->
-<!--        android:textSize="16sp"-->
-<!--        android:textColor="@android:color/holo_red_dark" />-->
+            <!-- Settings Header -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:fontFamily="@font/exo2_bold"
+                android:text="Settings"
+                android:textSize="20sp" />
+
+            <!-- Account Settings -->
+            <TextView
+                android:id="@+id/accountSettings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/list_item_background"
+                android:drawableStart="@drawable/ic_account"
+                android:drawableEnd="@drawable/ic_arrow_right"
+                android:drawablePadding="8dp"
+                android:gravity="center_vertical"
+                android:padding="8dp"
+                android:text="Account"
+                android:textSize="16sp" />
+
+            <!-- Notification Settings -->
+            <TextView
+                android:id="@+id/notificationSettings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/list_item_background"
+                android:drawableStart="@drawable/ic_notifications"
+                android:drawableEnd="@drawable/ic_arrow_right"
+                android:drawablePadding="8dp"
+                android:gravity="center_vertical"
+                android:padding="8dp"
+                android:text="Notifications"
+                android:textSize="16sp" />
+
+            <!-- Help & Support -->
+            <TextView
+                android:id="@+id/helpSupport"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/list_item_background"
+                android:drawableStart="@drawable/ic_help"
+                android:drawableEnd="@drawable/ic_arrow_right"
+                android:drawablePadding="8dp"
+                android:gravity="center_vertical"
+                android:padding="8dp"
+                android:text="Help &amp; Support"
+                android:textSize="16sp" />
+
+            <!-- About -->
+            <TextView
+                android:id="@+id/aboutSettings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/list_item_background"
+                android:drawableStart="@drawable/ic_info"
+                android:drawableEnd="@drawable/ic_arrow_right"
+                android:drawablePadding="8dp"
+                android:gravity="center_vertical"
+                android:padding="8dp"
+                android:text="About"
+                android:textSize="16sp" />
+        </LinearLayout>
+
+        <FrameLayout
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <!-- Content Layout -->
+
+            <!-- Sign Out -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <!-- Settings Header -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:fontFamily="@font/exo2_bold"
+                    android:text="Settings"
+                    android:textSize="20sp" />
+
+                <!-- Account Settings -->
+                <TextView
+                    android:id="@+id/accountSettings"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:background="@drawable/list_item_background"
+                    android:drawableStart="@drawable/ic_account"
+                    android:drawableEnd="@drawable/ic_arrow_right"
+                    android:drawablePadding="8dp"
+                    android:gravity="center_vertical"
+                    android:padding="8dp"
+                    android:text="Account"
+                    android:textSize="16sp" />
+
+                <!-- Notification Settings -->
+                <TextView
+                    android:id="@+id/notificationSettings"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:background="@drawable/list_item_background"
+                    android:drawableStart="@drawable/ic_notifications"
+                    android:drawableEnd="@drawable/ic_arrow_right"
+                    android:drawablePadding="8dp"
+                    android:gravity="center_vertical"
+                    android:padding="8dp"
+                    android:text="Notifications"
+                    android:textSize="16sp" />
+
+                <!-- Help & Support -->
+                <TextView
+                    android:id="@+id/helpSupport"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:background="@drawable/list_item_background"
+                    android:drawableStart="@drawable/ic_help"
+                    android:drawableEnd="@drawable/ic_arrow_right"
+                    android:drawablePadding="8dp"
+                    android:gravity="center_vertical"
+                    android:padding="8dp"
+                    android:text="Help &amp; Support"
+                    android:textSize="16sp" />
+
+                <!-- About -->
+                <TextView
+                    android:id="@+id/aboutSettings"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/list_item_background"
+                    android:drawableStart="@drawable/ic_info"
+                    android:drawableEnd="@drawable/ic_arrow_right"
+                    android:drawablePadding="8dp"
+                    android:gravity="center_vertical"
+                    android:padding="8dp"
+                    android:text="About"
+                    android:textSize="16sp" />
+            </LinearLayout>
+
+            <FrameLayout
+                android:id="@+id/signOutBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|center_horizontal"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/sign_out_button_background"
+                android:elevation="4dp"
+                android:clipChildren="true"
+                android:clipToPadding="true"
+                android:clickable="true"
+                android:focusable="true">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="12dp">
+
+                    <!-- Icon -->
+                    <ImageView
+                        android:id="@+id/signOutIcon"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_logout"
+                        app:tint="@android:color/white" />
+
+                    <!-- Text -->
+                    <TextView
+                        android:id="@+id/signOutText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="Sign Out"
+                        android:textColor="@android:color/white"
+                        android:textSize="18sp"
+                        android:fontFamily="@font/exo2_bold" />
+                </LinearLayout>
+            </FrameLayout>
+        </FrameLayout>
+    </FrameLayout>
 </FrameLayout>
