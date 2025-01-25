@@ -4,6 +4,7 @@
     android:layout_height="match_parent"
     android:padding="16dp">
 
+
     <!-- App Title -->
     <TextView
         android:id="@+id/appTitle"
@@ -36,6 +37,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="80dp"
+        android:paddingBottom="100dp"
         android:clipToPadding="false"
         app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
         app:spanCount="2" />
@@ -60,14 +62,6 @@
         android:layout_gravity="bottom|center_horizontal"
         android:layout_marginBottom="16dp"
         android:text="Join\nTournament"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:paddingStart="40dp"
-        android:paddingEnd="40dp"
-        android:paddingTop="12dp"
-        android:paddingBottom="17dp"
-        android:background="@drawable/custom_button"
-        android:textColor="@android:color/white"
-        android:elevation="8dp"
+        style="@style/JoinTournamentButtonStyle"
         android:stateListAnimator="@null" />
 </FrameLayout>

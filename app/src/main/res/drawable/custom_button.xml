@@ -1,19 +1,51 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- When button is pressed -->
+    <!-- Pressed state with larger shadow -->
     <item android:state_pressed="true">
-        <shape android:shape="rectangle">
-            <corners android:radius="50dp"/>
-            <solid android:color="#6b46c1" /> <!-- Purple color when pressed -->
-            <padding android:left="10dp" android:right="10dp" android:top="10dp" android:bottom="10dp"/>
-        </shape>
+        <layer-list>
+            <!-- Larger shadow layer -->
+            <item
+                android:left="15dp"
+                android:right="15dp"
+                android:top="15dp"
+                android:bottom="15dp">
+                <shape android:shape="rectangle">
+                    <corners android:radius="50dp" />
+                    <solid android:color="#808080" /> <!-- Darker shadow when pressed -->
+                </shape>
+            </item>
+
+            <!-- Button layer -->
+            <item>
+                <shape android:shape="rectangle">
+                    <corners android:radius="50dp" />
+                    <solid android:color="@color/black" />
+                </shape>
+            </item>
+        </layer-list>
     </item>
 
     <!-- Default state -->
     <item>
-        <shape android:shape="rectangle">
-            <corners android:radius="50dp"/>
-            <solid android:color="@android:color/white"/> <!-- White color when not pressed -->
-            <padding android:left="10dp" android:right="10dp" android:top="10dp" android:bottom="10dp"/>
-        </shape>
+        <layer-list>
+            <!-- Default shadow layer -->
+            <item
+                android:left="10dp"
+                android:right="10dp"
+                android:top="10dp"
+                android:bottom="10dp">
+                <shape android:shape="rectangle">
+                    <corners android:radius="50dp" />
+                    <solid android:color="#B0B0B0" />
+                </shape>
+            </item>
+
+            <!-- Button layer -->
+            <item>
+                <shape android:shape="rectangle">
+                    <corners android:radius="50dp" />
+                    <solid android:color="@color/black" />
+                </shape>
+            </item>
+        </layer-list>
     </item>
 </selector>

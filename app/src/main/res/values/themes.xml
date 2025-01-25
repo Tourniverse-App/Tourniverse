@@ -1,4 +1,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Theme for the app -->
     <style name="Theme.Tourniverse" parent="Theme.MaterialComponents.Light.NoActionBar">
         <!-- Primary brand color -->
         <item name="colorPrimary">@color/black</item>
@@ -11,7 +13,7 @@
         <item name="colorOnSecondary">@color/black</item>
 
         <!-- Background and surface colors -->
-<!--        <item name="colorBackground">@color/white</item>-->
+        <!-- <item name="colorBackground">@color/white</item> -->
         <item name="colorSurface">@color/light_gray</item>
         <item name="colorOnBackground">@color/black</item>
         <item name="colorOnSurface">@color/black</item>
@@ -34,6 +36,16 @@
 
         <!-- Apply font globally to toolbars -->
         <item name="toolbarStyle">@style/CustomToolbarStyle</item>
-
     </style>
+
+    <!-- Custom style for "Join Tournament" button -->
+    <style name="JoinTournamentButtonStyle" parent="Widget.MaterialComponents.Button">
+        <item name="android:background">@drawable/custom_button</item> <!-- Use the selector -->
+        <item name="android:textColor">@android:color/white</item> <!-- White text -->
+        <item name="android:elevation">8dp</item> <!-- Default shadow -->
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:textSize">18sp</item>
+    </style>
+
 </resources>
