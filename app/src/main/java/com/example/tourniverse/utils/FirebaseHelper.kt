@@ -8,6 +8,8 @@ import com.example.tourniverse.activities.MainActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import java.util.Calendar
+import java.util.Locale
 
 object FirebaseHelper {
     private val db = FirebaseFirestore.getInstance()
@@ -195,6 +197,16 @@ object FirebaseHelper {
     ) {
         val batch = db.batch() // Use a batch for efficiency and consistency
 
+        // Get today's date in the desired format (DD/MM/YY)
+        val calendar = Calendar.getInstance()
+        val currentDate = String.format(
+            Locale("iw", "IL"), // Locale for Israel
+            "%02d/%02d/%02d",
+            calendar.get(Calendar.DAY_OF_MONTH),
+            calendar.get(Calendar.MONTH) + 1,
+            calendar.get(Calendar.YEAR) % 100
+        )
+
         if (format == "Tables") {
             // Generate round-robin matches
             for (i in teamNames.indices) {
@@ -206,7 +218,8 @@ object FirebaseHelper {
                         "teamA" to teamNames[i],
                         "teamB" to teamNames[j],
                         "scoreA" to null,                 // Null for initial scores
-                        "scoreB" to null
+                        "scoreB" to null,
+                        "date" to currentDate
                     )
                     Log.d("generateMatches", "Adding match: $matchData")
 

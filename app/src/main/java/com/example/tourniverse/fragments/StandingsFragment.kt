@@ -14,6 +14,7 @@ import com.example.tourniverse.models.Match
 import com.example.tourniverse.models.TeamStanding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import java.util.Locale
 
 class StandingsFragment : Fragment() {
 
@@ -72,14 +73,16 @@ class StandingsFragment : Fragment() {
         updateStandings()
 
         // Set click listener for save button
-        saveButton.setOnClickListener { saveScoresToFirestore() }
+        saveButton.setOnClickListener { savePageToFirebase() }
 
         // Initialize and set up RecyclerView adapter
         fixturesAdapter = StandingsAdapter(
-            items = fixtures, // The list of matches
+            items = fixtures,
             updateMatchScores = { match, newScoreA, newScoreB -> updateMatchScores(match, newScoreA, newScoreB) },
-            notifyScoresUpdated = { notifyScoreUpdate() } // Pass the notification callback
+            notifyScoresUpdated = { notifyScoreUpdate() },
+            isOwner = isOwner
         )
+        Log.d("StandingsFragment", "isOwner passed to adapter: $isOwner")
         fixturesRecyclerView.adapter = fixturesAdapter
 
 
@@ -127,14 +130,34 @@ class StandingsFragment : Fragment() {
                             is Long -> rawScoreB.toInt()
                             else -> null
                         }
-
+                        val rawDate = document.getString("date")
+                        val date = if (rawDate.isNullOrBlank()) "-" else rawDate // Explicit null check
                         // Extract match ID
                         val matchId = document.id
 
-                        Log.d("StandingsFragment", "Match: $teamA vs $teamB - Scores: $scoreA : $scoreB")
+                        Log.d("StandingsFragment", "Match: $teamA vs $teamB - Scores: $scoreA : $scoreB - Date: $date")
 
                         // Add match with ID to fixtures list
-                        fixtures.add(Match(teamA, teamB, scoreA, scoreB, id = matchId))
+                        fixtures.add(Match(teamA, teamB, scoreA, scoreB, id = matchId, date = date))
+                    }
+
+                    // Sort fixtures by date
+                    fixtures.sortWith { match1, match2 ->
+                        // Handle invalid dates by keeping them at the end
+                        if (match1.date == "-" || match2.date == "-") {
+                            return@sortWith if (match1.date == "-") 1 else -1
+                        }
+
+                        // Parse dates into comparable format
+                        val formatter = java.text.SimpleDateFormat("dd/MM/yy", Locale.getDefault())
+                        val date1 = formatter.parse(match1.date)
+                        val date2 = formatter.parse(match2.date)
+
+                        when {
+                            date1 == null -> 1
+                            date2 == null -> -1
+                            else -> date1.compareTo(date2)
+                        }
                     }
 
                     // Notify adapter with updated data
@@ -150,80 +173,153 @@ class StandingsFragment : Fragment() {
     /**
      * Saves the updated match scores to Firestore.
      */
-    private fun saveScoresToFirestore() {
+    private fun savePageToFirebase() {
         Log.d("SaveButton", "Save button clicked.")
 
         tournamentId?.let { id ->
             val batch = db.batch()
-            var hasInvalidScores = false
+            val datesToValidate = fixtures.mapNotNull { it.date }
+            val invalidMatches = mutableListOf<Match>()
+            val existingDates = mutableSetOf<String>()
 
+            // Step 1: Validate scores and dates locally
+            var hasInvalidScoresOrDates = false
+            Log.d("SaveButton", "Starting local validation of matches...")
             fixtures.forEach { match ->
                 val scoreA = match.scoreA
                 val scoreB = match.scoreB
+                val date = match.date
 
-                Log.d("SaveButton", "Processing match: ${match.teamA} vs ${match.teamB} - Scores: $scoreA : $scoreB")
+                Log.d(
+                    "SaveButton",
+                    "Processing match: ${match.teamA} vs ${match.teamB} - Scores: $scoreA : $scoreB - Date: $date"
+                )
 
-                // Check if scores are reset to initial state (-:-)
+                // Validate scores
                 val isResetToDefault = (scoreA == null && scoreB == null)
-
-                // Invalid scores (e.g., one is null and the other isn't)
                 if (!isResetToDefault && ((scoreA == null && scoreB != null) || (scoreB == null && scoreA != null))) {
-                    Log.d("SaveButton", "Invalid scores detected for match: ${match.teamA} vs ${match.teamB}")
-                    hasInvalidScores = true
+                    Log.d("SaveButton", "Invalid scores detected: ScoreA=$scoreA, ScoreB=$scoreB for match: ${match.teamA} vs ${match.teamB}")
+                    invalidMatches.add(match)
+                    hasInvalidScoresOrDates = true
                     return@forEach
                 }
 
                 if (scoreA != null && (scoreA < 0 || scoreA > 99)) {
-                    Log.d("SaveButton", "Invalid score detected for team A: $scoreA")
-                    hasInvalidScores = true
+                    Log.d("SaveButton", "Invalid score detected for Team A: $scoreA in match: ${match.teamA} vs ${match.teamB}")
+                    invalidMatches.add(match)
+                    hasInvalidScoresOrDates = true
                     return@forEach
                 }
 
-                // Prepare data for update
-                val matchData = mapOf(
-                    "scoreA" to if (isResetToDefault) "-" else (scoreA ?: 0), // Reset to "-"
-                    "scoreB" to if (isResetToDefault) "-" else (scoreB ?: 0)  // Reset to "-"
-                )
-
-                // Ensure match.id exists before updating
-                if (match.id.isNotEmpty()) {
-                    val matchRef = db.collection("tournaments").document(id)
-                        .collection("matches").document(match.id) // Update the correct match
-                    batch.update(matchRef, matchData)
-                    Log.d("SaveButton", "Added match to batch: ${match.teamA} vs ${match.teamB}")
+                // Validate date using isValidDate
+                if (!isValidDate(date)) {
+                    Log.d("SaveButton", "Invalid date format detected: $date for match: ${match.teamA} vs ${match.teamB}")
+                    invalidMatches.add(match)
+                    hasInvalidScoresOrDates = true
+                    return@forEach
                 } else {
-                    Log.e("SaveButton", "Match ID is missing for ${match.teamA} vs ${match.teamB}")
-                    hasInvalidScores = true
+                    Log.d("SaveButton", "Valid date format detected: $date for match: ${match.teamA} vs ${match.teamB}")
                 }
             }
 
-            if (hasInvalidScores) {
-                Toast.makeText(
-                    context,
-                    "Invalid scores found. Please fix them.",
-                    Toast.LENGTH_LONG
-                ).show()
+            if (hasInvalidScoresOrDates) {
+                Log.d("SaveButton", "Validation failed. Invalid matches: $invalidMatches")
+                Toast.makeText(context, "Invalid scores or dates found. Please fix them.", Toast.LENGTH_LONG).show()
                 return
             }
+            Log.d("SaveButton", "Local validation completed successfully.")
 
-            // Commit batch
-            batch.commit()
-                .addOnSuccessListener {
-                    Log.d("SaveButton", "Scores saved successfully.")
-                    Toast.makeText(context, "Scores saved successfully.", Toast.LENGTH_SHORT).show()
+            // Step 2: Check if dates already exist in Firestore
+            Log.d("SaveButton", "Checking for existing dates in Firestore...")
+            db.collection("tournaments").document(id)
+                .collection("matches")
+                .whereIn("date", datesToValidate)
+                .get()
+                .addOnSuccessListener { querySnapshot ->
+                    querySnapshot.documents.forEach { document ->
+                        val existingDate = document.getString("date")
+                        if (existingDate != null) {
+                            existingDates.add(existingDate)
+                            Log.d("SaveButton", "Date already exists in Firestore: $existingDate")
+                        }
+                    }
 
-                    // Update standings after saving
-                    updateStandings()
+                    // Step 3: Finalize batch with valid data
+                    Log.d("SaveButton", "Preparing batch update with valid matches...")
+                    fixtures.forEach { match ->
+                        val scoreA = match.scoreA
+                        val scoreB = match.scoreB
+                        val date = match.date
 
-                    // Notify other fragments to refresh views
-                    notifyStatisticsFragments()
+                        val isResetToDefault = (scoreA == null && scoreB == null)
+                        val matchData = mapOf(
+                            "scoreA" to if (isResetToDefault) "-" else (scoreA ?: 0),
+                            "scoreB" to if (isResetToDefault) "-" else (scoreB ?: 0),
+                            "date" to date
+                        )
+
+                        if (match.id.isNotEmpty()) {
+                            val matchRef = db.collection("tournaments").document(id)
+                                .collection("matches").document(match.id)
+                            batch.update(matchRef, matchData)
+                            Log.d("SaveButton", "Added match to batch: ${match.teamA} vs ${match.teamB}")
+                        } else {
+                            Log.e("SaveButton", "Match ID is missing for ${match.teamA} vs ${match.teamB}")
+                            hasInvalidScoresOrDates = true
+                        }
+                    }
+
+                    if (hasInvalidScoresOrDates) {
+                        Log.d("SaveButton", "Validation failed during Firestore check.")
+                        Toast.makeText(context, "Invalid scores or dates found. Please fix them.", Toast.LENGTH_LONG).show()
+                        return@addOnSuccessListener
+                    }
+
+                    // Step 4: Commit batch
+                    Log.d("SaveButton", "Committing batch update to Firestore...")
+                    batch.commit()
+                        .addOnSuccessListener {
+                            Log.d("SaveButton", "Scores and dates saved successfully.")
+                            Toast.makeText(context, "Scores and dates saved successfully.", Toast.LENGTH_SHORT).show()
+                            updateStandings()
+                            notifyStatisticsFragments()
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("SaveButton", "Failed to save scores and dates: ${e.message}")
+                            Toast.makeText(context, "Failed to save scores and dates: ${e.message}", Toast.LENGTH_LONG).show()
+                        }
                 }
                 .addOnFailureListener { e ->
-                    Log.e("SaveButton", "Failed to save scores: ${e.message}")
-                    Toast.makeText(context, "Failed to save scores: ${e.message}", Toast.LENGTH_LONG)
-                        .show()
+                    Log.e("SaveButton", "Failed to validate dates in Firestore: ${e.message}")
+                    Toast.makeText(context, "Failed to validate dates in Firestore: ${e.message}", Toast.LENGTH_LONG).show()
                 }
         } ?: Log.e("SaveButton", "Tournament ID is null!")
+    }
+
+
+    private fun isValidDate(date: String): Boolean {
+        Log.d("SaveButton", "date: $date")
+
+        val datePattern = Regex("\\d{2}/\\d{2}/\\d{2}") // Matches DD/MM/YY
+        if (!date.matches(datePattern)) {
+            Log.d("isValidDate", "Date does not match pattern: $date")
+            return false
+        }
+
+        val parts = date.split("/")
+        val day = parts[0].toIntOrNull() ?: return false
+        val month = parts[1].toIntOrNull() ?: return false
+        val year = parts[2].toIntOrNull() ?: return false
+
+        Log.d("isValidDate", "Parsed values - Day: $day, Month: $month, Year: $year")
+
+        // Ensure day and month are within valid ranges
+        if (day !in 1..31 || month !in 1..12) {
+            Log.d("isValidDate", "Day or Month out of range - Day: $day, Month: $month")
+            return false
+        }
+
+        return true
     }
 
     /**
@@ -272,7 +368,13 @@ class StandingsFragment : Fragment() {
                             .collection("matches")
                             .document(document.id)
 
-                        matchRef.update("scoreA", newScoreA, "scoreB", newScoreB)
+                        val matchData = mapOf(
+                            "scoreA" to newScoreA,
+                            "scoreB" to newScoreB,
+                            "date" to match.date.ifEmpty { "-" }
+                        )
+
+                        matchRef.update(matchData)
                             .addOnSuccessListener {
                                 Log.d("StandingsFragment", "Match scores updated successfully.")
                                 Toast.makeText(

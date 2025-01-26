@@ -1,86 +1,104 @@
-<?xml version="1.0" encoding="utf-8"?>
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:clipToPadding="false"
+    android:clipChildren="false"
+    android:fillViewport="true">
 
+    <!-- Main Layout -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:padding="16dp">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
         <!-- Tourniverse Logo or Title -->
-        <TextView
-            android:id="@+id/tvAppTitle"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/tourniverse"
-            android:textSize="24sp"
-            android:textStyle="bold"
             android:gravity="center"
-            android:layout_marginBottom="24dp" />
+            android:layout_marginTop="30dp">
 
-    <!-- Background for Email to Sign-Up -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:background="@drawable/gray_rounded_box"
-        android:padding="16dp"
-        android:layout_marginBottom="24dp">
+            <TextView
+                android:id="@+id/tvAppTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/tourniverse"
+                android:textSize="50sp"
+                android:fontFamily="@font/exo2_black"
+                android:gravity="center" />
+        </LinearLayout>
 
-        <!-- Username Field -->
-        <EditText
-            android:id="@+id/etUsername"
+        <!-- Space Above the Gray Box -->
+
+        <!-- Gray Box Content -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Username"
-            android:inputType="textPersonName"
-            android:layout_marginBottom="8dp" />
-
-        <!-- Email Field -->
-        <EditText
-            android:id="@+id/etEmail"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Email"
-            android:inputType="textEmailAddress"
-            android:layout_marginBottom="8dp" />
-
-        <!-- Password Field -->
-        <EditText
-            android:id="@+id/etPassword"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Password"
-            android:inputType="textPassword"
-            android:drawableEnd="@drawable/ic_eye_closed"
-            android:layout_marginBottom="16dp" />
-
-        <!-- Register Button -->
-        <Button
-            android:id="@+id/btnRegister"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Register"
-            android:textSize="18sp"
-            android:background="@drawable/rounded_button"
-            android:textColor="@android:color/white"
-            android:layout_marginBottom="24dp" />
-
-        <!-- Login Link -->
-        <TextView
-            android:id="@+id/tvLogin"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Already have an account? Login"
-            android:textColor="@android:color/holo_blue_dark"
-            android:gravity="center"
             android:layout_gravity="center"
-            android:textSize="14sp" />
-    </LinearLayout>
+            android:background="@drawable/gray_rounded_box"
+            android:elevation="30dp"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_marginTop="30dp"
+            android:layout_marginHorizontal="19dp"
+            android:clipToPadding="false"
+            android:clipChildren="false">
+
+            <!-- Username Field -->
+            <EditText
+                android:id="@+id/etUsername"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:hint="Username"
+                android:inputType="textPersonName" />
+
+            <!-- Email Field -->
+            <EditText
+                android:id="@+id/etEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:hint="Email"
+                android:inputType="textEmailAddress" />
+
+            <!-- Password Field -->
+            <EditText
+                android:id="@+id/etPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:hint="Password"
+                android:inputType="textPassword"
+                android:drawableEnd="@drawable/ic_eye_closed" />
+
+            <!-- Register Button -->
+            <Button
+                android:id="@+id/btnRegister"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:background="@drawable/rounded_button"
+                android:text="Register"
+                android:textColor="@android:color/white"
+                android:textSize="18sp" />
+
+            <!-- Login Link -->
+            <TextView
+                android:id="@+id/tvLogin"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Already have an account? Login"
+                android:textColor="@android:color/holo_blue_dark"
+                android:gravity="center"
+                android:layout_gravity="center"/>
+        </LinearLayout>
+
+        <!-- Space Below the Gray Box -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
     </LinearLayout>
 </ScrollView>

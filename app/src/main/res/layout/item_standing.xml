@@ -1,55 +1,77 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     android:background="@drawable/rounded_background"
     android:padding="8dp"
     android:layout_marginBottom="8dp">
 
-    <!-- Team A Name -->
-    <TextView
-        android:id="@+id/teamAName"
-        android:layout_width="0dp"
+    <!-- Horizontal Layout for Team Names and Scores -->
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:gravity="start"
-        android:text="Team A"
-        android:textSize="16sp"
-        android:fontFamily="@font/exo2_bold"
-        android:paddingEnd="8dp" />
+        android:orientation="horizontal">
 
-    <!-- Score Input for Team A -->
+        <!-- Team A Name -->
+        <TextView
+            android:id="@+id/teamAName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+
+            android:text="Team A"
+            android:textSize="16sp"
+            android:fontFamily="@font/exo2_bold"
+            android:paddingEnd="8dp" />
+
+        <!-- Score Input for Team A -->
+        <EditText
+            android:id="@+id/scoreA"
+            android:layout_width="wrap_content"
+            android:minWidth="50dp"
+            android:layout_height="wrap_content"
+            android:background="@drawable/gray_box"
+            android:gravity="center"
+            android:inputType="text"
+            android:textSize="16sp"
+            android:padding="4dp" />
+
+        <!-- Score Input for Team B -->
+        <EditText
+            android:id="@+id/scoreB"
+            android:layout_width="wrap_content"
+            android:minWidth="50dp"
+            android:layout_height="wrap_content"
+            android:background="@drawable/gray_box"
+            android:gravity="center"
+            android:inputType="text"
+            android:textSize="16sp"
+            android:padding="4dp"
+            android:layout_marginStart="8dp" />
+
+        <!-- Team B Name -->
+        <TextView
+            android:id="@+id/teamBName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Team B"
+            android:textSize="16sp"
+            android:fontFamily="@font/exo2_bold"
+            android:paddingStart="8dp" />
+
+    </LinearLayout>
+
+    <!-- Date Input Section Centered Below Scores -->
     <EditText
-        android:id="@+id/scoreA"
-        android:layout_width="50dp"
+        android:id="@+id/dateInput"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/gray_box"
+        android:hint="DD/MM/YY"
         android:gravity="center"
         android:inputType="text"
         android:textSize="16sp"
-        android:padding="4dp" />
-
-    <!-- Score Input for Team B -->
-    <EditText
-        android:id="@+id/scoreB"
-        android:layout_width="50dp"
-        android:layout_height="wrap_content"
-        android:background="@drawable/gray_box"
-        android:gravity="center"
-        android:inputType="text"
-        android:textSize="16sp"
-        android:padding="4dp"
-        android:layout_marginStart="8dp" />
-
-    <!-- Team B Name -->
-    <TextView
-        android:id="@+id/teamBName"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:gravity="end"
-        android:text="Team B"
-        android:textSize="16sp"
-        android:fontFamily="@font/exo2_bold"
-        android:paddingStart="8dp" />
+        android:layout_gravity="center"/>
 </LinearLayout>

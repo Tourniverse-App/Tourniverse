@@ -67,7 +67,8 @@ dependencies {
     // Glide for Image Loading
     implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation(libs.androidx.junit.ktx)
-    implementation(libs.androidx.espresso.idling.resource) // Glide
+    implementation(libs.androidx.espresso.idling.resource)
+    implementation(libs.androidx.material3.android) // Glide
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0") // Glide Compiler
 
     // Test dependencies
