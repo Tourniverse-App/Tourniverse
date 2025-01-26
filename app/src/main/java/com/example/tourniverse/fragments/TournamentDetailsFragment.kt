@@ -1,10 +1,13 @@
 package com.example.tourniverse.fragments
 
+import android.animation.ObjectAnimator
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AccelerateDecelerateInterpolator
+import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -65,24 +68,6 @@ class TournamentDetailsFragment : Fragment() {
         return view
     }
 
-    private fun setupViewPager(view: View) {
-        val tabLayout = view.findViewById<TabLayout>(R.id.tabLayout)
-        val viewPager = view.findViewById<ViewPager2>(R.id.viewPager)
-
-        val adapter = TournamentPagerAdapter(requireActivity(), tournamentId ?: "", "Tables") // Example format
-        viewPager.adapter = adapter
-
-        TabLayoutMediator(tabLayout, viewPager) { tab, position ->
-            tab.text = when (position) {
-                0 -> "Social"
-                1 -> "Fixtures"
-                2 -> "Statistics"
-                3 -> "Settings"
-                else -> "Tab $position"
-            }
-        }.attach()
-    }
-
     private fun fetchTournamentDetails() {
         tournamentId?.let { id ->
             viewModel.fetchTournamentDetails(
@@ -104,4 +89,65 @@ class TournamentDetailsFragment : Fragment() {
             )
         }
     }
+
+    private fun setupViewPager(view: View) {
+        val tabLayout = view.findViewById<TabLayout>(R.id.tabLayout)
+        val viewPager = view.findViewById<ViewPager2>(R.id.viewPager)
+
+        val adapter = TournamentPagerAdapter(requireActivity(), tournamentId ?: "", "Tables")
+        viewPager.adapter = adapter
+
+        TabLayoutMediator(tabLayout, viewPager) { tab, position ->
+            tab.text = when (position) {
+                0 -> "Social"
+                1 -> "Fixtures"
+                2 -> "Statistics"
+                3 -> "Settings"
+                else -> "Tab $position"
+            }
+        }.attach()
+
+        // Wrap TabLayout in a FrameLayout
+        val frameLayout = tabLayout.parent as ViewGroup
+
+        // Create the highlighter view
+        val highlighter = View(requireContext()).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                resources.getDimensionPixelSize(R.dimen.tab_highlight_height)
+            ).apply {
+                gravity = android.view.Gravity.BOTTOM
+            }
+            setBackgroundResource(R.drawable.tab_highlighter) // Rounded drawable for the highlighter
+        }
+        frameLayout.addView(highlighter)
+
+        // Initialize the highlighter position
+        highlighter.post {
+            val initialTab = tabLayout.getTabAt(0)?.view
+            highlighter.layoutParams.width = initialTab?.width ?: 0 // Match the initial tab width
+            val x = initialTab?.x ?: 0f
+            highlighter.translationX = x
+        }
+
+        // Animate the highlighter on tab selection
+        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab?) {
+                tab?.let {
+                    highlighter.layoutParams.width = tab.view.width // Match the tab width dynamically
+                    val x = tab.view.x
+                    ObjectAnimator.ofFloat(highlighter, "translationX", x).apply {
+                        duration = 500
+                        interpolator = AccelerateDecelerateInterpolator()
+                        start()
+                    }
+                }
+            }
+
+            override fun onTabUnselected(tab: TabLayout.Tab?) {}
+
+            override fun onTabReselected(tab: TabLayout.Tab?) {}
+        })
+    }
+
 }

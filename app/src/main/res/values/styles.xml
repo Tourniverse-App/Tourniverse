@@ -61,4 +61,15 @@
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">50%</item>
     </style>
+
+    <!-- TabLayout Styles -->
+    <style name="TabLayoutStyle" parent="Widget.MaterialComponents.TabLayout">
+        <item name="tabIndicator">@null</item> <!-- Remove default indicator -->
+        <item name="tabBackground">@drawable/tab_background</item> <!-- Rounded tab background -->
+        <item name="tabTextAppearance">?attr/textAppearanceButton</item>
+        <item name="tabSelectedTextColor">@color/black</item> <!-- Selected tab text color -->
+        <item name="tabTextColor">@color/black</item> <!-- Default tab text color -->
+        <item name="fontFamily">@font/exo2_bold</item>
+    </style>
+
 </resources>

@@ -1,11 +1,18 @@
 package com.example.tourniverse.adapters
 
+import android.animation.ObjectAnimator
 import android.os.Bundle
 import android.util.Log
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentActivity
+import android.view.View
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.example.tourniverse.fragments.*
+import android.view.animation.AccelerateDecelerateInterpolator
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
+import androidx.viewpager2.widget.ViewPager2
+import com.google.android.material.tabs.TabLayout
+import com.google.android.material.tabs.TabLayoutMediator
+import com.example.tourniverse.R
 
 /**
  * Adapter for managing fragments in TournamentDetailsFragment's ViewPager2.

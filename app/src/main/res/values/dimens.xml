@@ -2,6 +2,7 @@
 <resources>
     <!-- Define the toggle slider translation distance - default 28-->
     <dimen name="custom_switch_toggle">24dp</dimen>
-
+    <dimen name="tab_highlight_height">4dp</dimen>
+    <dimen name="tab_highlight_width">48dp</dimen>
     <dimen name="corner_radius">45dp</dimen>
 </resources>
