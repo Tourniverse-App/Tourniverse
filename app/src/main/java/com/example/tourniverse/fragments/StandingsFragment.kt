@@ -100,7 +100,7 @@ class StandingsFragment : Fragment() {
     }
 
     /**
-     * Fetches the fixtures (matches) from Firestore for the given tournament.
+     * Fetches the fixtures (matches) from Firestore for the given tournament and updates live.
      */
     private fun fetchFixtures() {
         Log.d("StandingsFragment", "fetchFixtures called")
@@ -108,12 +108,23 @@ class StandingsFragment : Fragment() {
         tournamentId?.let { id ->
             db.collection("tournaments").document(id)
                 .collection("matches") // Fetch individual match documents
-                .get()
-                .addOnSuccessListener { documents ->
-                    Log.d("StandingsFragment", "fetchFixtures success")
+                .orderBy("date") // Ensures matches are sorted by date in Firestore
+                .addSnapshotListener { snapshot, e ->
+                    if (e != null) {
+                        Log.e("StandingsFragment", "fetchFixtures failed: ${e.message}")
+                        return@addSnapshotListener
+                    }
+
+                    if (snapshot == null || snapshot.isEmpty) {
+                        Log.d("StandingsFragment", "No fixtures found.")
+                        return@addSnapshotListener
+                    }
+
+                    Log.d("StandingsFragment", "fetchFixtures success - Realtime update received")
+
                     fixtures.clear()
 
-                    for (document in documents) {
+                    for (document in snapshot.documents) {
                         // Read match fields directly
                         val teamA = document.getString("teamA") ?: ""
                         val teamB = document.getString("teamB") ?: ""
@@ -130,6 +141,7 @@ class StandingsFragment : Fragment() {
                             is Long -> rawScoreB.toInt()
                             else -> null
                         }
+
                         val rawDate = document.getString("date")
                         val date = if (rawDate.isNullOrBlank()) "-" else rawDate // Explicit null check
                         // Extract match ID
@@ -162,10 +174,7 @@ class StandingsFragment : Fragment() {
 
                     // Notify adapter with updated data
                     fixturesAdapter.notifyDataSetChanged()
-                    Log.d("StandingsFragment", "Fixtures updated in adapter")
-                }
-                .addOnFailureListener { e ->
-                    Log.e("StandingsFragment", "fetchFixtures failed: ${e.message}")
+                    Log.d("StandingsFragment", "Fixtures updated in adapter (Realtime)")
                 }
         }
     }
@@ -393,22 +402,31 @@ class StandingsFragment : Fragment() {
     }
 
     /**
-     * Updates the standings for each team based on the match results.
+     * Updates the standings for each team based on the match results in real-time.
      */
     private fun updateStandings() {
         Log.d("StandingsFragment", "updateStandings called")
 
-        // Fetch all matches directly from Firestore
+        // Fetch all matches directly from Firestore in real-time
         tournamentId?.let { id ->
             db.collection("tournaments").document(id)
                 .collection("matches")
-                .get()
-                .addOnSuccessListener { documents ->
-                    Log.d("StandingsFragment", "Fetched all matches to recalculate standings")
+                .addSnapshotListener { snapshot, e ->
+                    if (e != null) {
+                        Log.e("StandingsFragment", "Failed to fetch matches for standings: ${e.message}")
+                        return@addSnapshotListener
+                    }
+
+                    if (snapshot == null || snapshot.isEmpty) {
+                        Log.d("StandingsFragment", "No matches found.")
+                        return@addSnapshotListener
+                    }
+
+                    Log.d("StandingsFragment", "Fetched all matches to recalculate standings (Realtime)")
 
                     val standingsMap = mutableMapOf<String, TeamStanding>()
 
-                    for (document in documents) {
+                    for (document in snapshot.documents) {
                         // Extract match data
                         val teamA = document.getString("teamA") ?: ""
                         val teamB = document.getString("teamB") ?: ""
@@ -482,17 +500,11 @@ class StandingsFragment : Fragment() {
                     // Commit batch update
                     batch.commit()
                         .addOnSuccessListener {
-                            Log.d("StandingsFragment", "updateStandings commit success")
-                            Toast.makeText(context, "Standings updated successfully.", Toast.LENGTH_SHORT).show()
+                            Log.d("StandingsFragment", "updateStandings commit success (Realtime)")
                         }
                         .addOnFailureListener { e ->
                             Log.e("StandingsFragment", "updateStandings commit failed: ${e.message}")
-                            Toast.makeText(context, "Failed to update standings.", Toast.LENGTH_SHORT).show()
                         }
-                }
-                .addOnFailureListener { e ->
-                    Log.e("StandingsFragment", "Failed to fetch matches for standings: ${e.message}")
-                    Toast.makeText(context, "Failed to fetch matches for standings.", Toast.LENGTH_SHORT).show()
                 }
         }
     }
