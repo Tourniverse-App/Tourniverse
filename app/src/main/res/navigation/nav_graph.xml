@@ -49,9 +49,6 @@
         <action
             android:id="@+id/action_tournamentDetailsFragment_to_tableStatisticsFragment"
             app:destination="@id/tableStatisticsFragment" />
-        <action
-            android:id="@+id/action_tournamentDetailsFragment_to_knockoutStatisticsFragment"
-            app:destination="@id/knockoutStatisticsFragment" />
     </fragment>
 
     <!-- Table Statistics Fragment -->
@@ -59,16 +56,6 @@
         android:id="@+id/tableStatisticsFragment"
         android:name="com.example.tourniverse.fragments.TableStatisticsFragment"
         android:label="Table Statistics">
-        <argument
-            android:name="tournamentId"
-            app:argType="string" />
-    </fragment>
-
-    <!-- Knockout Statistics Fragment -->
-    <fragment
-        android:id="@+id/knockoutStatisticsFragment"
-        android:name="com.example.tourniverse.fragments.KnockoutStatisticsFragment"
-        android:label="Knockout Statistics">
         <argument
             android:name="tournamentId"
             app:argType="string" />

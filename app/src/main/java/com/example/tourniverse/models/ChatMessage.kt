@@ -1,7 +1,5 @@
 package com.example.tourniverse.models
 
-import com.google.firebase.firestore.PropertyName
-
 data class ChatMessage(
     var documentId: String = "",
     var senderId: String = "",

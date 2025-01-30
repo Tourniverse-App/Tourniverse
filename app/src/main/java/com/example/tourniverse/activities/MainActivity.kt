@@ -17,6 +17,11 @@ import com.google.firebase.ktx.Firebase
 import android.Manifest
 import android.os.Build
 import androidx.activity.result.contract.ActivityResultContracts
+import android.graphics.Typeface
+import android.view.View
+import android.view.ViewGroup
+import android.widget.TextView
+import androidx.core.content.res.ResourcesCompat
 
 class MainActivity : AppCompatActivity() {
 
@@ -124,25 +129,6 @@ class MainActivity : AppCompatActivity() {
             .setIOSBundleId("com.example.ios")
             .setAndroidPackageName("com.example.tourniverse", true, "12") // Replace with your app's package name
             .build()
-    }
-
-    /**
-     * Sends a sign-in link to the provided email using Firebase Authentication
-     */
-    private fun sendSignInLink(email: String) {
-        val actionCodeSettings = buildActionCodeSettings()
-
-        Firebase.auth.sendSignInLinkToEmail(email, actionCodeSettings)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    Log.d(TAG, "Email sent successfully.")
-                    Toast.makeText(this, "Sign-in link sent to $email", Toast.LENGTH_LONG).show()
-                } else {
-                    val errorMessage = task.exception?.message ?: "Unknown error"
-                    Log.e(TAG, "Error: $errorMessage")
-                    Toast.makeText(this, "Failed to send sign-in link: $errorMessage", Toast.LENGTH_LONG).show()
-                }
-            }
     }
 
     private fun refreshHomeScreen() {
