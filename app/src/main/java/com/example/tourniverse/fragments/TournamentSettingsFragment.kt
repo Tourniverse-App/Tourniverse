@@ -178,7 +178,7 @@ class TournamentSettingsFragment : Fragment() {
         db.collection("tournaments").document(tournamentId).get()
             .addOnSuccessListener { document ->
                 val ownerId = document.getString("ownerId")
-                val privacy = document.getString("privacy") ?: "public"
+                val privacy = document.getString("privacy") ?: "Public"
 
                 if (ownerId == userId) {
                     buttonDeleteTournament.visibility = View.VISIBLE
@@ -188,7 +188,7 @@ class TournamentSettingsFragment : Fragment() {
                     buttonLeaveTournament.visibility = View.VISIBLE
                     buttonDeleteTournament.visibility = View.GONE // Non-owners see only Leave
 
-                    buttonInvite.visibility = if (privacy == "private") View.GONE else View.VISIBLE
+                    buttonInvite.visibility = if (privacy == "Private") View.GONE else View.VISIBLE
                 }
             }
             .addOnFailureListener { e ->
