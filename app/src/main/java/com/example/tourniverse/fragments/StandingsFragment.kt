@@ -573,8 +573,6 @@ class StandingsFragment : Fragment() {
         )
 
         Log.d("FCM Notification", "Sending notification: $notificationData")
-
-        // Replace this with your HTTP client logic (e.g., Retrofit, Volley, etc.)
     }
 
     /**
@@ -591,5 +589,4 @@ class StandingsFragment : Fragment() {
             }
         return tournamentName
     }
-
 }
