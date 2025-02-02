@@ -4,6 +4,7 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
+    android:background="@color/white"
     android:padding="4dp">
 
     <!-- Tournament Name -->
@@ -71,7 +72,7 @@
             app:tabGravity="fill"
             app:tabMode="fixed"
             app:tabRippleColor="@null"
-            android:background="@color/white" />
+            android:background="@color/grayish" />
     </FrameLayout>
 
     <!-- ViewPager2 -->
