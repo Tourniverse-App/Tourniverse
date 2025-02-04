@@ -143,11 +143,23 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun signIn() {
-        Log.d(TAG, "Starting Google sign-in process")
-        val signInIntent = googleSignInClient.signInIntent
-        startActivityForResult(signInIntent, RC_SIGN_IN)
-        Log.d(TAG, "Sign-in intent launched")
+        Log.d(TAG, "Signing out before initiating Google Sign-In")
+
+        // First, sign out to prevent automatic login
+        googleSignInClient.signOut().addOnCompleteListener {
+            Log.d(TAG, "Signed out successfully")
+
+            // Then, revoke access to force the account picker to show
+            googleSignInClient.revokeAccess().addOnCompleteListener {
+                Log.d(TAG, "Revoked access successfully, opening account chooser")
+
+                // Now start the sign-in intent to allow user selection
+                val signInIntent = googleSignInClient.signInIntent
+                startActivityForResult(signInIntent, RC_SIGN_IN)
+            }
+        }
     }
+
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
